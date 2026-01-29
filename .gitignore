@@ -30,7 +30,9 @@ out/
 .env.development
 .env.staging
 .env.production
-*.env
+!.env.example
+!**/.env.example
+deployment/env/.env
 
 # IDE
 .idea/
