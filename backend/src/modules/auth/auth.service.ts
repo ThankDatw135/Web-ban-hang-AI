@@ -1,29 +1,35 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+  BadRequestException,
+  Inject,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
-import { UsersService } from '../users/users.service';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
+import { RegisterDto, LoginDto, RefreshTokenDto, ForgotPasswordDto, ResetPasswordDto } from './dto';
+import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
+import Redis from 'ioredis';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly usersService: UsersService,
-    private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+    private configService: ConfigService,
+    @Inject('REDIS_CLIENT') private redis: Redis,
   ) {}
 
   async register(dto: RegisterDto) {
-    // Check if email exists
+    // Check existing email
     const existingUser = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
 
     if (existingUser) {
-      throw new ConflictException('Email already exists');
+      throw new ConflictException('Email đã được sử dụng');
     }
 
     // Hash password
@@ -37,6 +43,14 @@ export class AuthService {
         firstName: dto.firstName,
         lastName: dto.lastName,
         phone: dto.phone,
+        cart: { create: {} }, // Create empty cart
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
       },
     });
 
@@ -44,113 +58,172 @@ export class AuthService {
     const tokens = await this.generateTokens(user.id, user.email, user.role);
 
     return {
-      success: true,
-      data: {
-        user: this.usersService.excludePassword(user),
-        ...tokens,
-      },
+      user,
+      ...tokens,
     };
   }
 
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true,
+      },
     });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Tài khoản đã bị khóa');
     }
 
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    if (!user.isActive) {
-      throw new UnauthorizedException('Account is disabled');
+      throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
     }
 
     const tokens = await this.generateTokens(user.id, user.email, user.role);
 
+    // Remove password from response
+    const { password, ...userWithoutPassword } = user;
+
     return {
-      success: true,
-      data: {
-        user: this.usersService.excludePassword(user),
-        ...tokens,
-      },
+      user: userWithoutPassword,
+      ...tokens,
     };
   }
 
-  async refreshToken(refreshToken: string) {
+  async refreshToken(dto: RefreshTokenDto) {
     try {
-      const payload = this.jwtService.verify(refreshToken, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      const payload = this.jwtService.verify(dto.refreshToken, {
+        secret: this.configService.get<string>('jwt.refreshSecret'),
       });
 
-      const storedToken = await this.prisma.refreshToken.findFirst({
-        where: {
-          token: refreshToken,
-          userId: payload.sub,
-          expiresAt: { gt: new Date() },
-        },
-      });
-
-      if (!storedToken) {
-        throw new UnauthorizedException('Invalid refresh token');
+      // Check if token is blacklisted
+      const isBlacklisted = await this.redis.get(`bl_${dto.refreshToken}`);
+      if (isBlacklisted) {
+        throw new UnauthorizedException('Token đã hết hạn');
       }
 
-      // Delete old token
-      await this.prisma.refreshToken.delete({ where: { id: storedToken.id } });
-
-      // Generate new tokens
+      // Verify user still exists and is active
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
+        select: { id: true, email: true, role: true, isActive: true },
       });
 
-      const tokens = await this.generateTokens(user.id, user.email, user.role);
+      if (!user || !user.isActive) {
+        throw new UnauthorizedException('Tài khoản không tồn tại hoặc đã bị khóa');
+      }
 
-      return {
-        success: true,
-        data: tokens,
-      };
-    } catch {
-      throw new UnauthorizedException('Invalid refresh token');
+      // Blacklist old refresh token
+      await this.redis.set(
+        `bl_${dto.refreshToken}`,
+        '1',
+        'EX',
+        7 * 24 * 60 * 60, // 7 days
+      );
+
+      // Generate new tokens
+      return await this.generateTokens(user.id, user.email, user.role);
+    } catch (error) {
+      throw new UnauthorizedException('Token không hợp lệ');
     }
   }
 
   async logout(refreshToken: string) {
-    await this.prisma.refreshToken.deleteMany({
-      where: { token: refreshToken },
+    // Blacklist refresh token
+    await this.redis.set(
+      `bl_${refreshToken}`,
+      '1',
+      'EX',
+      7 * 24 * 60 * 60, // 7 days
+    );
+
+    return { message: 'Đăng xuất thành công' };
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
     });
 
-    return {
-      success: true,
-      message: 'Logged out successfully',
-    };
+    // Always return success to prevent email enumeration
+    if (!user) {
+      return { message: 'Nếu email tồn tại, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu' };
+    }
+
+    // Generate reset token
+    const resetToken = randomBytes(32).toString('hex');
+    const hashedToken = await bcrypt.hash(resetToken, 10);
+
+    // Store in Redis with 1 hour expiry
+    await this.redis.set(`reset_${user.id}`, hashedToken, 'EX', 3600);
+
+    // TODO: Send email with reset link
+    // For now, just log the token
+    console.log(`Reset token for ${user.email}: ${resetToken}`);
+
+    return { message: 'Nếu email tồn tại, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu' };
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    // Decode token to get user ID (token format: userId.randomToken)
+    const [userId, token] = dto.token.split('.');
+    if (!userId || !token) {
+      throw new BadRequestException('Token không hợp lệ');
+    }
+
+    // Get stored hash from Redis
+    const storedHash = await this.redis.get(`reset_${userId}`);
+    if (!storedHash) {
+      throw new BadRequestException('Token đã hết hạn');
+    }
+
+    // Verify token
+    const isValid = await bcrypt.compare(token, storedHash);
+    if (!isValid) {
+      throw new BadRequestException('Token không hợp lệ');
+    }
+
+    // Update password
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 12);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+
+    // Delete reset token
+    await this.redis.del(`reset_${userId}`);
+
+    return { message: 'Đặt lại mật khẩu thành công' };
   }
 
   private async generateTokens(userId: string, email: string, role: string) {
     const payload = { sub: userId, email, role };
 
-    const accessToken = this.jwtService.sign(payload);
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(payload, {
+        secret: this.configService.get<string>('jwt.secret'),
+        expiresIn: this.configService.get<string>('jwt.expiresIn'),
+      }),
+      this.jwtService.signAsync(payload, {
+        secret: this.configService.get<string>('jwt.refreshSecret'),
+        expiresIn: this.configService.get<string>('jwt.refreshExpiresIn'),
+      }),
+    ]);
 
-    const refreshToken = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d'),
-    });
-
-    // Store refresh token
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
-    await this.prisma.refreshToken.create({
-      data: {
-        token: refreshToken,
-        userId,
-        expiresAt,
-      },
-    });
-
-    return { accessToken, refreshToken };
+    return {
+      accessToken,
+      refreshToken,
+      expiresIn: this.configService.get<string>('jwt.expiresIn'),
+    };
   }
 }
