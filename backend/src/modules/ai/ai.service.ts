@@ -1,9 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../prisma/prisma.service';
-import { VirtualTryOnDto, SizeRecommendationDto, AIChatDto } from './dto';
-import { AIJobType, AIJobStatus } from '@prisma/client';
-import amqp, { Channel, ChannelWrapper } from 'amqp-connection-manager';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { PrismaService } from "../prisma/prisma.service";
+import { VirtualTryOnDto, SizeRecommendationDto, AIChatDto } from "./dto";
+import { AIJobType, AIJobStatus } from "@prisma/client";
+import amqp, { Channel, ChannelWrapper } from "amqp-connection-manager";
 
 @Injectable()
 export class AiService {
@@ -18,20 +18,20 @@ export class AiService {
 
   private async initRabbitMQ() {
     try {
-      const url = this.configService.get('rabbitmq.url');
+      const url = this.configService.get("rabbitmq.url");
       const connection = amqp.connect([url]);
-      
+
       this.channelWrapper = connection.createChannel({
         setup: async (channel: Channel) => {
-          await channel.assertQueue('ai.tryon', { durable: true });
-          await channel.assertQueue('ai.size', { durable: true });
-          await channel.assertQueue('ai.chat', { durable: true });
+          await channel.assertQueue("ai.tryon", { durable: true });
+          await channel.assertQueue("ai.size", { durable: true });
+          await channel.assertQueue("ai.chat", { durable: true });
         },
       });
 
-      console.log('✅ RabbitMQ connected');
+      console.log("✅ RabbitMQ connected");
     } catch (error: any) {
-      console.error('❌ RabbitMQ connection failed:', error.message);
+      console.error("❌ RabbitMQ connection failed:", error.message);
     }
   }
 
@@ -43,7 +43,7 @@ export class AiService {
     });
 
     if (!product) {
-      throw new NotFoundException('Sản phẩm không tồn tại');
+      throw new NotFoundException("Sản phẩm không tồn tại");
     }
 
     // Create AI job
@@ -62,7 +62,7 @@ export class AiService {
     });
 
     // Publish to RabbitMQ
-    await this.publishToQueue('ai.tryon', {
+    await this.publishToQueue("ai.tryon", {
       jobId: job.id,
       userId,
       ...dto,
@@ -72,7 +72,7 @@ export class AiService {
     return {
       jobId: job.id,
       status: job.status,
-      message: 'Yêu cầu thử đồ ảo đã được gửi. Vui lòng chờ kết quả.',
+      message: "Yêu cầu thử đồ ảo đã được gửi. Vui lòng chờ kết quả.",
     };
   }
 
@@ -80,7 +80,13 @@ export class AiService {
     // Get user measurements
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { height: true, weight: true, chest: true, waist: true, hips: true },
+      select: {
+        height: true,
+        weight: true,
+        chest: true,
+        waist: true,
+        hips: true,
+      },
     });
 
     // Get product size guide
@@ -90,7 +96,7 @@ export class AiService {
     });
 
     if (!product) {
-      throw new NotFoundException('Sản phẩm không tồn tại');
+      throw new NotFoundException("Sản phẩm không tồn tại");
     }
 
     // Create AI job
@@ -109,7 +115,7 @@ export class AiService {
     });
 
     // Publish to RabbitMQ
-    await this.publishToQueue('ai.size', {
+    await this.publishToQueue("ai.size", {
       jobId: job.id,
       userId,
       productId: dto.productId,
@@ -120,7 +126,7 @@ export class AiService {
     return {
       jobId: job.id,
       status: job.status,
-      message: 'Đang phân tích kích thước phù hợp...',
+      message: "Đang phân tích kích thước phù hợp...",
     };
   }
 
@@ -128,11 +134,11 @@ export class AiService {
     // Get or create chat session
     let session: any = null;
     let messages: any[] = [];
-    
+
     if (dto.sessionId) {
       session = await this.prisma.chatSession.findFirst({
         where: { id: dto.sessionId, userId },
-        include: { messages: { orderBy: { createdAt: 'asc' }, take: 20 } },
+        include: { messages: { orderBy: { createdAt: "asc" }, take: 20 } },
       });
       if (session) {
         messages = session.messages || [];
@@ -152,7 +158,7 @@ export class AiService {
     await this.prisma.chatMessage.create({
       data: {
         sessionId: session.id,
-        role: 'USER',
+        role: "USER",
         content: dto.message,
       },
     });
@@ -175,7 +181,7 @@ export class AiService {
     });
 
     // Publish to RabbitMQ
-    await this.publishToQueue('ai.chat', {
+    await this.publishToQueue("ai.chat", {
       jobId: job.id,
       userId,
       sessionId: session.id,
@@ -187,7 +193,7 @@ export class AiService {
       jobId: job.id,
       sessionId: session.id,
       status: job.status,
-      message: 'Đang xử lý...',
+      message: "Đang xử lý...",
     };
   }
 
@@ -207,7 +213,7 @@ export class AiService {
     });
 
     if (!job) {
-      throw new NotFoundException('Không tìm thấy yêu cầu');
+      throw new NotFoundException("Không tìm thấy yêu cầu");
     }
 
     return job;
@@ -217,12 +223,12 @@ export class AiService {
     const session = await this.prisma.chatSession.findFirst({
       where: { id: sessionId, userId },
       include: {
-        messages: { orderBy: { createdAt: 'asc' } },
+        messages: { orderBy: { createdAt: "asc" } },
       },
     });
 
     if (!session) {
-      throw new NotFoundException('Phiên chat không tồn tại');
+      throw new NotFoundException("Phiên chat không tồn tại");
     }
 
     return session;
@@ -231,7 +237,7 @@ export class AiService {
   async getChatSessions(userId: string) {
     return this.prisma.chatSession.findMany({
       where: { userId, isActive: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       select: {
         id: true,
         title: true,
@@ -244,7 +250,7 @@ export class AiService {
 
   private async publishToQueue(queue: string, message: any) {
     if (!this.channelWrapper) {
-      console.error('RabbitMQ channel not available');
+      console.error("RabbitMQ channel not available");
       return;
     }
 
@@ -255,4 +261,3 @@ export class AiService {
     );
   }
 }
-

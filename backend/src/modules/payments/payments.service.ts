@@ -1,9 +1,13 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../prisma/prisma.service';
-import { InitiatePaymentDto } from './dto';
-import { PaymentMethod, PaymentStatus, OrderStatus } from '@prisma/client';
-import * as crypto from 'crypto';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { PrismaService } from "../prisma/prisma.service";
+import { InitiatePaymentDto } from "./dto";
+import { PaymentMethod, PaymentStatus, OrderStatus } from "@prisma/client";
+import * as crypto from "crypto";
 
 @Injectable()
 export class PaymentsService {
@@ -18,11 +22,11 @@ export class PaymentsService {
     });
 
     if (!order) {
-      throw new NotFoundException('Đơn hàng không tồn tại');
+      throw new NotFoundException("Đơn hàng không tồn tại");
     }
 
     if (order.paymentStatus === PaymentStatus.COMPLETED) {
-      throw new BadRequestException('Đơn hàng đã được thanh toán');
+      throw new BadRequestException("Đơn hàng đã được thanh toán");
     }
 
     // Create payment record
@@ -49,7 +53,7 @@ export class PaymentsService {
         return this.handleZaloPay(order, payment, dto.returnUrl);
 
       default:
-        throw new BadRequestException('Phương thức thanh toán không hỗ trợ');
+        throw new BadRequestException("Phương thức thanh toán không hỗ trợ");
     }
   }
 
@@ -67,84 +71,85 @@ export class PaymentsService {
     ]);
 
     return {
-      method: 'COD',
-      message: 'Đơn hàng đã được xác nhận. Thanh toán khi nhận hàng.',
+      method: "COD",
+      message: "Đơn hàng đã được xác nhận. Thanh toán khi nhận hàng.",
     };
   }
 
   // Bank Transfer: Return bank info
   private async handleBankTransfer(payment: any) {
     return {
-      method: 'BANK',
+      method: "BANK",
       bankInfo: {
-        bankName: 'Vietcombank',
-        accountNumber: '1234567890',
-        accountHolder: 'CONG TY FASHION AI',
-        branch: 'Chi nhánh TP.HCM',
+        bankName: "Vietcombank",
+        accountNumber: "1234567890",
+        accountHolder: "CONG TY FASHION AI",
+        branch: "Chi nhánh TP.HCM",
       },
       amount: Number(payment.amount),
       referenceCode: payment.referenceCode,
       message: `Nội dung chuyển khoản: ${payment.referenceCode}`,
-      note: 'Vui lòng chuyển khoản đúng số tiền và nội dung để đơn hàng được xử lý nhanh chóng.',
+      note: "Vui lòng chuyển khoản đúng số tiền và nội dung để đơn hàng được xử lý nhanh chóng.",
     };
   }
 
   // MoMo: Generate payment URL
   private async handleMoMo(order: any, payment: any, returnUrl?: string) {
-    const partnerCode = this.configService.get('MOMO_PARTNER_CODE');
-    const accessKey = this.configService.get('MOMO_ACCESS_KEY');
-    const secretKey = this.configService.get('MOMO_SECRET_KEY');
+    const partnerCode = this.configService.get("MOMO_PARTNER_CODE");
+    const accessKey = this.configService.get("MOMO_ACCESS_KEY");
+    const secretKey = this.configService.get("MOMO_SECRET_KEY");
 
     if (!partnerCode || !accessKey || !secretKey) {
-      throw new BadRequestException('MoMo chưa được cấu hình');
+      throw new BadRequestException("MoMo chưa được cấu hình");
     }
 
     const requestId = `${Date.now()}_${payment.id}`;
     const orderId = payment.referenceCode;
     const amount = Number(payment.amount);
     const orderInfo = `Thanh toan don hang ${order.orderNumber}`;
-    const redirectUrl = returnUrl || `${this.configService.get('APP_URL')}/payment/result`;
-    const ipnUrl = `${this.configService.get('APP_URL')}/api/payments/momo/webhook`;
-    const requestType = 'captureWallet';
-    const extraData = '';
+    const redirectUrl =
+      returnUrl || `${this.configService.get("APP_URL")}/payment/result`;
+    const ipnUrl = `${this.configService.get("APP_URL")}/api/payments/momo/webhook`;
+    const requestType = "captureWallet";
+    const extraData = "";
 
     const rawSignature = `accessKey=${accessKey}&amount=${amount}&extraData=${extraData}&ipnUrl=${ipnUrl}&orderId=${orderId}&orderInfo=${orderInfo}&partnerCode=${partnerCode}&redirectUrl=${redirectUrl}&requestId=${requestId}&requestType=${requestType}`;
 
     const signature = crypto
-      .createHmac('sha256', secretKey)
+      .createHmac("sha256", secretKey)
       .update(rawSignature)
-      .digest('hex');
+      .digest("hex");
 
     // In production, call MoMo API
     // For now, return mock response
     return {
-      method: 'MOMO',
+      method: "MOMO",
       payUrl: `https://test-payment.momo.vn/v2/gateway/pay?t=${requestId}`,
       orderId,
       requestId,
-      message: 'Vui lòng thanh toán qua MoMo',
+      message: "Vui lòng thanh toán qua MoMo",
       // In production: actual payUrl from MoMo response
     };
   }
 
   // ZaloPay: Generate payment URL
   private async handleZaloPay(order: any, payment: any, returnUrl?: string) {
-    const appId = this.configService.get('ZALOPAY_APP_ID');
-    const key1 = this.configService.get('ZALOPAY_KEY1');
+    const appId = this.configService.get("ZALOPAY_APP_ID");
+    const key1 = this.configService.get("ZALOPAY_KEY1");
 
     if (!appId || !key1) {
-      throw new BadRequestException('ZaloPay chưa được cấu hình');
+      throw new BadRequestException("ZaloPay chưa được cấu hình");
     }
 
-    const appTransId = `${new Date().toISOString().slice(0, 10).replace(/-/g, '')}_${payment.id}`;
+    const appTransId = `${new Date().toISOString().slice(0, 10).replace(/-/g, "")}_${payment.id}`;
     const amount = Number(payment.amount);
 
     // In production, call ZaloPay API
     return {
-      method: 'ZALOPAY',
+      method: "ZALOPAY",
       orderUrl: `https://sandbox.zalopay.vn/v001/gateway?t=${appTransId}`,
       appTransId,
-      message: 'Vui lòng thanh toán qua ZaloPay',
+      message: "Vui lòng thanh toán qua ZaloPay",
     };
   }
 
@@ -157,7 +162,7 @@ export class PaymentsService {
     });
 
     if (!payment) {
-      return { returnCode: 1, returnMessage: 'Payment not found' };
+      return { returnCode: 1, returnMessage: "Payment not found" };
     }
 
     if (resultCode === 0) {
@@ -191,21 +196,21 @@ export class PaymentsService {
       });
     }
 
-    return { returnCode: 0, returnMessage: 'Success' };
+    return { returnCode: 0, returnMessage: "Success" };
   }
 
   async handleZaloPayWebhook(body: any) {
     const { data, mac } = body;
 
     // Verify MAC
-    const key2 = this.configService.get('ZALOPAY_KEY2');
+    const key2 = this.configService.get("ZALOPAY_KEY2");
     const computedMac = crypto
-      .createHmac('sha256', key2)
+      .createHmac("sha256", key2)
       .update(data)
-      .digest('hex');
+      .digest("hex");
 
     if (mac !== computedMac) {
-      return { returnCode: -1, returnMessage: 'MAC verification failed' };
+      return { returnCode: -1, returnMessage: "MAC verification failed" };
     }
 
     const dataJson = JSON.parse(data);
@@ -216,7 +221,7 @@ export class PaymentsService {
     });
 
     if (!payment) {
-      return { returnCode: 2, returnMessage: 'Payment not found' };
+      return { returnCode: 2, returnMessage: "Payment not found" };
     }
 
     await this.prisma.$transaction([
@@ -238,7 +243,7 @@ export class PaymentsService {
       }),
     ]);
 
-    return { returnCode: 1, returnMessage: 'Success' };
+    return { returnCode: 1, returnMessage: "Success" };
   }
 
   // Verify bank transfer
@@ -248,7 +253,7 @@ export class PaymentsService {
     });
 
     if (!payment) {
-      throw new NotFoundException('Thanh toán không tồn tại');
+      throw new NotFoundException("Thanh toán không tồn tại");
     }
 
     await this.prisma.$transaction([
@@ -269,12 +274,12 @@ export class PaymentsService {
       }),
     ]);
 
-    return { message: 'Xác nhận thanh toán thành công' };
+    return { message: "Xác nhận thanh toán thành công" };
   }
 
   private generateReferenceCode(): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let result = 'FA';
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let result = "FA";
     for (let i = 0; i < 8; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
     }

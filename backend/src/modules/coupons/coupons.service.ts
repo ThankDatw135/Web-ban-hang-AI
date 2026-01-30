@@ -1,12 +1,12 @@
 /**
  * CouponsService - Xử lý logic mã giảm giá
- * 
+ *
  * Features:
  * - validate: Kiểm tra mã hợp lệ
  * - apply: Áp dụng mã vào đơn hàng
  * - calculateDiscount: Tính số tiền giảm
  * - CRUD cho Admin
- * 
+ *
  * @author Fashion AI Team
  * @created 30/01/2026
  */
@@ -15,20 +15,20 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-} from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { CouponType } from '@prisma/client';
-import { CreateCouponDto, UpdateCouponDto, ValidateCouponDto } from './dto';
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { CouponType } from "@prisma/client";
+import { CreateCouponDto, UpdateCouponDto, ValidateCouponDto } from "./dto";
 
 // Error codes cho response chi tiết
 export enum CouponErrorCode {
-  COUPON_NOT_FOUND = 'COUPON_NOT_FOUND',
-  COUPON_EXPIRED = 'COUPON_EXPIRED',
-  COUPON_INACTIVE = 'COUPON_INACTIVE',
-  COUPON_LIMIT_REACHED = 'COUPON_LIMIT_REACHED',
-  USER_LIMIT_REACHED = 'USER_LIMIT_REACHED',
-  MIN_ORDER_NOT_MET = 'MIN_ORDER_NOT_MET',
-  COUPON_NOT_STARTED = 'COUPON_NOT_STARTED',
+  COUPON_NOT_FOUND = "COUPON_NOT_FOUND",
+  COUPON_EXPIRED = "COUPON_EXPIRED",
+  COUPON_INACTIVE = "COUPON_INACTIVE",
+  COUPON_LIMIT_REACHED = "COUPON_LIMIT_REACHED",
+  USER_LIMIT_REACHED = "USER_LIMIT_REACHED",
+  MIN_ORDER_NOT_MET = "MIN_ORDER_NOT_MET",
+  COUPON_NOT_STARTED = "COUPON_NOT_STARTED",
 }
 
 // Interface cho kết quả validate
@@ -57,7 +57,7 @@ export class CouponsService {
 
   /**
    * Kiểm tra mã giảm giá có hợp lệ không
-   * 
+   *
    * @param dto - Thông tin validate (code, orderTotal)
    * @param userId - ID của user đang validate
    * @returns Kết quả validate với thông tin discount
@@ -75,7 +75,7 @@ export class CouponsService {
       return {
         valid: false,
         error: CouponErrorCode.COUPON_NOT_FOUND,
-        errorMessage: 'Mã giảm giá không tồn tại',
+        errorMessage: "Mã giảm giá không tồn tại",
       };
     }
 
@@ -84,7 +84,7 @@ export class CouponsService {
       return {
         valid: false,
         error: CouponErrorCode.COUPON_INACTIVE,
-        errorMessage: 'Mã giảm giá không còn hoạt động',
+        errorMessage: "Mã giảm giá không còn hoạt động",
       };
     }
 
@@ -94,7 +94,7 @@ export class CouponsService {
       return {
         valid: false,
         error: CouponErrorCode.COUPON_NOT_STARTED,
-        errorMessage: 'Mã giảm giá chưa có hiệu lực',
+        errorMessage: "Mã giảm giá chưa có hiệu lực",
       };
     }
 
@@ -102,7 +102,7 @@ export class CouponsService {
       return {
         valid: false,
         error: CouponErrorCode.COUPON_EXPIRED,
-        errorMessage: 'Mã giảm giá đã hết hạn',
+        errorMessage: "Mã giảm giá đã hết hạn",
       };
     }
 
@@ -111,7 +111,7 @@ export class CouponsService {
       return {
         valid: false,
         error: CouponErrorCode.COUPON_LIMIT_REACHED,
-        errorMessage: 'Mã giảm giá đã hết lượt sử dụng',
+        errorMessage: "Mã giảm giá đã hết lượt sử dụng",
       };
     }
 
@@ -127,7 +127,7 @@ export class CouponsService {
       return {
         valid: false,
         error: CouponErrorCode.USER_LIMIT_REACHED,
-        errorMessage: 'Bạn đã sử dụng mã này rồi',
+        errorMessage: "Bạn đã sử dụng mã này rồi",
       };
     }
 
@@ -136,7 +136,7 @@ export class CouponsService {
       return {
         valid: false,
         error: CouponErrorCode.MIN_ORDER_NOT_MET,
-        errorMessage: `Đơn hàng tối thiểu ${Number(coupon.minOrderValue).toLocaleString('vi-VN')}đ`,
+        errorMessage: `Đơn hàng tối thiểu ${Number(coupon.minOrderValue).toLocaleString("vi-VN")}đ`,
       };
     }
 
@@ -228,21 +228,24 @@ export class CouponsService {
   /**
    * Lấy danh sách tất cả coupons (Admin)
    */
-  async findAll(params?: { isActive?: boolean; page?: number; limit?: number }) {
+  async findAll(params?: {
+    isActive?: boolean;
+    page?: number;
+    limit?: number;
+  }) {
     const page = params?.page || 1;
     const limit = params?.limit || 20;
     const skip = (page - 1) * limit;
 
-    const where = params?.isActive !== undefined
-      ? { isActive: params.isActive }
-      : {};
+    const where =
+      params?.isActive !== undefined ? { isActive: params.isActive } : {};
 
     const [coupons, total] = await Promise.all([
       this.prisma.coupon.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: {
           _count: { select: { usages: true, orders: true } },
         },
@@ -273,7 +276,7 @@ export class CouponsService {
     });
 
     if (!coupon) {
-      throw new NotFoundException('Mã giảm giá không tồn tại');
+      throw new NotFoundException("Mã giảm giá không tồn tại");
     }
 
     return coupon;
@@ -289,7 +292,7 @@ export class CouponsService {
     });
 
     if (existing) {
-      throw new BadRequestException('Mã giảm giá đã tồn tại');
+      throw new BadRequestException("Mã giảm giá đã tồn tại");
     }
 
     return this.prisma.coupon.create({
@@ -348,7 +351,7 @@ export class CouponsService {
         where: { couponId },
         skip,
         take: limit,
-        orderBy: { usedAt: 'desc' },
+        orderBy: { usedAt: "desc" },
       }),
       this.prisma.couponUsage.count({ where: { couponId } }),
     ]);

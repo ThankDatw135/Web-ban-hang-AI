@@ -1,20 +1,23 @@
 /**
  * QueueService - Service quản lý message queue (RabbitMQ)
- * 
+ *
  * Tính năng:
  * - Tách riêng các queues theo chức năng
  * - Dead Letter Queue (DLQ) cho failed messages
  * - Retry với exponential backoff
  * - Logging chi tiết
- * 
+ *
  * @author Fashion AI Team
  * @created 30/01/2026
  */
 
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import amqp, { ChannelWrapper, AmqpConnectionManager } from 'amqp-connection-manager';
-import { Channel, ConsumeMessage } from 'amqplib';
+import { Injectable, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import amqp, {
+  ChannelWrapper,
+  AmqpConnectionManager,
+} from "amqp-connection-manager";
+import { Channel, ConsumeMessage } from "amqplib";
 
 // ========================================
 // QUEUE CONSTANTS
@@ -25,19 +28,19 @@ import { Channel, ConsumeMessage } from 'amqplib';
  */
 export const QUEUES = {
   // AI Processing
-  AI_TRYON: 'ai.tryon',           // Thử đồ ảo
-  AI_SIZE: 'ai.size',             // Gợi ý kích thước
-  AI_CHAT: 'ai.chat',             // Chat AI
+  AI_TRYON: "ai.tryon", // Thử đồ ảo
+  AI_SIZE: "ai.size", // Gợi ý kích thước
+  AI_CHAT: "ai.chat", // Chat AI
 
   // Notifications
-  NOTIFICATION_EMAIL: 'notifications.email',    // Gửi email
-  NOTIFICATION_PUSH: 'notifications.push',      // Push notification
+  NOTIFICATION_EMAIL: "notifications.email", // Gửi email
+  NOTIFICATION_PUSH: "notifications.push", // Push notification
 
   // Analytics
-  ANALYTICS_EVENTS: 'analytics.events',         // Event tracking
+  ANALYTICS_EVENTS: "analytics.events", // Event tracking
 
   // Dead Letter Queue
-  DLQ: 'dlq.failed',              // Failed messages
+  DLQ: "dlq.failed", // Failed messages
 } as const;
 
 /**
@@ -47,7 +50,10 @@ const RETRY_CONFIG = {
   [QUEUES.AI_TRYON]: { maxRetries: 3, delays: [1000, 5000, 30000] },
   [QUEUES.AI_SIZE]: { maxRetries: 3, delays: [1000, 5000, 30000] },
   [QUEUES.AI_CHAT]: { maxRetries: 2, delays: [1000, 5000] },
-  [QUEUES.NOTIFICATION_EMAIL]: { maxRetries: 5, delays: [1000, 5000, 15000, 60000, 300000] },
+  [QUEUES.NOTIFICATION_EMAIL]: {
+    maxRetries: 5,
+    delays: [1000, 5000, 15000, 60000, 300000],
+  },
   [QUEUES.NOTIFICATION_PUSH]: { maxRetries: 3, delays: [1000, 5000, 30000] },
 };
 
@@ -81,32 +87,34 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
    */
   private async connect() {
     try {
-      const url = this.configService.get<string>('rabbitmq.url') || 'amqp://localhost:5672';
+      const url =
+        this.configService.get<string>("rabbitmq.url") ||
+        "amqp://localhost:5672";
 
       this.connection = amqp.connect([url]);
 
-      this.connection.on('connect', () => {
-        console.log('✅ RabbitMQ connected');
+      this.connection.on("connect", () => {
+        console.log("✅ RabbitMQ connected");
       });
 
-      this.connection.on('disconnect', ({ err }) => {
-        console.error('❌ RabbitMQ disconnected:', err?.message);
+      this.connection.on("disconnect", ({ err }) => {
+        console.error("❌ RabbitMQ disconnected:", err?.message);
       });
 
       // Tạo channel và setup queues
       this.channelWrapper = this.connection.createChannel({
         setup: async (channel: Channel) => {
           // Setup Dead Letter Exchange
-          await channel.assertExchange('dlx', 'direct', { durable: true });
+          await channel.assertExchange("dlx", "direct", { durable: true });
           await channel.assertQueue(QUEUES.DLQ, { durable: true });
-          await channel.bindQueue(QUEUES.DLQ, 'dlx', 'failed');
+          await channel.bindQueue(QUEUES.DLQ, "dlx", "failed");
 
           // Setup các queue chính với DLX
           const queueOptions = {
             durable: true,
             arguments: {
-              'x-dead-letter-exchange': 'dlx',
-              'x-dead-letter-routing-key': 'failed',
+              "x-dead-letter-exchange": "dlx",
+              "x-dead-letter-routing-key": "failed",
             },
           };
 
@@ -120,13 +128,15 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
           await channel.assertQueue(QUEUES.NOTIFICATION_PUSH, queueOptions);
 
           // Analytics Queue (không cần DLQ, có thể mất)
-          await channel.assertQueue(QUEUES.ANALYTICS_EVENTS, { durable: false });
+          await channel.assertQueue(QUEUES.ANALYTICS_EVENTS, {
+            durable: false,
+          });
 
-          console.log('📦 All queues initialized with DLQ support');
+          console.log("📦 All queues initialized with DLQ support");
         },
       });
     } catch (error: any) {
-      console.error('❌ Failed to connect to RabbitMQ:', error.message);
+      console.error("❌ Failed to connect to RabbitMQ:", error.message);
     }
   }
 
@@ -141,9 +151,9 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
       if (this.connection) {
         await this.connection.close();
       }
-      console.log('🔌 RabbitMQ connection closed');
+      console.log("🔌 RabbitMQ connection closed");
     } catch (error: any) {
-      console.error('Error closing RabbitMQ:', error.message);
+      console.error("Error closing RabbitMQ:", error.message);
     }
   }
 
@@ -153,7 +163,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * Gửi message tới queue
-   * 
+   *
    * @param queue - Tên queue (sử dụng QUEUES constant)
    * @param message - Dữ liệu message
    * @param options - Tùy chọn thêm
@@ -164,7 +174,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     options?: { priority?: number; expiration?: number },
   ): Promise<boolean> {
     if (!this.channelWrapper) {
-      console.error('❌ RabbitMQ channel not available');
+      console.error("❌ RabbitMQ channel not available");
       return false;
     }
 
@@ -188,7 +198,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
         },
       );
 
-      console.log(`📤 Published to ${queue}:`, message.jobId || 'no-jobId');
+      console.log(`📤 Published to ${queue}:`, message.jobId || "no-jobId");
       return true;
     } catch (error: any) {
       console.error(`❌ Failed to publish to ${queue}:`, error.message);

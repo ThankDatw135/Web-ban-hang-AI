@@ -1,12 +1,12 @@
-import { IsString, IsNumber, Min, Max } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsNumber, Min, Max } from "class-validator";
+import { ApiProperty } from "@nestjs/swagger";
 
 export class AddToCartDto {
-  @ApiProperty({ description: 'ID sản phẩm' })
+  @ApiProperty({ description: "ID sản phẩm" })
   @IsString()
   productId: string;
 
-  @ApiProperty({ description: 'ID variant' })
+  @ApiProperty({ description: "ID variant" })
   @IsString()
   variantId: string;
 

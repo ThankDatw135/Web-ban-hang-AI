@@ -1,25 +1,25 @@
 /**
  * CacheService - Service caching với Redis
- * 
+ *
  * Cung cấp các method caching thông dụng:
  * - get/set với TTL
  * - delete key
  * - Pattern delete (xóa nhiều key)
- * 
+ *
  * @author Fashion AI Team
  * @created 30/01/2026
  */
 
-import { Injectable, Inject } from '@nestjs/common';
-import Redis from 'ioredis';
-import { REDIS_CLIENT } from '../redis/redis.module';
+import { Injectable, Inject } from "@nestjs/common";
+import Redis from "ioredis";
+import { REDIS_CLIENT } from "../redis/redis.module";
 
 // TTL Constants (tính bằng giây)
 export const CACHE_TTL = {
-  CATEGORIES: 3600,      // 1 giờ - Categories ít thay đổi
-  PRODUCT_LIST: 300,     // 5 phút - Danh sách sản phẩm
-  PRODUCT_DETAIL: 600,   // 10 phút - Chi tiết sản phẩm
-  USER_SESSION: 604800,  // 7 ngày - Session user
+  CATEGORIES: 3600, // 1 giờ - Categories ít thay đổi
+  PRODUCT_LIST: 300, // 5 phút - Danh sách sản phẩm
+  PRODUCT_DETAIL: 600, // 10 phút - Chi tiết sản phẩm
+  USER_SESSION: 604800, // 7 ngày - Session user
 };
 
 @Injectable()
@@ -28,7 +28,7 @@ export class CacheService {
 
   /**
    * Lấy value từ cache
-   * 
+   *
    * @param key - Cache key
    * @returns Parsed JSON object hoặc null nếu không có
    */
@@ -46,7 +46,7 @@ export class CacheService {
 
   /**
    * Lưu value vào cache
-   * 
+   *
    * @param key - Cache key
    * @param value - Value cần lưu (sẽ được stringify)
    * @param ttl - Time to live (giây), mặc định 5 phút
@@ -61,7 +61,7 @@ export class CacheService {
 
   /**
    * Xóa một key khỏi cache
-   * 
+   *
    * @param key - Cache key cần xóa
    */
   async del(key: string): Promise<void> {
@@ -75,9 +75,9 @@ export class CacheService {
   /**
    * Xóa nhiều keys theo pattern
    * Ví dụ: deleteByPattern('products:*') xóa tất cả cache products
-   * 
+   *
    * @param pattern - Pattern để match keys (ví dụ: 'products:*')
-   * 
+   *
    * // CAUTION: Dùng cẩn thận với pattern rộng
    */
   async deleteByPattern(pattern: string): Promise<void> {
@@ -85,16 +85,21 @@ export class CacheService {
       const keys = await this.redis.keys(pattern);
       if (keys.length > 0) {
         await this.redis.del(...keys);
-        console.log(`Deleted ${keys.length} cache keys matching pattern: ${pattern}`);
+        console.log(
+          `Deleted ${keys.length} cache keys matching pattern: ${pattern}`,
+        );
       }
     } catch (error) {
-      console.error(`Cache pattern delete error for ${pattern}:`, error.message);
+      console.error(
+        `Cache pattern delete error for ${pattern}:`,
+        error.message,
+      );
     }
   }
 
   /**
    * Kiểm tra key có tồn tại không
-   * 
+   *
    * @param key - Cache key
    * @returns true nếu tồn tại
    */
@@ -115,7 +120,7 @@ export class CacheService {
    * Tạo cache key cho categories
    */
   static categoriesKey(): string {
-    return 'categories:all';
+    return "categories:all";
   }
 
   /**
@@ -127,8 +132,8 @@ export class CacheService {
       .filter(([_, v]) => v !== undefined && v !== null)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([k, v]) => `${k}=${v}`)
-      .join(':');
-    return `products:list:${params || 'default'}`;
+      .join(":");
+    return `products:list:${params || "default"}`;
   }
 
   /**

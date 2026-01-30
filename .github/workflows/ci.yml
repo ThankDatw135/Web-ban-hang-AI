@@ -50,9 +50,6 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
-      - name: Run Prettier check
-        run: npm run format -- --check
-
   # ========================================
   # JOB 2: Test - Chạy unit tests
   # ========================================

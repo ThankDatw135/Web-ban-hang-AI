@@ -1,18 +1,18 @@
 /**
  * OrdersQueryService - Xử lý truy vấn đơn hàng
- * 
+ *
  * File này chứa các method:
  * - findUserOrders: Lấy danh sách đơn hàng của user
  * - findById: Lấy chi tiết đơn hàng
  * - findAll: Lấy tất cả đơn hàng (Admin)
- * 
+ *
  * @author Fashion AI Team
  * @created 30/01/2026
  */
 
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { OrderFilterDto } from './dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { OrderFilterDto } from "./dto";
 
 @Injectable()
 export class OrdersQueryService {
@@ -20,11 +20,11 @@ export class OrdersQueryService {
 
   /**
    * Lấy danh sách đơn hàng của user
-   * 
+   *
    * @param userId - ID của user
    * @param filter - Bộ lọc (status, page, limit)
    * @returns Danh sách đơn hàng với phân trang
-   * 
+   *
    * // Hiển thị tối đa 3 items preview trong mỗi order
    * // để giảm data transfer
    */
@@ -42,7 +42,7 @@ export class OrdersQueryService {
         where,
         skip: filter.skip,
         take: filter.limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: {
           // Chỉ lấy 3 items đầu tiên để preview
           items: {
@@ -74,7 +74,7 @@ export class OrdersQueryService {
 
   /**
    * Lấy chi tiết đơn hàng theo ID
-   * 
+   *
    * @param userId - ID của user (để verify ownership)
    * @param orderId - ID của đơn hàng
    * @param isAdmin - Nếu true, bỏ qua kiểm tra ownership
@@ -83,7 +83,7 @@ export class OrdersQueryService {
    */
   async findById(userId: string, orderId: string, isAdmin = false) {
     const where: any = { id: orderId };
-    
+
     // User thường chỉ xem được đơn của mình
     if (!isAdmin) {
       where.userId = userId;
@@ -105,7 +105,7 @@ export class OrdersQueryService {
     });
 
     if (!order) {
-      throw new NotFoundException('Đơn hàng không tồn tại');
+      throw new NotFoundException("Đơn hàng không tồn tại");
     }
 
     return order;
@@ -113,7 +113,7 @@ export class OrdersQueryService {
 
   /**
    * Lấy tất cả đơn hàng (Admin only)
-   * 
+   *
    * @param filter - Bộ lọc (status, page, limit)
    * @returns Danh sách đơn hàng với thông tin user
    */
@@ -129,7 +129,7 @@ export class OrdersQueryService {
         where,
         skip: filter.skip,
         take: filter.limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: {
           // Thông tin user để admin xem
           user: {

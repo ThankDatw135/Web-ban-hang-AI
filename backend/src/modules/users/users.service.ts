@@ -1,7 +1,16 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { UpdateProfileDto, UpdateMeasurementsDto, CreateAddressDto, UpdateAddressDto } from './dto';
-import { PaginationDto } from '@/common/dto';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import {
+  UpdateProfileDto,
+  UpdateMeasurementsDto,
+  CreateAddressDto,
+  UpdateAddressDto,
+} from "./dto";
+import { PaginationDto } from "@/common/dto";
 
 @Injectable()
 export class UsersService {
@@ -29,7 +38,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('Người dùng không tồn tại');
+      throw new NotFoundException("Người dùng không tồn tại");
     }
 
     return user;
@@ -69,7 +78,7 @@ export class UsersService {
   async getAddresses(userId: string) {
     return this.prisma.address.findMany({
       where: { userId },
-      orderBy: [{ isDefault: 'desc' }, { id: 'desc' }],
+      orderBy: [{ isDefault: "desc" }, { id: "desc" }],
     });
   }
 
@@ -90,13 +99,17 @@ export class UsersService {
     });
   }
 
-  async updateAddress(userId: string, addressId: string, dto: UpdateAddressDto) {
+  async updateAddress(
+    userId: string,
+    addressId: string,
+    dto: UpdateAddressDto,
+  ) {
     const address = await this.prisma.address.findFirst({
       where: { id: addressId, userId },
     });
 
     if (!address) {
-      throw new NotFoundException('Địa chỉ không tồn tại');
+      throw new NotFoundException("Địa chỉ không tồn tại");
     }
 
     // If setting as default, unset other defaults
@@ -119,14 +132,14 @@ export class UsersService {
     });
 
     if (!address) {
-      throw new NotFoundException('Địa chỉ không tồn tại');
+      throw new NotFoundException("Địa chỉ không tồn tại");
     }
 
     await this.prisma.address.delete({
       where: { id: addressId },
     });
 
-    return { message: 'Xóa địa chỉ thành công' };
+    return { message: "Xóa địa chỉ thành công" };
   }
 
   async setDefaultAddress(userId: string, addressId: string) {
@@ -135,7 +148,7 @@ export class UsersService {
     });
 
     if (!address) {
-      throw new NotFoundException('Địa chỉ không tồn tại');
+      throw new NotFoundException("Địa chỉ không tồn tại");
     }
 
     // Unset all defaults
@@ -156,9 +169,9 @@ export class UsersService {
     const where = search
       ? {
           OR: [
-            { email: { contains: search, mode: 'insensitive' as const } },
-            { firstName: { contains: search, mode: 'insensitive' as const } },
-            { lastName: { contains: search, mode: 'insensitive' as const } },
+            { email: { contains: search, mode: "insensitive" as const } },
+            { firstName: { contains: search, mode: "insensitive" as const } },
+            { lastName: { contains: search, mode: "insensitive" as const } },
           ],
         }
       : {};
@@ -178,7 +191,7 @@ export class UsersService {
           isActive: true,
           createdAt: true,
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       this.prisma.user.count({ where }),
     ]);
@@ -224,7 +237,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('Người dùng không tồn tại');
+      throw new NotFoundException("Người dùng không tồn tại");
     }
 
     return user;

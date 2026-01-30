@@ -3,9 +3,9 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
-} from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateReviewDto } from './dto';
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { CreateReviewDto } from "./dto";
 
 @Injectable()
 export class ReviewsService {
@@ -17,7 +17,7 @@ export class ReviewsService {
     const [reviews, total] = await Promise.all([
       this.prisma.review.findMany({
         where: { productId, isVisible: true },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip,
         take: limit,
         include: {
@@ -47,7 +47,7 @@ export class ReviewsService {
     });
 
     if (!product) {
-      throw new NotFoundException('Sản phẩm không tồn tại');
+      throw new NotFoundException("Sản phẩm không tồn tại");
     }
 
     // Check if user has purchased this product
@@ -56,13 +56,13 @@ export class ReviewsService {
         productId: dto.productId,
         order: {
           userId,
-          status: 'DELIVERED',
+          status: "DELIVERED",
         },
       },
     });
 
     if (!hasPurchased) {
-      throw new BadRequestException('Bạn cần mua sản phẩm trước khi đánh giá');
+      throw new BadRequestException("Bạn cần mua sản phẩm trước khi đánh giá");
     }
 
     // Check if already reviewed
@@ -71,7 +71,7 @@ export class ReviewsService {
     });
 
     if (existingReview) {
-      throw new ConflictException('Bạn đã đánh giá sản phẩm này rồi');
+      throw new ConflictException("Bạn đã đánh giá sản phẩm này rồi");
     }
 
     return this.prisma.review.create({
@@ -91,14 +91,14 @@ export class ReviewsService {
     });
 
     if (!review) {
-      throw new NotFoundException('Đánh giá không tồn tại');
+      throw new NotFoundException("Đánh giá không tồn tại");
     }
 
     await this.prisma.review.delete({
       where: { id: reviewId },
     });
 
-    return { message: 'Xóa đánh giá thành công' };
+    return { message: "Xóa đánh giá thành công" };
   }
 
   // Admin: Toggle visibility
@@ -108,7 +108,7 @@ export class ReviewsService {
     });
 
     if (!review) {
-      throw new NotFoundException('Đánh giá không tồn tại');
+      throw new NotFoundException("Đánh giá không tồn tại");
     }
 
     return this.prisma.review.update({

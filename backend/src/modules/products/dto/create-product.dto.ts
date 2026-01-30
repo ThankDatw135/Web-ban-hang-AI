@@ -1,6 +1,16 @@
-import { IsString, IsNumber, IsOptional, IsBoolean, IsArray, ValidateNested, Min, MinLength, MaxLength } from 'class-validator';
-import { Type } from 'class-transformer';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsBoolean,
+  IsArray,
+  ValidateNested,
+  Min,
+  MinLength,
+  MaxLength,
+} from "class-validator";
+import { Type } from "class-transformer";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class CreateProductImageDto {
   @ApiProperty()
@@ -19,15 +29,15 @@ export class CreateProductImageDto {
 }
 
 export class CreateProductVariantDto {
-  @ApiProperty({ example: 'M' })
+  @ApiProperty({ example: "M" })
   @IsString()
   size: string;
 
-  @ApiProperty({ example: 'Đen' })
+  @ApiProperty({ example: "Đen" })
   @IsString()
   color: string;
 
-  @ApiPropertyOptional({ example: '#000000' })
+  @ApiPropertyOptional({ example: "#000000" })
   @IsOptional()
   @IsString()
   colorCode?: string;
@@ -39,13 +49,13 @@ export class CreateProductVariantDto {
 }
 
 export class CreateProductDto {
-  @ApiProperty({ example: 'Áo Thun Cotton Basic' })
+  @ApiProperty({ example: "Áo Thun Cotton Basic" })
   @IsString()
   @MinLength(3)
   @MaxLength(200)
   name: string;
 
-  @ApiPropertyOptional({ example: 'Áo thun cotton thoáng mát...' })
+  @ApiPropertyOptional({ example: "Áo thun cotton thoáng mát..." })
   @IsOptional()
   @IsString()
   description?: string;
@@ -61,23 +71,23 @@ export class CreateProductDto {
   @Min(0)
   salePrice?: number;
 
-  @ApiProperty({ example: 'ATN-001' })
+  @ApiProperty({ example: "ATN-001" })
   @IsString()
   @MinLength(3)
   @MaxLength(50)
   sku: string;
 
-  @ApiPropertyOptional({ example: 'Fashion AI' })
+  @ApiPropertyOptional({ example: "Fashion AI" })
   @IsOptional()
   @IsString()
   brand?: string;
 
-  @ApiPropertyOptional({ example: 'Cotton 100%' })
+  @ApiPropertyOptional({ example: "Cotton 100%" })
   @IsOptional()
   @IsString()
   material?: string;
 
-  @ApiProperty({ description: 'Category ID' })
+  @ApiProperty({ description: "Category ID" })
   @IsString()
   categoryId: string;
 
@@ -86,7 +96,7 @@ export class CreateProductDto {
   @IsBoolean()
   isFeatured?: boolean;
 
-  @ApiPropertyOptional({ description: 'Size guide JSON' })
+  @ApiPropertyOptional({ description: "Size guide JSON" })
   @IsOptional()
   sizeGuide?: Record<string, any>;
 

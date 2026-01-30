@@ -1,21 +1,21 @@
 /**
  * OrdersService - Entry point cho Orders module
- * 
+ *
  * Service này đóng vai trò là façade, delegate các request tới các service con:
  * - OrdersQueryService: Đọc dữ liệu (findUserOrders, findById, findAll)
  * - OrdersCreateService: Tạo/hủy đơn (create, cancelOrder)
  * - OrdersAdminService: Thao tác admin (updateStatus)
- * 
+ *
  * @author Fashion AI Team
  * @created 29/01/2026
  * @refactored 30/01/2026 - Chia từ 316 lines thành 4 files
  */
 
-import { Injectable } from '@nestjs/common';
-import { CreateOrderDto, OrderFilterDto, UpdateOrderStatusDto } from './dto';
-import { OrdersQueryService } from './orders.query.service';
-import { OrdersCreateService } from './orders.create.service';
-import { OrdersAdminService } from './orders.admin.service';
+import { Injectable } from "@nestjs/common";
+import { CreateOrderDto, OrderFilterDto, UpdateOrderStatusDto } from "./dto";
+import { OrdersQueryService } from "./orders.query.service";
+import { OrdersCreateService } from "./orders.create.service";
+import { OrdersAdminService } from "./orders.admin.service";
 
 @Injectable()
 export class OrdersService {

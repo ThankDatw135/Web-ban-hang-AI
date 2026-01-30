@@ -5,14 +5,14 @@ import {
   ConnectedSocket,
   OnGatewayConnection,
   OnGatewayDisconnect,
-} from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
+} from "@nestjs/websockets";
+import { Server, Socket } from "socket.io";
+import { JwtService } from "@nestjs/jwt";
+import { ConfigService } from "@nestjs/config";
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: "*",
   },
 })
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -35,7 +35,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       const payload = this.jwtService.verify(token, {
-        secret: this.configService.get('jwt.secret'),
+        secret: this.configService.get("jwt.secret"),
       });
 
       this.connectedClients.set(client.id, payload.sub);
@@ -52,32 +52,41 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   // Emit AI job status updates
-  emitAIJobStatus(userId: string, data: { jobId: string; status: string; progress?: number }) {
-    this.server.to(`user:${userId}`).emit('ai:job:status', data);
+  emitAIJobStatus(
+    userId: string,
+    data: { jobId: string; status: string; progress?: number },
+  ) {
+    this.server.to(`user:${userId}`).emit("ai:job:status", data);
   }
 
   // Emit AI job result
-  emitAIJobResult(userId: string, data: { jobId: string; status: string; resultUrl?: string }) {
-    this.server.to(`user:${userId}`).emit('ai:job:result', data);
+  emitAIJobResult(
+    userId: string,
+    data: { jobId: string; status: string; resultUrl?: string },
+  ) {
+    this.server.to(`user:${userId}`).emit("ai:job:result", data);
   }
 
   // Emit chat message
   emitChatMessage(userId: string, data: { sessionId: string; message: any }) {
-    this.server.to(`user:${userId}`).emit('chat:message', data);
+    this.server.to(`user:${userId}`).emit("chat:message", data);
   }
 
   // Emit order status update
   emitOrderStatus(userId: string, data: { orderId: string; status: string }) {
-    this.server.to(`user:${userId}`).emit('order:status', data);
+    this.server.to(`user:${userId}`).emit("order:status", data);
   }
 
   // Emit payment status
-  emitPaymentStatus(userId: string, data: { orderId: string; paymentStatus: string }) {
-    this.server.to(`user:${userId}`).emit('payment:status', data);
+  emitPaymentStatus(
+    userId: string,
+    data: { orderId: string; paymentStatus: string },
+  ) {
+    this.server.to(`user:${userId}`).emit("payment:status", data);
   }
 
-  @SubscribeMessage('ping')
+  @SubscribeMessage("ping")
   handlePing(@ConnectedSocket() client: Socket) {
-    return { event: 'pong', data: { timestamp: Date.now() } };
+    return { event: "pong", data: { timestamp: Date.now() } };
   }
 }

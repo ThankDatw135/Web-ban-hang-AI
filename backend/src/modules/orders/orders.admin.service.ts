@@ -1,17 +1,17 @@
 /**
  * OrdersAdminService - Xử lý thao tác admin với đơn hàng
- * 
+ *
  * File này chứa các method:
  * - updateStatus: Cập nhật trạng thái đơn hàng
- * 
+ *
  * @author Fashion AI Team
  * @created 30/01/2026
  */
 
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { UpdateOrderStatusDto } from './dto';
-import { OrderStatus, PaymentStatus } from '@prisma/client';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { UpdateOrderStatusDto } from "./dto";
+import { OrderStatus, PaymentStatus } from "@prisma/client";
 
 @Injectable()
 export class OrdersAdminService {
@@ -19,15 +19,15 @@ export class OrdersAdminService {
 
   /**
    * Cập nhật trạng thái đơn hàng (Admin only)
-   * 
+   *
    * @param orderId - ID đơn hàng
    * @param dto - Trạng thái mới
    * @returns Đơn hàng sau khi cập nhật
-   * 
+   *
    * // Các trạng thái:
    * // PENDING -> CONFIRMED -> PROCESSING -> SHIPPED -> DELIVERED
    * //                                               -> CANCELLED
-   * 
+   *
    * // Logic đặc biệt:
    * // - SHIPPED: Set shippedAt
    * // - DELIVERED: Set deliveredAt, nếu COD thì đánh dấu đã thanh toán
@@ -40,7 +40,7 @@ export class OrdersAdminService {
     });
 
     if (!order) {
-      throw new NotFoundException('Đơn hàng không tồn tại');
+      throw new NotFoundException("Đơn hàng không tồn tại");
     }
 
     // Chuẩn bị dữ liệu update
@@ -56,9 +56,9 @@ export class OrdersAdminService {
       case OrderStatus.DELIVERED:
         // Đơn hàng đã giao thành công
         updateData.deliveredAt = new Date();
-        
+
         // Nếu thanh toán COD, tự động đánh dấu đã thanh toán
-        if (order.paymentMethod === 'COD') {
+        if (order.paymentMethod === "COD") {
           updateData.paymentStatus = PaymentStatus.COMPLETED;
           updateData.paidAt = new Date();
         }

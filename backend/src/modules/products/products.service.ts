@@ -1,24 +1,24 @@
 /**
  * ProductsService - Entry point cho Products module
- * 
+ *
  * Service này đóng vai trò là façade, delegate các request tới các service con:
  * - ProductsQueryService: Đọc dữ liệu (findAll, findBySlug, findById)
  * - ProductsAdminService: Thao tác admin (create, update, delete)
- * 
+ *
  * Cấu trúc này giúp:
  * - Code dễ đọc và maintain hơn
  * - Dễ dàng thêm caching, logging riêng cho từng loại operation
  * - Dễ test từng phần riêng biệt
- * 
+ *
  * @author Fashion AI Team
  * @created 30/01/2026
  * @refactored 30/01/2026 - Chia từ 270 lines thành 4 files
  */
 
-import { Injectable } from '@nestjs/common';
-import { ProductFilterDto, CreateProductDto, UpdateProductDto } from './dto';
-import { ProductsQueryService } from './products.query.service';
-import { ProductsAdminService } from './products.admin.service';
+import { Injectable } from "@nestjs/common";
+import { ProductFilterDto, CreateProductDto, UpdateProductDto } from "./dto";
+import { ProductsQueryService } from "./products.query.service";
+import { ProductsAdminService } from "./products.admin.service";
 
 @Injectable()
 export class ProductsService {

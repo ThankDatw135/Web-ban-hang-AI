@@ -1,19 +1,19 @@
 /**
  * ProductsQueryService - Xử lý các thao tác đọc dữ liệu sản phẩm
- * 
+ *
  * File này chứa các method:
  * - findAll: Lấy danh sách sản phẩm với bộ lọc và phân trang
  * - findBySlug: Lấy chi tiết sản phẩm theo slug
  * - findById: Lấy sản phẩm theo ID (internal use)
- * 
+ *
  * @author Fashion AI Team
  * @created 30/01/2026
  */
 
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { ProductFilterDto, ProductSortBy } from './dto';
-import { Prisma, Size } from '@prisma/client';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { ProductFilterDto, ProductSortBy } from "./dto";
+import { Prisma, Size } from "@prisma/client";
 
 @Injectable()
 export class ProductsQueryService {
@@ -21,10 +21,10 @@ export class ProductsQueryService {
 
   /**
    * Lấy danh sách sản phẩm với bộ lọc và phân trang
-   * 
+   *
    * @param filter - Các tham số lọc (category, price, size, color, sortBy, page, limit)
    * @returns Danh sách sản phẩm và thông tin phân trang
-   * 
+   *
    * // Tiến độ triển khai:
    * // [x] Lọc theo category - DONE 29/01/2026
    * // [x] Lọc theo giá min/max - DONE 29/01/2026
@@ -35,7 +35,7 @@ export class ProductsQueryService {
   async findAll(filter: ProductFilterDto) {
     // Xây dựng điều kiện WHERE
     const where = this.buildWhereClause(filter);
-    
+
     // Xây dựng điều kiện ORDER BY
     const orderBy = this.buildOrderBy(filter);
 
@@ -77,7 +77,7 @@ export class ProductsQueryService {
 
   /**
    * Lấy chi tiết sản phẩm theo slug (URL-friendly)
-   * 
+   *
    * @param slug - Slug của sản phẩm (ví dụ: "ao-thun-nam-co-tron")
    * @returns Chi tiết sản phẩm bao gồm variants, images, reviews
    * @throws NotFoundException nếu sản phẩm không tồn tại hoặc đã bị ẩn
@@ -87,9 +87,16 @@ export class ProductsQueryService {
       where: { slug },
       include: {
         category: { select: { id: true, name: true, slug: true } },
-        images: { orderBy: { sortOrder: 'asc' } },
+        images: { orderBy: { sortOrder: "asc" } },
         variants: {
-          select: { id: true, size: true, color: true, colorCode: true, stock: true, sku: true },
+          select: {
+            id: true,
+            size: true,
+            color: true,
+            colorCode: true,
+            stock: true,
+            sku: true,
+          },
         },
         // Lấy 10 reviews mới nhất
         reviews: {
@@ -97,7 +104,7 @@ export class ProductsQueryService {
           include: {
             user: { select: { firstName: true, lastName: true } },
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           take: 10,
         },
       },
@@ -105,7 +112,7 @@ export class ProductsQueryService {
 
     // Kiểm tra sản phẩm tồn tại và đang active
     if (!product || !product.isActive) {
-      throw new NotFoundException('Sản phẩm không tồn tại');
+      throw new NotFoundException("Sản phẩm không tồn tại");
     }
 
     // Tính rating trung bình
@@ -124,7 +131,7 @@ export class ProductsQueryService {
 
   /**
    * Lấy sản phẩm theo ID (dùng internal, không expose ra API public)
-   * 
+   *
    * @param id - UUID của sản phẩm
    * @returns Sản phẩm với đầy đủ thông tin
    * @throws NotFoundException nếu không tìm thấy
@@ -134,13 +141,13 @@ export class ProductsQueryService {
       where: { id },
       include: {
         category: true,
-        images: { orderBy: { sortOrder: 'asc' } },
+        images: { orderBy: { sortOrder: "asc" } },
         variants: true,
       },
     });
 
     if (!product) {
-      throw new NotFoundException('Sản phẩm không tồn tại');
+      throw new NotFoundException("Sản phẩm không tồn tại");
     }
 
     return product;
@@ -162,24 +169,21 @@ export class ProductsQueryService {
     // Tìm kiếm theo tên hoặc mô tả
     if (filter.search) {
       where.OR = [
-        { name: { contains: filter.search, mode: 'insensitive' } },
-        { description: { contains: filter.search, mode: 'insensitive' } },
+        { name: { contains: filter.search, mode: "insensitive" } },
+        { description: { contains: filter.search, mode: "insensitive" } },
       ];
     }
 
     // Lọc theo danh mục (bao gồm cả danh mục con)
     if (filter.category) {
       where.category = {
-        OR: [
-          { slug: filter.category },
-          { parent: { slug: filter.category } },
-        ],
+        OR: [{ slug: filter.category }, { parent: { slug: filter.category } }],
       };
     }
 
     // Lọc theo thương hiệu
     if (filter.brand) {
-      where.brand = { equals: filter.brand, mode: 'insensitive' };
+      where.brand = { equals: filter.brand, mode: "insensitive" };
     }
 
     // Lọc theo khoảng giá
@@ -198,7 +202,9 @@ export class ProductsQueryService {
       where.variants = {
         some: {
           ...(filter.size && { size: filter.size as Size }),
-          ...(filter.color && { color: { contains: filter.color, mode: 'insensitive' } }),
+          ...(filter.color && {
+            color: { contains: filter.color, mode: "insensitive" },
+          }),
           stock: { gt: 0 }, // Chỉ lấy variants còn hàng
         },
       };
@@ -220,17 +226,19 @@ export class ProductsQueryService {
   /**
    * Xây dựng điều kiện ORDER BY từ sortBy
    */
-  private buildOrderBy(filter: ProductFilterDto): Prisma.ProductOrderByWithRelationInput {
+  private buildOrderBy(
+    filter: ProductFilterDto,
+  ): Prisma.ProductOrderByWithRelationInput {
     switch (filter.sortBy) {
       case ProductSortBy.PRICE_ASC:
-        return { price: 'asc' };
+        return { price: "asc" };
       case ProductSortBy.PRICE_DESC:
-        return { price: 'desc' };
+        return { price: "desc" };
       case ProductSortBy.NAME:
-        return { name: 'asc' };
+        return { name: "asc" };
       case ProductSortBy.NEWEST:
       default:
-        return { createdAt: 'desc' };
+        return { createdAt: "desc" };
     }
   }
 }

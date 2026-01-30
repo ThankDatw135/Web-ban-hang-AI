@@ -1,20 +1,24 @@
 /**
  * ProductsAdminService - Xử lý các thao tác Admin với sản phẩm
- * 
+ *
  * File này chứa các method:
  * - create: Tạo sản phẩm mới
  * - update: Cập nhật sản phẩm
  * - delete: Xóa sản phẩm
- * 
+ *
  * @author Fashion AI Team
  * @created 30/01/2026
  */
 
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateProductDto, UpdateProductDto } from './dto';
-import { Size } from '@prisma/client';
-import { ProductsUtils } from './products.utils';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { CreateProductDto, UpdateProductDto } from "./dto";
+import { Size } from "@prisma/client";
+import { ProductsUtils } from "./products.utils";
 
 @Injectable()
 export class ProductsAdminService {
@@ -25,11 +29,11 @@ export class ProductsAdminService {
 
   /**
    * Tạo sản phẩm mới
-   * 
+   *
    * @param dto - Dữ liệu sản phẩm (name, sku, price, variants, images...)
    * @returns Sản phẩm vừa tạo với đầy đủ thông tin
    * @throws ConflictException nếu SKU hoặc slug đã tồn tại
-   * 
+   *
    * // Quy trình:
    * // 1. Generate slug từ tên sản phẩm
    * // 2. Kiểm tra SKU trùng lặp
@@ -45,7 +49,7 @@ export class ProductsAdminService {
       where: { sku: dto.sku },
     });
     if (existingSku) {
-      throw new ConflictException('SKU đã tồn tại');
+      throw new ConflictException("SKU đã tồn tại");
     }
 
     // Bước 3: Kiểm tra slug đã tồn tại chưa
@@ -53,7 +57,7 @@ export class ProductsAdminService {
       where: { slug },
     });
     if (existingSlug) {
-      throw new ConflictException('Sản phẩm với tên này đã tồn tại');
+      throw new ConflictException("Sản phẩm với tên này đã tồn tại");
     }
 
     // Bước 4: Tách data để xử lý nested create
@@ -94,12 +98,12 @@ export class ProductsAdminService {
 
   /**
    * Cập nhật thông tin sản phẩm
-   * 
+   *
    * @param id - UUID của sản phẩm cần cập nhật
    * @param dto - Dữ liệu cập nhật (các field optional)
    * @returns Sản phẩm sau khi cập nhật
    * @throws NotFoundException nếu sản phẩm không tồn tại
-   * 
+   *
    * // NOTE: Hiện tại chưa hỗ trợ update variants/images
    * // TODO: Thêm logic update variants - cần thiết kế UI trước
    */
@@ -128,11 +132,11 @@ export class ProductsAdminService {
 
   /**
    * Xóa sản phẩm (hard delete)
-   * 
+   *
    * @param id - UUID của sản phẩm cần xóa
    * @returns Message xác nhận
    * @throws NotFoundException nếu sản phẩm không tồn tại
-   * 
+   *
    * // CAUTION: Đây là hard delete, không recovery được
    * // TODO: Cân nhắc chuyển sang soft delete (set isActive = false)
    */
@@ -145,7 +149,7 @@ export class ProductsAdminService {
       where: { id },
     });
 
-    return { message: 'Xóa sản phẩm thành công' };
+    return { message: "Xóa sản phẩm thành công" };
   }
 
   // ========================================
@@ -160,13 +164,13 @@ export class ProductsAdminService {
       where: { id },
       include: {
         category: true,
-        images: { orderBy: { sortOrder: 'asc' } },
+        images: { orderBy: { sortOrder: "asc" } },
         variants: true,
       },
     });
 
     if (!product) {
-      throw new NotFoundException('Sản phẩm không tồn tại');
+      throw new NotFoundException("Sản phẩm không tồn tại");
     }
 
     return product;

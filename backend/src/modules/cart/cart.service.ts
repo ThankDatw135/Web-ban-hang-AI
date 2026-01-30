@@ -1,6 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { AddToCartDto, UpdateCartItemDto } from './dto';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { AddToCartDto, UpdateCartItemDto } from "./dto";
 
 @Injectable()
 export class CartService {
@@ -104,11 +108,11 @@ export class CartService {
     });
 
     if (!variant || variant.productId !== dto.productId) {
-      throw new NotFoundException('Sản phẩm không tồn tại');
+      throw new NotFoundException("Sản phẩm không tồn tại");
     }
 
     if (variant.stock < dto.quantity) {
-      throw new BadRequestException('Số lượng vượt quá tồn kho');
+      throw new BadRequestException("Số lượng vượt quá tồn kho");
     }
 
     // Get or create cart
@@ -136,7 +140,7 @@ export class CartService {
       // Update quantity
       const newQuantity = existingItem.quantity + dto.quantity;
       if (newQuantity > variant.stock) {
-        throw new BadRequestException('Số lượng vượt quá tồn kho');
+        throw new BadRequestException("Số lượng vượt quá tồn kho");
       }
 
       await this.prisma.cartItem.update({
@@ -164,7 +168,7 @@ export class CartService {
     });
 
     if (!cart) {
-      throw new NotFoundException('Giỏ hàng không tồn tại');
+      throw new NotFoundException("Giỏ hàng không tồn tại");
     }
 
     const item = await this.prisma.cartItem.findFirst({
@@ -173,11 +177,11 @@ export class CartService {
     });
 
     if (!item) {
-      throw new NotFoundException('Sản phẩm không có trong giỏ hàng');
+      throw new NotFoundException("Sản phẩm không có trong giỏ hàng");
     }
 
     if (dto.quantity > item.variant.stock) {
-      throw new BadRequestException('Số lượng vượt quá tồn kho');
+      throw new BadRequestException("Số lượng vượt quá tồn kho");
     }
 
     await this.prisma.cartItem.update({
@@ -194,7 +198,7 @@ export class CartService {
     });
 
     if (!cart) {
-      throw new NotFoundException('Giỏ hàng không tồn tại');
+      throw new NotFoundException("Giỏ hàng không tồn tại");
     }
 
     const item = await this.prisma.cartItem.findFirst({
@@ -202,7 +206,7 @@ export class CartService {
     });
 
     if (!item) {
-      throw new NotFoundException('Sản phẩm không có trong giỏ hàng');
+      throw new NotFoundException("Sản phẩm không có trong giỏ hàng");
     }
 
     await this.prisma.cartItem.delete({
@@ -223,6 +227,6 @@ export class CartService {
       });
     }
 
-    return { message: 'Đã xóa giỏ hàng', items: [], subtotal: 0, itemCount: 0 };
+    return { message: "Đã xóa giỏ hàng", items: [], subtotal: 0, itemCount: 0 };
   }
 }

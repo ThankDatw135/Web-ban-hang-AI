@@ -1,15 +1,15 @@
 /**
  * Unit Tests cho CategoriesService
- * 
+ *
  * @author Fashion AI Team
  * @created 30/01/2026
  */
 
-import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ConflictException } from '@nestjs/common';
-import { CategoriesService } from './categories.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { CacheService, CACHE_TTL } from '../redis/cache.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { NotFoundException, ConflictException } from "@nestjs/common";
+import { CategoriesService } from "./categories.service";
+import { PrismaService } from "../prisma/prisma.service";
+import { CacheService, CACHE_TTL } from "../redis/cache.service";
 
 // Mock PrismaService với DeepMockProxy
 const mockPrismaService = {
@@ -30,20 +30,20 @@ const mockCacheService = {
   deleteByPattern: jest.fn(),
 };
 
-describe('CategoriesService', () => {
+describe("CategoriesService", () => {
   let service: CategoriesService;
 
   // Mock data
   const mockCategories = [
-    { id: '1', name: 'Áo', slug: 'ao', isActive: true, sortOrder: 0 },
-    { id: '2', name: 'Quần', slug: 'quan', isActive: true, sortOrder: 1 },
+    { id: "1", name: "Áo", slug: "ao", isActive: true, sortOrder: 0 },
+    { id: "2", name: "Quần", slug: "quan", isActive: true, sortOrder: 1 },
   ];
 
   const mockCategory = {
-    id: '1',
-    name: 'Áo',
-    slug: 'ao',
-    description: 'Áo các loại',
+    id: "1",
+    name: "Áo",
+    slug: "ao",
+    description: "Áo các loại",
     isActive: true,
     parent: null,
     children: [],
@@ -65,18 +65,18 @@ describe('CategoriesService', () => {
     service = module.get<CategoriesService>(CategoriesService);
   });
 
-  describe('findAll', () => {
-    it('should return categories from cache if available', async () => {
+  describe("findAll", () => {
+    it("should return categories from cache if available", async () => {
       mockCacheService.get.mockResolvedValue(mockCategories);
 
       const result = await service.findAll(false);
 
-      expect(mockCacheService.get).toHaveBeenCalledWith('categories:flat');
+      expect(mockCacheService.get).toHaveBeenCalledWith("categories:flat");
       expect(mockPrismaService.category.findMany).not.toHaveBeenCalled();
       expect(result).toEqual(mockCategories);
     });
 
-    it('should fetch from DB and cache if not in cache', async () => {
+    it("should fetch from DB and cache if not in cache", async () => {
       mockCacheService.get.mockResolvedValue(null);
       mockPrismaService.category.findMany.mockResolvedValue(mockCategories);
 
@@ -84,7 +84,7 @@ describe('CategoriesService', () => {
 
       expect(mockPrismaService.category.findMany).toHaveBeenCalled();
       expect(mockCacheService.set).toHaveBeenCalledWith(
-        'categories:flat',
+        "categories:flat",
         mockCategories,
         CACHE_TTL.CATEGORIES,
       );
@@ -92,44 +92,48 @@ describe('CategoriesService', () => {
     });
   });
 
-  describe('findBySlug', () => {
-    it('should return category by slug', async () => {
+  describe("findBySlug", () => {
+    it("should return category by slug", async () => {
       mockPrismaService.category.findUnique.mockResolvedValue(mockCategory);
 
-      const result = await service.findBySlug('ao');
+      const result = await service.findBySlug("ao");
 
       expect(result).toEqual(mockCategory);
     });
 
-    it('should throw NotFoundException if not found', async () => {
+    it("should throw NotFoundException if not found", async () => {
       mockPrismaService.category.findUnique.mockResolvedValue(null);
 
-      await expect(service.findBySlug('not-exist')).rejects.toThrow(
+      await expect(service.findBySlug("not-exist")).rejects.toThrow(
         NotFoundException,
       );
     });
   });
 
-  describe('create', () => {
-    it('should create a new category', async () => {
-      const dto = { name: 'Váy', description: 'Váy các loại' };
+  describe("create", () => {
+    it("should create a new category", async () => {
+      const dto = { name: "Váy", description: "Váy các loại" };
       mockPrismaService.category.findUnique.mockResolvedValue(null);
       mockPrismaService.category.create.mockResolvedValue({
-        id: '3',
+        id: "3",
         ...dto,
-        slug: 'vay',
+        slug: "vay",
         isActive: true,
       });
 
       const result = await service.create(dto);
 
-      expect(mockCacheService.deleteByPattern).toHaveBeenCalledWith('categories:*');
-      expect(result.slug).toBe('vay');
+      expect(mockCacheService.deleteByPattern).toHaveBeenCalledWith(
+        "categories:*",
+      );
+      expect(result.slug).toBe("vay");
     });
 
-    it('should throw ConflictException if slug exists', async () => {
-      const dto = { name: 'Áo' };
-      mockPrismaService.category.findUnique.mockResolvedValue(mockCategories[0]);
+    it("should throw ConflictException if slug exists", async () => {
+      const dto = { name: "Áo" };
+      mockPrismaService.category.findUnique.mockResolvedValue(
+        mockCategories[0],
+      );
 
       await expect(service.create(dto)).rejects.toThrow(ConflictException);
     });

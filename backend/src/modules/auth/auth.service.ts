@@ -4,15 +4,21 @@ import {
   UnauthorizedException,
   BadRequestException,
   Inject,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../prisma/prisma.service';
-import { RegisterDto, LoginDto, RefreshTokenDto, ForgotPasswordDto, ResetPasswordDto } from './dto';
-import * as bcrypt from 'bcrypt';
-import { randomBytes } from 'crypto';
-import Redis from 'ioredis';
-import { FirebaseService } from './firebase.service';
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { JwtService } from "@nestjs/jwt";
+import { PrismaService } from "../prisma/prisma.service";
+import {
+  RegisterDto,
+  LoginDto,
+  RefreshTokenDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+} from "./dto";
+import * as bcrypt from "bcrypt";
+import { randomBytes } from "crypto";
+import Redis from "ioredis";
+import { FirebaseService } from "./firebase.service";
 
 @Injectable()
 export class AuthService {
@@ -21,7 +27,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private firebaseService: FirebaseService,
-    @Inject('REDIS_CLIENT') private redis: Redis,
+    @Inject("REDIS_CLIENT") private redis: Redis,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -31,7 +37,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ConflictException('Email đã được sử dụng');
+      throw new ConflictException("Email đã được sử dụng");
     }
 
     // Hash password
@@ -71,7 +77,7 @@ export class AuthService {
     const { email, name, picture, uid } = decodedToken;
 
     if (!email) {
-      throw new BadRequestException('Email không tồn tại trong Google Token');
+      throw new BadRequestException("Email không tồn tại trong Google Token");
     }
 
     // Check if user exists
@@ -82,12 +88,12 @@ export class AuthService {
     if (!user) {
       // Create new user
       // Split name into first/last
-      const nameParts = (name || '').split(' ');
-      const lastName = nameParts.pop() || '';
-      const firstName = nameParts.join(' ') || 'User';
+      const nameParts = (name || "").split(" ");
+      const lastName = nameParts.pop() || "";
+      const firstName = nameParts.join(" ") || "User";
 
       // Generate random password
-      const randomPassword = randomBytes(16).toString('hex');
+      const randomPassword = randomBytes(16).toString("hex");
       const hashedPassword = await bcrypt.hash(randomPassword, 12);
 
       user = await this.prisma.user.create({
@@ -98,12 +104,12 @@ export class AuthService {
           lastName,
           avatar: picture,
           isActive: true,
-          role: 'USER',
+          role: "USER",
           cart: { create: {} },
         },
       });
     } else if (!user.isActive) {
-      throw new UnauthorizedException('Tài khoản đã bị khóa');
+      throw new UnauthorizedException("Tài khoản đã bị khóa");
     }
 
     // Generate tokens
@@ -133,16 +139,16 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
+      throw new UnauthorizedException("Email hoặc mật khẩu không đúng");
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('Tài khoản đã bị khóa');
+      throw new UnauthorizedException("Tài khoản đã bị khóa");
     }
 
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
+      throw new UnauthorizedException("Email hoặc mật khẩu không đúng");
     }
 
     const tokens = await this.generateTokens(user.id, user.email, user.role);
@@ -159,13 +165,13 @@ export class AuthService {
   async refreshToken(dto: RefreshTokenDto) {
     try {
       const payload = this.jwtService.verify(dto.refreshToken, {
-        secret: this.configService.get<string>('jwt.refreshSecret'),
+        secret: this.configService.get<string>("jwt.refreshSecret"),
       });
 
       // Check if token is blacklisted
       const isBlacklisted = await this.redis.get(`bl_${dto.refreshToken}`);
       if (isBlacklisted) {
-        throw new UnauthorizedException('Token đã hết hạn');
+        throw new UnauthorizedException("Token đã hết hạn");
       }
 
       // Verify user still exists and is active
@@ -175,21 +181,23 @@ export class AuthService {
       });
 
       if (!user || !user.isActive) {
-        throw new UnauthorizedException('Tài khoản không tồn tại hoặc đã bị khóa');
+        throw new UnauthorizedException(
+          "Tài khoản không tồn tại hoặc đã bị khóa",
+        );
       }
 
       // Blacklist old refresh token
       await this.redis.set(
         `bl_${dto.refreshToken}`,
-        '1',
-        'EX',
+        "1",
+        "EX",
         7 * 24 * 60 * 60, // 7 days
       );
 
       // Generate new tokens
       return await this.generateTokens(user.id, user.email, user.role);
     } catch (error) {
-      throw new UnauthorizedException('Token không hợp lệ');
+      throw new UnauthorizedException("Token không hợp lệ");
     }
   }
 
@@ -197,12 +205,12 @@ export class AuthService {
     // Blacklist refresh token
     await this.redis.set(
       `bl_${refreshToken}`,
-      '1',
-      'EX',
+      "1",
+      "EX",
       7 * 24 * 60 * 60, // 7 days
     );
 
-    return { message: 'Đăng xuất thành công' };
+    return { message: "Đăng xuất thành công" };
   }
 
   async forgotPassword(dto: ForgotPasswordDto) {
@@ -212,40 +220,45 @@ export class AuthService {
 
     // Always return success to prevent email enumeration
     if (!user) {
-      return { message: 'Nếu email tồn tại, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu' };
+      return {
+        message:
+          "Nếu email tồn tại, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu",
+      };
     }
 
     // Generate reset token
-    const resetToken = randomBytes(32).toString('hex');
+    const resetToken = randomBytes(32).toString("hex");
     const hashedToken = await bcrypt.hash(resetToken, 10);
 
     // Store in Redis with 1 hour expiry
-    await this.redis.set(`reset_${user.id}`, hashedToken, 'EX', 3600);
+    await this.redis.set(`reset_${user.id}`, hashedToken, "EX", 3600);
 
     // TODO: Send email with reset link
     // For now, just log the token
     console.log(`Reset token for ${user.email}: ${resetToken}`);
 
-    return { message: 'Nếu email tồn tại, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu' };
+    return {
+      message: "Nếu email tồn tại, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu",
+    };
   }
 
   async resetPassword(dto: ResetPasswordDto) {
     // Decode token to get user ID (token format: userId.randomToken)
-    const [userId, token] = dto.token.split('.');
+    const [userId, token] = dto.token.split(".");
     if (!userId || !token) {
-      throw new BadRequestException('Token không hợp lệ');
+      throw new BadRequestException("Token không hợp lệ");
     }
 
     // Get stored hash from Redis
     const storedHash = await this.redis.get(`reset_${userId}`);
     if (!storedHash) {
-      throw new BadRequestException('Token đã hết hạn');
+      throw new BadRequestException("Token đã hết hạn");
     }
 
     // Verify token
     const isValid = await bcrypt.compare(token, storedHash);
     if (!isValid) {
-      throw new BadRequestException('Token không hợp lệ');
+      throw new BadRequestException("Token không hợp lệ");
     }
 
     // Update password
@@ -258,7 +271,7 @@ export class AuthService {
     // Delete reset token
     await this.redis.del(`reset_${userId}`);
 
-    return { message: 'Đặt lại mật khẩu thành công' };
+    return { message: "Đặt lại mật khẩu thành công" };
   }
 
   private async generateTokens(userId: string, email: string, role: string) {
@@ -266,19 +279,19 @@ export class AuthService {
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('jwt.secret'),
-        expiresIn: this.configService.get<string>('jwt.expiresIn'),
+        secret: this.configService.get<string>("jwt.secret"),
+        expiresIn: this.configService.get<string>("jwt.expiresIn"),
       }),
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('jwt.refreshSecret'),
-        expiresIn: this.configService.get<string>('jwt.refreshExpiresIn'),
+        secret: this.configService.get<string>("jwt.refreshSecret"),
+        expiresIn: this.configService.get<string>("jwt.refreshExpiresIn"),
       }),
     ]);
 
     return {
       accessToken,
       refreshToken,
-      expiresIn: this.configService.get<string>('jwt.expiresIn'),
+      expiresIn: this.configService.get<string>("jwt.expiresIn"),
     };
   }
 }

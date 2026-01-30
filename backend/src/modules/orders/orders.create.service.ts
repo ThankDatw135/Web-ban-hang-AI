@@ -1,19 +1,23 @@
 /**
  * OrdersCreateService - Xử lý tạo đơn hàng
- * 
+ *
  * File này chứa logic phức tạp nhất:
  * - create: Tạo đơn hàng từ giỏ hàng
  * - cancelOrder: Hủy đơn hàng
  * - generateOrderNumber: Tạo mã đơn hàng
- * 
+ *
  * @author Fashion AI Team
  * @created 30/01/2026
  */
 
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateOrderDto } from './dto';
-import { OrderStatus } from '@prisma/client';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { CreateOrderDto } from "./dto";
+import { OrderStatus } from "@prisma/client";
 
 @Injectable()
 export class OrdersCreateService {
@@ -21,11 +25,11 @@ export class OrdersCreateService {
 
   /**
    * Tạo đơn hàng từ giỏ hàng
-   * 
+   *
    * @param userId - ID của user đặt hàng
    * @param dto - Dữ liệu đơn hàng (addressId, paymentMethod, note)
    * @returns Đơn hàng vừa tạo
-   * 
+   *
    * // Quy trình:
    * // 1. Lấy giỏ hàng với các items
    * // 2. Kiểm tra địa chỉ giao hàng
@@ -49,7 +53,7 @@ export class OrdersCreateService {
     });
 
     if (!cart || cart.items.length === 0) {
-      throw new BadRequestException('Giỏ hàng trống');
+      throw new BadRequestException("Giỏ hàng trống");
     }
 
     // Bước 2: Kiểm tra địa chỉ giao hàng thuộc về user
@@ -58,7 +62,7 @@ export class OrdersCreateService {
     });
 
     if (!address) {
-      throw new NotFoundException('Địa chỉ không tồn tại');
+      throw new NotFoundException("Địa chỉ không tồn tại");
     }
 
     // Bước 3: Kiểm tra tồn kho và tính giá
@@ -154,11 +158,11 @@ export class OrdersCreateService {
 
   /**
    * Hủy đơn hàng
-   * 
+   *
    * @param userId - ID của user
    * @param orderId - ID đơn hàng cần hủy
    * @returns Message xác nhận
-   * 
+   *
    * // Chỉ được hủy khi đơn đang ở trạng thái PENDING hoặc CONFIRMED
    * // Sau khi hủy, stock được hoàn lại
    */
@@ -170,12 +174,12 @@ export class OrdersCreateService {
     });
 
     if (!order) {
-      throw new NotFoundException('Đơn hàng không tồn tại');
+      throw new NotFoundException("Đơn hàng không tồn tại");
     }
 
     // Kiểm tra trạng thái có thể hủy
-    if (!['PENDING', 'CONFIRMED'].includes(order.status)) {
-      throw new BadRequestException('Không thể hủy đơn hàng này');
+    if (!["PENDING", "CONFIRMED"].includes(order.status)) {
+      throw new BadRequestException("Không thể hủy đơn hàng này");
     }
 
     // Hoàn stock và cập nhật trạng thái trong transaction
@@ -200,27 +204,27 @@ export class OrdersCreateService {
       });
     });
 
-    return { message: 'Đã hủy đơn hàng' };
+    return { message: "Đã hủy đơn hàng" };
   }
 
   /**
    * Tạo mã đơn hàng theo format: FA + YYYYMMDD + sequence
-   * 
+   *
    * @returns Mã đơn hàng (ví dụ: FA202601300001)
-   * 
+   *
    * // Format: FA + năm(4) + tháng(2) + ngày(2) + sequence(4)
    * // Mỗi ngày sequence reset về 0001
    */
   async generateOrderNumber(): Promise<string> {
     const date = new Date();
-    
+
     // Tạo prefix: FA20260130
-    const prefix = `FA${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+    const prefix = `FA${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}`;
 
     // Tìm đơn hàng cuối cùng trong ngày
     const lastOrder = await this.prisma.order.findFirst({
       where: { orderNumber: { startsWith: prefix } },
-      orderBy: { orderNumber: 'desc' },
+      orderBy: { orderNumber: "desc" },
     });
 
     // Tính sequence tiếp theo
@@ -231,6 +235,6 @@ export class OrdersCreateService {
     }
 
     // Trả về mã hoàn chỉnh: FA202601300001
-    return `${prefix}${String(sequence).padStart(4, '0')}`;
+    return `${prefix}${String(sequence).padStart(4, "0")}`;
   }
 }
