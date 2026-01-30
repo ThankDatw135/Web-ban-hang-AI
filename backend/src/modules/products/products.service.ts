@@ -111,9 +111,9 @@ export class ProductsService {
       })),
       meta: {
         total,
-        page: filter.page,
-        limit: filter.limit,
-        totalPages: Math.ceil(total / filter.limit),
+        page: filter.page ?? 1,
+        limit: filter.limit ?? 10,
+        totalPages: Math.ceil(total / (filter.limit ?? 10)),
       },
     };
   }

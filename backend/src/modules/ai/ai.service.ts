@@ -1,14 +1,13 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { VirtualTryOnDto, SizeRecommendationDto, AIChatDto } from './dto';
 import { AIJobType, AIJobStatus } from '@prisma/client';
-import * as amqp from 'amqplib';
+import amqp, { Channel, ChannelWrapper } from 'amqp-connection-manager';
 
 @Injectable()
 export class AiService {
-  private connection: amqp.Connection;
-  private channel: amqp.Channel;
+  private channelWrapper: ChannelWrapper | null = null;
 
   constructor(
     private prisma: PrismaService,
@@ -20,16 +19,18 @@ export class AiService {
   private async initRabbitMQ() {
     try {
       const url = this.configService.get('rabbitmq.url');
-      this.connection = await amqp.connect(url);
-      this.channel = await this.connection.createChannel();
-
-      // Declare queues
-      await this.channel.assertQueue('ai.tryon', { durable: true });
-      await this.channel.assertQueue('ai.size', { durable: true });
-      await this.channel.assertQueue('ai.chat', { durable: true });
+      const connection = amqp.connect([url]);
+      
+      this.channelWrapper = connection.createChannel({
+        setup: async (channel: Channel) => {
+          await channel.assertQueue('ai.tryon', { durable: true });
+          await channel.assertQueue('ai.size', { durable: true });
+          await channel.assertQueue('ai.chat', { durable: true });
+        },
+      });
 
       console.log('✅ RabbitMQ connected');
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ RabbitMQ connection failed:', error.message);
     }
   }
@@ -125,12 +126,17 @@ export class AiService {
 
   async chat(userId: string, dto: AIChatDto) {
     // Get or create chat session
-    let session;
+    let session: any = null;
+    let messages: any[] = [];
+    
     if (dto.sessionId) {
       session = await this.prisma.chatSession.findFirst({
         where: { id: dto.sessionId, userId },
         include: { messages: { orderBy: { createdAt: 'asc' }, take: 20 } },
       });
+      if (session) {
+        messages = session.messages || [];
+      }
     }
 
     if (!session) {
@@ -160,10 +166,10 @@ export class AiService {
         inputData: {
           sessionId: session.id,
           message: dto.message,
-          history: session.messages?.map((m) => ({
+          history: messages.map((m: any) => ({
             role: m.role,
             content: m.content,
-          })) || [],
+          })),
         },
       },
     });
@@ -174,7 +180,7 @@ export class AiService {
       userId,
       sessionId: session.id,
       message: dto.message,
-      history: session.messages || [],
+      history: messages,
     });
 
     return {
@@ -237,15 +243,16 @@ export class AiService {
   }
 
   private async publishToQueue(queue: string, message: any) {
-    if (!this.channel) {
+    if (!this.channelWrapper) {
       console.error('RabbitMQ channel not available');
       return;
     }
 
-    this.channel.sendToQueue(
+    await this.channelWrapper.sendToQueue(
       queue,
       Buffer.from(JSON.stringify(message)),
       { persistent: true },
     );
   }
 }
+

@@ -187,9 +187,9 @@ export class UsersService {
       data: users,
       meta: {
         total,
-        page: pagination.page,
-        limit: pagination.limit,
-        totalPages: Math.ceil(total / pagination.limit),
+        page: pagination.page ?? 1,
+        limit: pagination.limit ?? 10,
+        totalPages: Math.ceil(total / (pagination.limit ?? 10)),
       },
     };
   }

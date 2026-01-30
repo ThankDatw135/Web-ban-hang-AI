@@ -36,7 +36,7 @@ export class OrdersService {
 
     // Check stock and calculate prices
     let subtotal = 0;
-    const orderItems = [];
+    const orderItems: any[] = [];
 
     for (const item of cart.items) {
       if (item.variant.stock < item.quantity) {
@@ -154,9 +154,9 @@ export class OrdersService {
       data: orders,
       meta: {
         total,
-        page: filter.page,
-        limit: filter.limit,
-        totalPages: Math.ceil(total / filter.limit),
+        page: filter.page ?? 1,
+        limit: filter.limit ?? 10,
+        totalPages: Math.ceil(total / (filter.limit ?? 10)),
       },
     };
   }
@@ -254,9 +254,9 @@ export class OrdersService {
       data: orders,
       meta: {
         total,
-        page: filter.page,
-        limit: filter.limit,
-        totalPages: Math.ceil(total / filter.limit),
+        page: filter.page ?? 1,
+        limit: filter.limit ?? 10,
+        totalPages: Math.ceil(total / (filter.limit ?? 10)),
       },
     };
   }
