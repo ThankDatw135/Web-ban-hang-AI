@@ -78,8 +78,11 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Run tests
+      - name: Run unit tests
         run: npm run test
+
+      - name: Run integration tests
+        run: npx jest test/integration.spec.ts --config test/jest-e2e.json
 
       - name: Run tests with coverage
         run: npm run test:cov
