@@ -2,7 +2,7 @@ import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Req } from '@n
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto, RefreshTokenDto, ForgotPasswordDto, ResetPasswordDto } from './dto';
+import { RegisterDto, LoginDto, RefreshTokenDto, ForgotPasswordDto, ResetPasswordDto, GoogleLoginDto } from './dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -24,6 +24,15 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Email hoặc mật khẩu không đúng' })
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Post('login/google')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Đăng nhập bằng Google' })
+  @ApiResponse({ status: 200, description: 'Đăng nhập thành công' })
+  @ApiResponse({ status: 400, description: 'Token không hợp lệ' })
+  googleLogin(@Body() dto: GoogleLoginDto) {
+    return this.authService.loginGoogle(dto.token);
   }
 
   @Post('refresh')

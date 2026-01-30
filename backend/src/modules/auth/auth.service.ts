@@ -12,6 +12,7 @@ import { RegisterDto, LoginDto, RefreshTokenDto, ForgotPasswordDto, ResetPasswor
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import Redis from 'ioredis';
+import { FirebaseService } from './firebase.service';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private firebaseService: FirebaseService,
     @Inject('REDIS_CLIENT') private redis: Redis,
   ) {}
 
@@ -59,6 +61,59 @@ export class AuthService {
 
     return {
       user,
+      ...tokens,
+    };
+  }
+
+  async loginGoogle(idToken: string) {
+    // Verify token with Firebase
+    const decodedToken = await this.firebaseService.verifyToken(idToken);
+    const { email, name, picture, uid } = decodedToken;
+
+    if (!email) {
+      throw new BadRequestException('Email không tồn tại trong Google Token');
+    }
+
+    // Check if user exists
+    let user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      // Create new user
+      // Split name into first/last
+      const nameParts = (name || '').split(' ');
+      const lastName = nameParts.pop() || '';
+      const firstName = nameParts.join(' ') || 'User';
+
+      // Generate random password
+      const randomPassword = randomBytes(16).toString('hex');
+      const hashedPassword = await bcrypt.hash(randomPassword, 12);
+
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          firstName,
+          lastName,
+          avatar: picture,
+          isActive: true,
+          role: 'USER',
+          cart: { create: {} },
+        },
+      });
+    } else if (!user.isActive) {
+      throw new UnauthorizedException('Tài khoản đã bị khóa');
+    }
+
+    // Generate tokens
+    const tokens = await this.generateTokens(user.id, user.email, user.role);
+
+    // Remove password
+    const { password, ...userWithoutPassword } = user;
+
+    return {
+      user: userWithoutPassword,
       ...tokens,
     };
   }

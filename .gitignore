@@ -34,6 +34,10 @@ out/
 !**/.env.example
 deployment/env/.env
 
+# Firebase (private keys)
+**/firebase-service-account.json
+**/firebase-adminsdk*.json
+
 # IDE
 .idea/
 *.swp
