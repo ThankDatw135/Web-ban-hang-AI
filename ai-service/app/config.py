@@ -29,15 +29,21 @@ class Settings(BaseSettings):
     ai_model_path: str = "./models"
     viton_model: str = "viton-hd"
 
-    # LLM
+    # LLM - Gemini 2.5 Flash
     llm_provider: str = "gemini"
     gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.5-flash-preview-04-17"  # Latest model
+    gemini_vision_model: str = "gemini-2.5-flash-preview-04-17"  # For image analysis
     openai_api_key: str = ""
 
     # Rate Limiting
     max_tryon_per_minute: int = 5
     max_size_rec_per_minute: int = 20
     max_chat_per_minute: int = 30
+
+    # Chat Settings
+    chat_max_history: int = 20  # Max messages in context
+    chat_session_ttl: int = 3600  # Session expiry in seconds (1 hour)
 
     class Config:
         env_file = ".env"

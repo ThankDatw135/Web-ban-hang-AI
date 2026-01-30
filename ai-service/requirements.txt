@@ -21,8 +21,10 @@ httpx==0.26.0
 pillow==10.2.0
 numpy==1.26.3
 
-# LLM
-google-generativeai==0.3.2
+# LLM - Gemini
+google-genai==1.0.0
+
+# OpenAI (backup)
 openai==1.8.0
 
 # Utilities
@@ -30,3 +32,6 @@ python-dotenv==1.0.0
 python-jose[cryptography]==3.3.0
 redis==5.0.1
 structlog==24.1.0
+
+# SSE for streaming
+sse-starlette==2.0.0
