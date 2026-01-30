@@ -1,60 +1,173 @@
 /**
  * Product Detail Page - Fashion AI
  * 
- * Chi tiết sản phẩm với:
- * - Editorial Hero với AI insights
- * - Style Forecast cá nhân
- * - Color Palette
- * - AI Predicted Essentials carousel
+ * Chi tiết sản phẩm động với:
+ * - API integration
+ * - AI insights
+ * - Add to cart functionality
+ * - Wishlist integration
+ * - Size recommendation
  */
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { Sparkles, Heart, ShoppingBag, ChevronRight, ChevronLeft, Star, Minus, Plus } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { Sparkles, Heart, ShoppingBag, ChevronRight, ChevronLeft, Minus, Plus, Loader2 } from 'lucide-react';
 import { Header, Footer } from '@/components';
-
-// Mock product data
-const product = {
-  id: '1',
-  slug: 'structured-minimalism-blazer',
-  name: 'Structured Minimalism Blazer',
-  price: 6100000,
-  originalPrice: 7625000,
-  images: [
-    'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=800',
-    'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=800',
-    'https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=800',
-  ],
-  description: 'Áo blazer thiết kế với vai cấu trúc, mang đậm phong cách Modern Classic. Chất liệu len cao cấp, form dáng thanh lịch, hoàn hảo cho mùa Thu/Đông.',
-  material: '100% Wool',
-  aiConfidence: 98,
-  colors: [
-    { name: 'Sand', hex: '#E5D3B3' },
-    { name: 'Gold', hex: '#C7A26B' },
-    { name: 'Milk', hex: '#F5F5F5' },
-    { name: 'Charcoal', hex: '#2C2C2C' },
-  ],
-  sizes: ['XS', 'S', 'M', 'L', 'XL'],
-  keyElements: ['Oversized Trench', 'Leather Loafers', 'Gold Accents'],
-  aiInsight: 'Dựa trên lịch sử mua hàng (quần beige), chúng tôi dự đoán bạn sẽ thích tông màu ấm áp và form dáng cấu trúc này trong mùa này.',
-};
-
-const relatedProducts = [
-  { id: '1', name: 'Sculpted Wool Blazer', price: 6100000, image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400', material: 'Sand / 100% Wool' },
-  { id: '2', name: 'Heritage Silk Scarf', price: 2950000, image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400', material: 'Gold Print / Silk' },
-  { id: '3', name: 'Azure Pump', price: 7630000, image: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=400', material: 'Cobalt / Suede' },
-  { id: '4', name: 'Pearl Statement Ring', price: 2090000, image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400', material: 'Gold Vermeil / Pearl' },
-];
+import { useProduct } from '@/hooks/useProducts';
+import { useRelatedProducts, addToRecentlyViewed } from '@/hooks/useRelatedProducts';
+import { useAddToCart } from '@/hooks/useCart';
+import { useSizeRecommend } from '@/hooks/useAI';
+import { useWishlistStore, toastSuccess, toastError } from '@/stores';
+import { useAuthStore } from '@/stores/auth-store';
+import { useUserStore } from '@/stores/user-store';
 
 export default function ProductDetailPage() {
   const params = useParams();
+  const router = useRouter();
+  const slug = params.slug as string;
+  
+  // Fetch product data
+  const { data: product, isLoading, error } = useProduct(slug);
+  const { data: relatedProducts } = useRelatedProducts(product?.id || '', 4);
+  
+  // Track recently viewed
+  useEffect(() => {
+    if (product?.id) {
+      addToRecentlyViewed(product.id);
+    }
+  }, [product?.id]);
+  
+  // Mutations
+  const addToCart = useAddToCart();
+  const sizeRecommend = useSizeRecommend();
+  
+  // Stores
+  const { isAuthenticated } = useAuthStore();
+  const { toggleItem, isInWishlist } = useWishlistStore();
+  const { measurements } = useUserStore();
+  
+  // Local state
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedSize, setSelectedSize] = useState('M');
-  const [selectedColor, setSelectedColor] = useState(0);
+  const [selectedSize, setSelectedSize] = useState<string>('');
+  const [selectedVariant, setSelectedVariant] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
+  const [recommendedSize, setRecommendedSize] = useState<string | null>(null);
+
+  // Get unique sizes and colors from variants
+  const sizes = product?.variants 
+    ? Array.from(new Set(product.variants.map(v => v.size)))
+    : [];
+  
+  const colors = product?.variants 
+    ? product.variants.reduce((acc: { name: string; hex: string }[], v) => {
+        if (!acc.find(c => c.name === v.color)) {
+          acc.push({ name: v.color, hex: v.colorCode });
+        }
+        return acc;
+      }, [])
+    : [];
+  
+  // Find selected variant based on size and color
+  const findVariant = (size: string, color: string) => {
+    return product?.variants.find(v => v.size === size && v.color === color);
+  };
+
+  // Get AI size recommendation
+  const handleGetSizeRecommendation = async () => {
+    if (!product) return;
+    
+    try {
+      const result = await sizeRecommend.mutateAsync({
+        productId: product.id,
+        measurements,
+      });
+      setRecommendedSize(result.recommendedSize);
+      setSelectedSize(result.recommendedSize);
+      toastSuccess('Gợi ý size', `AI gợi ý bạn nên chọn size ${result.recommendedSize}`);
+    } catch {
+      toastError('Lỗi', 'Không thể lấy gợi ý size');
+    }
+  };
+
+  // Add to cart
+  const handleAddToCart = async () => {
+    if (!product || !selectedSize) {
+      toastError('Lỗi', 'Vui lòng chọn size');
+      return;
+    }
+
+    const variant = product.variants.find(v => v.size === selectedSize);
+    if (!variant) {
+      toastError('Lỗi', 'Không tìm thấy biến thể');
+      return;
+    }
+
+    if (!isAuthenticated) {
+      // For non-auth users, could use local cart
+      router.push('/login?redirect=/products/' + slug);
+      return;
+    }
+
+    try {
+      await addToCart.mutateAsync({
+        productId: product.id,
+        variantId: variant.id,
+        quantity,
+      });
+      toastSuccess('Thành công', `Đã thêm ${product.name} vào giỏ hàng`);
+    } catch {
+      toastError('Lỗi', 'Không thể thêm vào giỏ hàng');
+    }
+  };
+
+  // Toggle wishlist
+  const handleToggleWishlist = () => {
+    if (!product) return;
+    toggleItem({
+      productId: product.id,
+      name: product.name,
+      price: product.salePrice || product.price,
+      image: product.images?.[0]?.url || '',
+    });
+  };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-cream">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <Loader2 className="size-8 animate-spin text-primary" />
+          <span className="ml-3 text-text-muted">Đang tải...</span>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !product) {
+    return (
+      <div className="min-h-screen flex flex-col bg-cream">
+        <Header />
+        <main className="flex-1 flex flex-col items-center justify-center">
+          <p className="text-red-500 mb-4">Không tìm thấy sản phẩm</p>
+          <Link href="/shop" className="btn-primary">
+            Quay lại Shop
+          </Link>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const inWishlist = isInWishlist(product.id);
+  const discount = product.salePrice 
+    ? Math.round((1 - product.salePrice / product.price) * 100) 
+    : 0;
 
   return (
     <div className="min-h-screen flex flex-col bg-cream">
@@ -76,7 +189,7 @@ export default function ProductDetailPage() {
           <div className="relative group overflow-hidden rounded-xl shadow-2xl">
             <div className="aspect-[4/5] w-full">
               <img
-                src={product.images[selectedImage]}
+                src={product.images[selectedImage]?.url || 'https://via.placeholder.com/800x1000'}
                 alt={product.name}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
@@ -86,51 +199,60 @@ export default function ProductDetailPage() {
             <div className="absolute bottom-6 left-6 right-6">
               <div className="inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-wide text-accent backdrop-blur-sm shadow-sm mb-3">
                 <Sparkles className="size-3.5" />
-                Tại sao AI chọn sản phẩm này
+                AI Insights
               </div>
               <div className="bg-white/95 backdrop-blur p-4 rounded-lg shadow-lg border-l-4 border-accent">
                 <p className="text-text-main text-sm leading-relaxed">
-                  {product.aiInsight}
+                  Sản phẩm này phù hợp với phong cách Modern Classic. Kết hợp với quần và phụ kiện tông màu trung tính.
                 </p>
               </div>
             </div>
 
             {/* Image Navigation */}
-            <div className="absolute top-4 right-4 flex gap-2">
-              <button
-                onClick={() => setSelectedImage((prev) => (prev === 0 ? product.images.length - 1 : prev - 1))}
-                className="size-10 bg-white/80 backdrop-blur rounded-full flex items-center justify-center hover:bg-white transition-colors"
-              >
-                <ChevronLeft className="size-5" />
-              </button>
-              <button
-                onClick={() => setSelectedImage((prev) => (prev === product.images.length - 1 ? 0 : prev + 1))}
-                className="size-10 bg-white/80 backdrop-blur rounded-full flex items-center justify-center hover:bg-white transition-colors"
-              >
-                <ChevronRight className="size-5" />
-              </button>
-            </div>
+            {product.images.length > 1 && (
+              <div className="absolute top-4 right-4 flex gap-2">
+                <button
+                  onClick={() => setSelectedImage((prev) => (prev === 0 ? product.images.length - 1 : prev - 1))}
+                  className="size-10 bg-white/80 backdrop-blur rounded-full flex items-center justify-center hover:bg-white transition-colors"
+                >
+                  <ChevronLeft className="size-5" />
+                </button>
+                <button
+                  onClick={() => setSelectedImage((prev) => (prev === product.images.length - 1 ? 0 : prev + 1))}
+                  className="size-10 bg-white/80 backdrop-blur rounded-full flex items-center justify-center hover:bg-white transition-colors"
+                >
+                  <ChevronRight className="size-5" />
+                </button>
+              </div>
+            )}
 
             {/* Thumbnails */}
-            <div className="absolute bottom-4 right-4 flex gap-2">
-              {product.images.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setSelectedImage(i)}
-                  className={`size-2 rounded-full transition-all ${
-                    i === selectedImage ? 'bg-white w-6' : 'bg-white/50'
-                  }`}
-                />
-              ))}
-            </div>
+            {product.images.length > 1 && (
+              <div className="absolute bottom-4 right-4 flex gap-2">
+                {product.images.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedImage(i)}
+                    className={`size-2 rounded-full transition-all ${
+                      i === selectedImage ? 'bg-white w-6' : 'bg-white/50'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Product Info */}
           <div className="flex flex-col gap-8">
-            {/* Trending Badge */}
-            <div className="text-primary text-sm font-bold uppercase tracking-widest">
-              Xu hướng cho bạn
-            </div>
+            {/* Category Badge */}
+            {product.category && (
+              <Link 
+                href={`/shop?category=${product.category.slug}`}
+                className="text-primary text-sm font-bold uppercase tracking-widest hover:underline"
+              >
+                {product.category.name}
+              </Link>
+            )}
 
             <div className="space-y-4">
               <h1 className="text-text-main text-4xl lg:text-5xl font-bold leading-tight">
@@ -144,71 +266,109 @@ export default function ProductDetailPage() {
             {/* Price */}
             <div className="flex items-baseline gap-3">
               <span className="text-3xl font-bold text-text-main">
-                {new Intl.NumberFormat('vi-VN').format(product.price)}₫
+                {new Intl.NumberFormat('vi-VN').format(product.salePrice || product.price)}₫
               </span>
-              <span className="text-lg text-text-muted line-through">
-                {new Intl.NumberFormat('vi-VN').format(product.originalPrice)}₫
-              </span>
-              <span className="text-sm font-bold text-green-600 bg-green-50 px-2 py-1 rounded">
-                -20%
-              </span>
+              {product.salePrice && (
+                <>
+                  <span className="text-lg text-text-muted line-through">
+                    {new Intl.NumberFormat('vi-VN').format(product.price)}₫
+                  </span>
+                  <span className="text-sm font-bold text-green-600 bg-green-50 px-2 py-1 rounded">
+                    -{discount}%
+                  </span>
+                </>
+              )}
             </div>
 
-            {/* Key Elements */}
-            <div className="flex flex-col gap-4 border-t border-primary/20 pt-8">
-              <div className="flex items-center justify-between">
-                <span className="text-text-main font-medium">Key Elements</span>
-                <span className="text-text-muted text-sm">confidence score: {product.aiConfidence}%</span>
+            {/* Reviews */}
+            {product.reviews && (
+              <div className="flex items-center gap-2">
+                <div className="flex text-yellow-400">
+                  {[...Array(5)].map((_, i) => (
+                    <span key={i} className={i < Math.round(product.reviews!.average) ? '' : 'opacity-30'}>
+                      ★
+                    </span>
+                  ))}
+                </div>
+                <span className="text-text-muted text-sm">
+                  {product.reviews.average.toFixed(1)} ({product.reviews.count} đánh giá)
+                </span>
               </div>
-              <div className="flex gap-3 flex-wrap">
-                {product.keyElements.map((el) => (
-                  <span key={el} className="rounded-full border border-border bg-white px-4 py-2 text-sm text-text-main shadow-sm">
-                    {el}
-                  </span>
-                ))}
+            )}
+
+            {/* Material */}
+            {product.material && (
+              <div className="text-sm text-text-muted">
+                Chất liệu: <span className="text-text-main font-medium">{product.material}</span>
               </div>
-            </div>
+            )}
 
             {/* Color Selection */}
-            <div className="space-y-3">
-              <span className="text-sm font-medium text-text-main">Màu sắc: {product.colors[selectedColor].name}</span>
-              <div className="flex gap-3">
-                {product.colors.map((color, i) => (
-                  <button
-                    key={color.name}
-                    onClick={() => setSelectedColor(i)}
-                    className={`size-10 rounded-full border-4 transition-all ${
-                      i === selectedColor ? 'border-primary scale-110' : 'border-white shadow-md hover:scale-105'
-                    }`}
-                    style={{ backgroundColor: color.hex }}
-                    title={color.name}
-                  />
-                ))}
+            {colors.length > 0 && (
+              <div className="space-y-3">
+                <span className="text-sm font-medium text-text-main">Màu sắc</span>
+                <div className="flex gap-3">
+                  {colors.map((color, i) => (
+                    <button
+                      key={color.name}
+                      onClick={() => {}}
+                      className="size-10 rounded-full border-4 transition-all border-white shadow-md hover:scale-105"
+                      style={{ backgroundColor: color.hex }}
+                      title={color.name}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Size Selection */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-text-main">Kích thước: {selectedSize}</span>
-                <button className="text-sm text-accent hover:underline">Hướng dẫn chọn size</button>
-              </div>
-              <div className="flex gap-3">
-                {product.sizes.map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`size-12 rounded-lg border font-medium transition-all ${
-                      size === selectedSize
-                        ? 'border-primary bg-primary text-white'
-                        : 'border-border bg-white text-text-main hover:border-primary'
-                    }`}
+            {sizes.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-text-main">
+                    Kích thước: {selectedSize || 'Chưa chọn'}
+                    {recommendedSize && selectedSize === recommendedSize && (
+                      <span className="ml-2 text-accent text-xs">(AI gợi ý)</span>
+                    )}
+                  </span>
+                  <button 
+                    onClick={handleGetSizeRecommendation}
+                    disabled={sizeRecommend.isPending}
+                    className="text-sm text-accent hover:underline flex items-center gap-1"
                   >
-                    {size}
+                    {sizeRecommend.isPending ? (
+                      <Loader2 className="size-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="size-3" />
+                    )}
+                    AI gợi ý size
                   </button>
-                ))}
+                </div>
+                <div className="flex gap-3">
+                  {sizes.map((size) => {
+                    const variant = product.variants.find(v => v.size === size);
+                    const inStock = variant && variant.stock > 0;
+                    
+                    return (
+                      <button
+                        key={size}
+                        onClick={() => setSelectedSize(size)}
+                        disabled={!inStock}
+                        className={`size-12 rounded-lg border font-medium transition-all ${
+                          size === selectedSize
+                            ? 'border-primary bg-primary text-white'
+                            : inStock
+                              ? 'border-border bg-white text-text-main hover:border-primary'
+                              : 'border-border bg-gray-100 text-gray-400 cursor-not-allowed'
+                        } ${size === recommendedSize ? 'ring-2 ring-accent ring-offset-2' : ''}`}
+                      >
+                        {size}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Quantity */}
             <div className="flex items-center gap-4">
@@ -232,89 +392,82 @@ export default function ProductDetailPage() {
 
             {/* Actions */}
             <div className="flex gap-4">
-              <button className="flex-1 group flex items-center justify-center gap-3 rounded-full bg-text-main px-8 py-4 text-white transition-all hover:bg-primary hover:shadow-lg hover:shadow-primary/30">
-                <ShoppingBag className="size-5" />
+              <button 
+                onClick={handleAddToCart}
+                disabled={addToCart.isPending || !selectedSize}
+                className="flex-1 group flex items-center justify-center gap-3 rounded-full bg-text-main px-8 py-4 text-white transition-all hover:bg-primary hover:shadow-lg hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {addToCart.isPending ? (
+                  <Loader2 className="size-5 animate-spin" />
+                ) : (
+                  <ShoppingBag className="size-5" />
+                )}
                 <span className="font-bold tracking-wide">Thêm vào giỏ</span>
               </button>
-              <button className="size-14 rounded-full border border-border flex items-center justify-center hover:border-primary hover:text-primary transition-colors">
-                <Heart className="size-6" />
+              <button 
+                onClick={handleToggleWishlist}
+                className={`size-14 rounded-full border flex items-center justify-center transition-colors ${
+                  inWishlist 
+                    ? 'border-red-300 bg-red-50 text-red-500' 
+                    : 'border-border hover:border-primary hover:text-primary'
+                }`}
+              >
+                <Heart className={`size-6 ${inWishlist ? 'fill-current' : ''}`} />
               </button>
             </div>
 
             {/* AI Try-On */}
-            <button className="w-full flex items-center justify-center gap-3 rounded-full bg-accent/10 border border-accent/20 px-8 py-4 text-accent transition-all hover:bg-accent hover:text-white">
+            <Link 
+              href={`/try-on?product=${product.id}`}
+              className="w-full flex items-center justify-center gap-3 rounded-full bg-accent/10 border border-accent/20 px-8 py-4 text-accent transition-all hover:bg-accent hover:text-white"
+            >
               <Sparkles className="size-5" />
               <span className="font-bold tracking-wide">Thử Đồ AI</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Color Palette Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 py-10 mb-16">
-          <div className="lg:col-span-4 flex flex-col justify-center gap-4">
-            <h3 className="text-2xl font-bold text-text-main">Bảng Màu Xu Hướng</h3>
-            <p className="text-text-muted">
-              Bảng màu cá nhân của bạn đang chuyển sang tông ấm. Champagne Gold và Sand là chủ đạo.
-            </p>
-            <div className="inline-flex items-center gap-2 text-accent text-sm font-medium cursor-pointer hover:underline">
-              <Sparkles className="size-4" />
-              Tại sao những màu này?
-            </div>
-          </div>
-          <div className="lg:col-span-8 grid grid-cols-2 md:grid-cols-4 gap-4">
-            {product.colors.map((color) => (
-              <div key={color.name} className="group relative aspect-square w-full overflow-hidden rounded-full border-4 border-white shadow-xl transition-transform hover:-translate-y-2">
-                <div className="h-full w-full" style={{ backgroundColor: color.hex }} />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 transition-opacity group-hover:opacity-100">
-                  <span className="text-xs font-bold text-white uppercase tracking-wider">{color.name}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* AI Predicted Essentials */}
-        <div className="flex flex-col gap-6 py-6">
-          <div className="flex items-end justify-between px-2">
-            <h3 className="text-3xl font-bold text-text-main">AI Gợi Ý Phối Đồ</h3>
-            <Link href="/shop" className="hidden sm:flex items-center gap-1 text-sm font-bold text-primary hover:text-primary/80">
-              Xem tất cả
-              <ChevronRight className="size-4" />
             </Link>
           </div>
+        </div>
 
-          {/* Carousel */}
-          <div className="flex gap-6 overflow-x-auto pb-8 pt-2 snap-x">
-            {relatedProducts.map((item) => (
-              <div key={item.id} className="min-w-[280px] md:min-w-[320px] snap-center group relative flex flex-col gap-3 rounded-lg bg-white p-3 shadow-sm hover:shadow-xl transition-all duration-300">
-                <div className="relative aspect-[3/4] overflow-hidden rounded-md bg-secondary-100">
-                  <button className="absolute right-3 top-3 z-10 size-8 rounded-full bg-white/90 flex items-center justify-center text-text-main opacity-0 shadow-md transition-opacity group-hover:opacity-100">
-                    <Heart className="size-4" />
-                  </button>
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className="absolute bottom-3 left-3">
-                    <div className="inline-flex items-center justify-center rounded-full bg-accent/90 p-1.5 text-white shadow-lg backdrop-blur-sm">
-                      <Sparkles className="size-3.5" />
+        {/* Related Products */}
+        {relatedProducts && relatedProducts.length > 0 && (
+          <div className="flex flex-col gap-6 py-6">
+            <div className="flex items-end justify-between px-2">
+              <h3 className="text-3xl font-bold text-text-main">AI Gợi Ý Phối Đồ</h3>
+              <Link href="/shop" className="hidden sm:flex items-center gap-1 text-sm font-bold text-primary hover:text-primary/80">
+                Xem tất cả
+                <ChevronRight className="size-4" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {relatedProducts.map((item) => (
+                <Link 
+                  key={item.id} 
+                  href={`/products/${item.slug}`}
+                  className="group flex flex-col gap-3 rounded-lg bg-white p-3 shadow-sm hover:shadow-xl transition-all duration-300"
+                >
+                  <div className="relative aspect-[3/4] overflow-hidden rounded-md bg-secondary-100">
+                    <img
+                      src={item.images?.[0]?.url || 'https://via.placeholder.com/400x500'}
+                      alt={item.name}
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                    <div className="absolute bottom-3 left-3">
+                      <div className="inline-flex items-center justify-center rounded-full bg-accent/90 p-1.5 text-white shadow-lg backdrop-blur-sm">
+                        <Sparkles className="size-3.5" />
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex flex-col px-1">
-                  <div className="flex justify-between">
-                    <h4 className="font-bold text-text-main">{item.name}</h4>
-                    <span className="font-medium text-text-main">
-                      {new Intl.NumberFormat('vi-VN').format(item.price)}₫
+                  <div className="flex flex-col px-1">
+                    <h4 className="font-bold text-text-main line-clamp-1">{item.name}</h4>
+                    <span className="font-medium text-primary">
+                      {new Intl.NumberFormat('vi-VN').format(item.salePrice || item.price)}₫
                     </span>
                   </div>
-                  <p className="text-sm text-text-muted">{item.material}</p>
-                </div>
-              </div>
-            ))}
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </main>
 
       <Footer />

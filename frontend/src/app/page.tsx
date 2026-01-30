@@ -3,53 +3,25 @@
  * 
  * Sections:
  * - Hero: AI-powered fashion tagline
- * - Featured Products: 4 sản phẩm nổi bật
+ * - Featured Products: API-driven
+ * - New Arrivals: API-driven
+ * - Collections: API-driven
  * - AI Try-On CTA
  * - Footer
  */
 
-import Link from 'next/link';
-import { Sparkles, ArrowRight, View } from 'lucide-react';
-import { Header, Footer, ProductCard, AIChatWidget } from '@/components';
+'use client';
 
-// Mock data - sau này sẽ fetch từ API
-const featuredProducts = [
-  {
-    id: '1',
-    slug: 'silk-slip-dress',
-    name: 'The Silk Slip Dress',
-    price: 5990000,
-    image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600',
-    material: 'Lụa Ý cao cấp',
-    isNew: true,
-  },
-  {
-    id: '2',
-    slug: 'cashmere-sweater',
-    name: 'The Cashmere Sweater',
-    price: 4390000,
-    image: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600',
-    material: '100% Cashmere',
-  },
-  {
-    id: '3',
-    slug: 'tailored-blazer',
-    name: 'The Tailored Blazer',
-    price: 7590000,
-    image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600',
-    material: 'Merino Wool Blend',
-  },
-  {
-    id: '4',
-    slug: 'pleated-trousers',
-    name: 'The Pleated Trousers',
-    price: 3290000,
-    image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=600',
-    material: 'High-waisted fit',
-  },
-];
+import Link from 'next/link';
+import { Sparkles, ArrowRight, View, ChevronRight, Loader2 } from 'lucide-react';
+import { Header, Footer, ProductCard, AIChatWidget } from '@/components';
+import { useFeaturedProducts, useNewArrivals, useFeaturedCollections } from '@/hooks/useHome';
 
 export default function HomePage() {
+  const { data: featuredProducts, isLoading: featuredLoading } = useFeaturedProducts(4);
+  const { data: newArrivals, isLoading: arrivalsLoading } = useNewArrivals(4);
+  const { data: collections, isLoading: collectionsLoading } = useFeaturedCollections(4);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -79,7 +51,7 @@ export default function HomePage() {
                   Thử đồ với AI
                 </Link>
                 <Link
-                  href="/products"
+                  href="/shop"
                   className="btn-primary btn-lg"
                 >
                   Khám phá BST
@@ -145,7 +117,7 @@ export default function HomePage() {
               </p>
             </div>
             <Link
-              href="/products"
+              href="/shop?featured=true"
               className="hidden sm:flex items-center gap-1 text-sm font-bold text-primary hover:text-accent transition-colors"
             >
               Xem tất cả <ArrowRight className="size-4" />
@@ -153,19 +125,155 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="container-custom pb-20">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 pt-8">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} {...product} />
-            ))}
-          </div>
+        <section className="container-custom pb-16">
+          {featuredLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="size-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 pt-8">
+              {featuredProducts?.map((product) => (
+                <ProductCard 
+                  key={product.id} 
+                  id={product.id}
+                  slug={product.slug}
+                  name={product.name}
+                  price={product.salePrice || product.price}
+                  originalPrice={product.salePrice ? product.price : undefined}
+                  image={product.images?.[0]?.url || product.image || ''}
+                  isNew={product.isNew}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Mobile View All */}
           <div className="mt-10 text-center sm:hidden">
-            <Link href="/products" className="btn-outline btn-lg w-full">
+            <Link href="/shop" className="btn-outline btn-lg w-full">
               Xem tất cả sản phẩm
             </Link>
           </div>
+        </section>
+
+        {/* Featured Collections */}
+        <section className="bg-secondary-50 py-16">
+          <div className="container-custom">
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold text-text-main tracking-tight">
+                  Bộ Sưu Tập
+                </h2>
+                <p className="text-text-muted mt-1 text-sm">
+                  Khám phá các bộ sưu tập được yêu thích nhất
+                </p>
+              </div>
+              <Link
+                href="/collections"
+                className="hidden sm:flex items-center gap-1 text-sm font-bold text-primary hover:text-accent transition-colors"
+              >
+                Tất cả BST <ArrowRight className="size-4" />
+              </Link>
+            </div>
+
+            {collectionsLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="size-8 animate-spin text-primary" />
+              </div>
+            ) : collections && collections.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {collections.map((collection) => (
+                  <Link 
+                    key={collection.id} 
+                    href={`/collections/${collection.slug}`}
+                    className="group relative aspect-[4/5] rounded-2xl overflow-hidden"
+                  >
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+                      style={{ backgroundImage: `url('${collection.image}')` }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-6">
+                      <h3 className="text-xl font-bold text-white mb-1">{collection.name}</h3>
+                      <p className="text-white/80 text-sm flex items-center gap-1">
+                        {collection.productCount} sản phẩm
+                        <ChevronRight className="size-4" />
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Fallback static collections */}
+                {[
+                  { name: 'Xuân Hè 2026', image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600', slug: 'xuan-he-2026', count: 48 },
+                  { name: 'Thu Đông 2025', image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600', slug: 'thu-dong-2025', count: 36 },
+                  { name: 'Essentials', image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=600', slug: 'essentials', count: 24 },
+                  { name: 'Limited Edition', image: 'https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600', slug: 'limited-edition', count: 12 },
+                ].map((col, idx) => (
+                  <Link 
+                    key={idx} 
+                    href={`/collections/${col.slug}`}
+                    className="group relative aspect-[4/5] rounded-2xl overflow-hidden"
+                  >
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+                      style={{ backgroundImage: `url('${col.image}')` }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-6">
+                      <h3 className="text-xl font-bold text-white mb-1">{col.name}</h3>
+                      <p className="text-white/80 text-sm flex items-center gap-1">
+                        {col.count} sản phẩm
+                        <ChevronRight className="size-4" />
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* New Arrivals */}
+        <section className="container-custom py-16">
+          <div className="flex items-end justify-between border-b border-primary/20 pb-4 mb-8">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold text-text-main tracking-tight">
+                Hàng Mới Về
+              </h2>
+              <p className="text-text-muted mt-1 text-sm">
+                Những sản phẩm mới nhất vừa cập bến
+              </p>
+            </div>
+            <Link
+              href="/shop?sort=newest"
+              className="hidden sm:flex items-center gap-1 text-sm font-bold text-primary hover:text-accent transition-colors"
+            >
+              Xem tất cả <ArrowRight className="size-4" />
+            </Link>
+          </div>
+
+          {arrivalsLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="size-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+              {newArrivals?.map((product) => (
+                <ProductCard 
+                  key={product.id} 
+                  id={product.id}
+                  slug={product.slug}
+                  name={product.name}
+                  price={product.salePrice || product.price}
+                  originalPrice={product.salePrice ? product.price : undefined}
+                  image={product.images?.[0]?.url || product.image || ''}
+                  isNew={true}
+                />
+              ))}
+            </div>
+          )}
         </section>
 
         {/* AI Try-On Banner */}

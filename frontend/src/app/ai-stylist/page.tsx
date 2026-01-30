@@ -1,18 +1,12 @@
 /**
  * AI Stylist & Persona Config - Fashion AI
  * 
- * Cấu hình AI Stylist cá nhân:
- * - Chọn phong cách (Minimalist, Classic, Trendy, etc.)
- * - Màu sắc yêu thích
- * - Budget range
- * - Occasions (Work, Casual, Event)
- * - AI Stylist avatar/persona
+ * Cấu hình AI Stylist với API integration
  */
 
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
+import { useState, useEffect } from 'react';
 import { 
   Sparkles, 
   Palette, 
@@ -23,9 +17,12 @@ import {
   Briefcase,
   Sun,
   PartyPopper,
-  Save
+  Save,
+  Loader2
 } from 'lucide-react';
 import { Header, Footer } from '@/components';
+import { useStylistPreferences, useSaveStylistPreferences, type StylistPreferences } from '@/hooks/useAI';
+import { toastSuccess, toastError } from '@/stores';
 
 // Style options
 const styles = [
@@ -68,6 +65,20 @@ export default function AIStylistPage() {
   const [selectedBudget, setSelectedBudget] = useState('moderate');
   const [stylistName, setStylistName] = useState('Aria');
 
+  const { data: preferences, isLoading } = useStylistPreferences();
+  const savePreferences = useSaveStylistPreferences();
+
+  // Load saved preferences
+  useEffect(() => {
+    if (preferences) {
+      setSelectedStyles(preferences.styles || ['minimalist', 'classic']);
+      setSelectedPalette(preferences.colorPalette || 'neutral');
+      setSelectedOccasions(preferences.occasions || ['work', 'casual']);
+      setSelectedBudget(preferences.budget || 'moderate');
+      setStylistName(preferences.stylistName || 'Aria');
+    }
+  }, [preferences]);
+
   const toggleStyle = (id: string) => {
     setSelectedStyles(prev => 
       prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
@@ -79,6 +90,29 @@ export default function AIStylistPage() {
       prev.includes(id) ? prev.filter(o => o !== id) : [...prev, id]
     );
   };
+
+  const handleSave = async () => {
+    try {
+      await savePreferences.mutateAsync({
+        styles: selectedStyles,
+        colorPalette: selectedPalette,
+        occasions: selectedOccasions,
+        budget: selectedBudget,
+        stylistName,
+      });
+      toastSuccess('Thành công', 'Đã lưu cấu hình AI Stylist!');
+    } catch {
+      toastError('Lỗi', 'Không thể lưu cấu hình');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-cream">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-cream">
@@ -245,8 +279,16 @@ export default function AIStylistPage() {
           </section>
 
           {/* Save Button */}
-          <button className="w-full py-4 bg-primary hover:bg-primary/90 text-white font-bold text-lg rounded-xl shadow-lg shadow-primary/30 flex items-center justify-center gap-2 transition-all">
-            <Save className="size-5" />
+          <button 
+            onClick={handleSave}
+            disabled={savePreferences.isPending}
+            className="w-full py-4 bg-primary hover:bg-primary/90 text-white font-bold text-lg rounded-xl shadow-lg shadow-primary/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+          >
+            {savePreferences.isPending ? (
+              <Loader2 className="size-5 animate-spin" />
+            ) : (
+              <Save className="size-5" />
+            )}
             Lưu Cấu Hình
           </button>
         </div>

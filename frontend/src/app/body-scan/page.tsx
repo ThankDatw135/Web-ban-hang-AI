@@ -1,17 +1,12 @@
 /**
  * AI 3D Body Profile & Scanning - Fashion AI
  * 
- * Trang quản lý hồ sơ body 3D:
- * - 3D body viewer (simulated)
- * - Measurement stats (Bust, Waist, Hips, Inseam)
- * - AI Confidence badge
- * - Start 3D Scan / Edit Manually CTAs
- * - "Precision in 3 Steps" section
+ * Quản lý số đo với API integration
  */
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Sparkles, 
@@ -19,7 +14,6 @@ import {
   RotateCw, 
   Shield, 
   Ruler, 
-  TrendingUp,
   TrendingDown,
   Minus,
   ScanLine,
@@ -27,17 +21,13 @@ import {
   Camera,
   RefreshCw,
   Wand2,
-  ChevronRight
+  ChevronRight,
+  Loader2,
+  Save
 } from 'lucide-react';
 import { Header, Footer } from '@/components';
-
-// Mock measurement data
-const measurements = [
-  { name: 'Ngực', value: 88, unit: 'cm', trend: 'stable', change: null },
-  { name: 'Eo', value: 66, unit: 'cm', trend: 'down', change: -1.5 },
-  { name: 'Hông', value: 94, unit: 'cm', trend: 'stable', change: null },
-  { name: 'Đùi trong', value: 76, unit: 'cm', trend: 'stable', change: null, lastUpdated: 'Tháng 1, 2024' },
-];
+import { useMeasurements, useSaveMeasurements, useBodyScan, type Measurements } from '@/hooks/useAI';
+import { toastSuccess, toastError } from '@/stores';
 
 const steps = [
   {
@@ -59,6 +49,40 @@ const steps = [
 
 export default function BodyScanPage() {
   const [rotation, setRotation] = useState(0);
+  const [editMode, setEditMode] = useState(false);
+  const [formData, setFormData] = useState<Measurements>({});
+
+  const { data: measurements, isLoading } = useMeasurements();
+  const saveMeasurements = useSaveMeasurements();
+  const bodyScan = useBodyScan();
+
+  useEffect(() => {
+    if (measurements) {
+      setFormData(measurements);
+    }
+  }, [measurements]);
+
+  const handleSave = async () => {
+    try {
+      await saveMeasurements.mutateAsync(formData);
+      toastSuccess('Thành công', 'Đã lưu số đo!');
+      setEditMode(false);
+    } catch {
+      toastError('Lỗi', 'Không thể lưu số đo');
+    }
+  };
+
+  const displayMeasurements = [
+    { key: 'chest', name: 'Ngực', unit: 'cm' },
+    { key: 'waist', name: 'Eo', unit: 'cm' },
+    { key: 'hips', name: 'Hông', unit: 'cm' },
+    { key: 'inseam', name: 'Đùi trong', unit: 'cm' },
+  ];
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Chưa cập nhật';
+    return new Date(dateString).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' });
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-cream">
@@ -77,7 +101,7 @@ export default function BodyScanPage() {
                   <img
                     src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500"
                     alt="3D Body Model"
-                    className="w-full h-full object-cover opacity-50 grayscale"
+                    className="w-full h-full object-cover opacity-50 grayscale transition-transform duration-300"
                     style={{ transform: `rotateY(${rotation}deg)` }}
                   />
                   {/* Overlay mesh effect */}
@@ -119,7 +143,7 @@ export default function BodyScanPage() {
                 <div>
                   <h4 className="text-sm font-bold text-text-main">Riêng Tư & Bảo Mật</h4>
                   <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                    Dữ liệu quét của bạn được mã hóa end-to-end và chỉ bạn mới có thể xem. Chúng tôi không bao giờ chia sẻ dữ liệu sinh trắc học.
+                    Dữ liệu quét của bạn được mã hóa end-to-end và chỉ bạn mới có thể xem.
                   </p>
                 </div>
               </div>
@@ -132,73 +156,123 @@ export default function BodyScanPage() {
             <div className="flex flex-col gap-4">
               <div className="inline-flex w-fit items-center gap-2 rounded-full bg-white border border-border px-3 py-1 text-xs font-bold text-text-main shadow-sm">
                 <Sparkles className="size-4 text-accent" />
-                <span>AI Confidence: 98.5%</span>
+                <span>AI Confidence: {measurements?.confidence || 0}%</span>
               </div>
               <h1 className="text-4xl md:text-5xl font-black text-text-main tracking-tight leading-[1.1]">
                 Hồ Sơ Body Kỹ Thuật Số
               </h1>
               <p className="text-lg text-text-muted font-normal leading-relaxed max-w-xl">
-                Quản lý số đo chính xác để có form dáng hoàn hảo. AI đã phân tích đường cong của bạn để tạo ra gợi ý size chính xác.
+                Quản lý số đo chính xác để có form dáng hoàn hảo.
               </p>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              {measurements.map((m) => (
-                <div
-                  key={m.name}
-                  className="group bg-white p-6 rounded-2xl border border-border hover:border-primary/50 transition-colors shadow-sm"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <p className="text-text-muted text-sm font-medium">{m.name}</p>
-                    <Ruler className="size-5 text-secondary-200 group-hover:text-primary transition-colors" />
-                  </div>
-                  <p className="text-primary text-4xl font-bold tracking-tight">
-                    {m.value}
-                    <span className="text-xl text-text-muted ml-1 font-medium">{m.unit}</span>
-                  </p>
-                  <div className="mt-3">
-                    {m.trend === 'down' ? (
-                      <div className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 w-fit px-2 py-0.5 rounded-md">
-                        <TrendingDown className="size-3" />
-                        <span>{m.change} cm</span>
-                      </div>
-                    ) : m.lastUpdated ? (
-                      <div className="text-xs font-medium text-text-muted bg-secondary-50 w-fit px-2 py-0.5 rounded-md">
-                        Cập nhật: {m.lastUpdated}
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 w-fit px-2 py-0.5 rounded-md">
-                        <Minus className="size-3" />
-                        <span>Ổn định</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* CTA Section */}
-            <div className="bg-white p-8 rounded-3xl shadow-sm border border-border relative overflow-hidden">
-              {/* Decor */}
-              <div className="absolute -right-10 -top-10 size-40 bg-accent/5 rounded-full blur-3xl" />
-              <div className="relative z-10">
-                <h3 className="text-xl font-bold text-text-main mb-2">Sẵn sàng cập nhật số đo?</h3>
-                <p className="text-text-muted text-sm mb-6 max-w-md">
-                  Số đo thay đổi theo thời gian. Cập nhật hồ sơ với lần quét mới để đảm bảo đơn hàng tiếp theo vừa vặn hoàn hảo.
-                </p>
-                <div className="flex flex-wrap gap-4">
-                  <button className="flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-white font-bold h-12 px-8 rounded-xl transition-all shadow-lg shadow-accent/25 hover:shadow-accent/40 transform hover:-translate-y-0.5">
-                    <ScanLine className="size-5" />
-                    Bắt Đầu Quét 3D
-                  </button>
-                  <button className="flex items-center justify-center gap-2 bg-white border border-border hover:bg-secondary-50 text-text-main font-bold h-12 px-6 rounded-xl transition-colors">
-                    <Edit className="size-5" />
-                    Nhập Thủ Công
-                  </button>
-                </div>
+            {/* Loading */}
+            {isLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="size-8 animate-spin text-primary" />
               </div>
-            </div>
+            ) : (
+              <>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 gap-4">
+                  {displayMeasurements.map((m) => (
+                    <div
+                      key={m.key}
+                      className="group bg-white p-6 rounded-2xl border border-border hover:border-primary/50 transition-colors shadow-sm"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <p className="text-text-muted text-sm font-medium">{m.name}</p>
+                        <Ruler className="size-5 text-secondary-200 group-hover:text-primary transition-colors" />
+                      </div>
+                      {editMode ? (
+                        <input
+                          type="number"
+                          value={formData[m.key as keyof Measurements] || ''}
+                          onChange={(e) => setFormData({ ...formData, [m.key]: Number(e.target.value) })}
+                          className="text-3xl font-bold text-primary w-full bg-transparent border-b border-primary/30 focus:outline-none focus:border-primary"
+                        />
+                      ) : (
+                        <p className="text-primary text-4xl font-bold tracking-tight">
+                          {formData[m.key as keyof Measurements] || '-'}
+                          <span className="text-xl text-text-muted ml-1 font-medium">{m.unit}</span>
+                        </p>
+                      )}
+                      <div className="mt-3">
+                        <div className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 w-fit px-2 py-0.5 rounded-md">
+                          <Minus className="size-3" />
+                          <span>Ổn định</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Last Updated */}
+                <p className="text-sm text-text-muted">
+                  Cập nhật lần cuối: {formatDate(measurements?.updatedAt)}
+                </p>
+
+                {/* CTA Section */}
+                <div className="bg-white p-8 rounded-3xl shadow-sm border border-border relative overflow-hidden">
+                  <div className="absolute -right-10 -top-10 size-40 bg-accent/5 rounded-full blur-3xl" />
+                  <div className="relative z-10">
+                    <h3 className="text-xl font-bold text-text-main mb-2">
+                      {editMode ? 'Chỉnh sửa số đo' : 'Sẵn sàng cập nhật số đo?'}
+                    </h3>
+                    <p className="text-text-muted text-sm mb-6 max-w-md">
+                      {editMode 
+                        ? 'Nhập số đo mới và nhấn Lưu để cập nhật.'
+                        : 'Số đo thay đổi theo thời gian. Cập nhật hồ sơ với lần quét mới hoặc nhập thủ công.'}
+                    </p>
+                    <div className="flex flex-wrap gap-4">
+                      {editMode ? (
+                        <>
+                          <button 
+                            onClick={handleSave}
+                            disabled={saveMeasurements.isPending}
+                            className="flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold h-12 px-8 rounded-xl transition-all disabled:opacity-50"
+                          >
+                            {saveMeasurements.isPending ? (
+                              <Loader2 className="size-5 animate-spin" />
+                            ) : (
+                              <Save className="size-5" />
+                            )}
+                            Lưu Số Đo
+                          </button>
+                          <button 
+                            onClick={() => setEditMode(false)}
+                            className="flex items-center justify-center gap-2 bg-white border border-border hover:bg-secondary-50 text-text-main font-bold h-12 px-6 rounded-xl transition-colors"
+                          >
+                            Hủy
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button 
+                            disabled={bodyScan.isPending}
+                            className="flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-white font-bold h-12 px-8 rounded-xl transition-all shadow-lg shadow-accent/25 hover:shadow-accent/40 transform hover:-translate-y-0.5 disabled:opacity-50"
+                          >
+                            {bodyScan.isPending ? (
+                              <Loader2 className="size-5 animate-spin" />
+                            ) : (
+                              <ScanLine className="size-5" />
+                            )}
+                            Bắt Đầu Quét 3D
+                          </button>
+                          <button 
+                            onClick={() => setEditMode(true)}
+                            className="flex items-center justify-center gap-2 bg-white border border-border hover:bg-secondary-50 text-text-main font-bold h-12 px-6 rounded-xl transition-colors"
+                          >
+                            <Edit className="size-5" />
+                            Nhập Thủ Công
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

@@ -1,11 +1,11 @@
 /**
  * Fashion AI Notification Hub - Fashion AI
  * 
- * Trung tâm thông báo:
+ * Trung tâm thông báo với API integration:
  * - Order updates
  * - Promotions
  * - AI recommendations
- * - Settings
+ * - Mark as read
  */
 
 'use client';
@@ -21,64 +21,20 @@ import {
   Check,
   Trash2,
   Settings,
-  ChevronRight
+  ChevronRight,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { Header, Footer } from '@/components';
-
-// Mock notifications
-const initialNotifications = [
-  {
-    id: '1',
-    type: 'order',
-    title: 'Đơn hàng đang được giao',
-    message: 'Đơn hàng ORD-2024001 đang trên đường giao đến bạn. Dự kiến nhận hàng: 30/01/2024',
-    time: '2 giờ trước',
-    read: false,
-    link: '/orders/ORD-2024001',
-  },
-  {
-    id: '2',
-    type: 'promo',
-    title: 'Flash Sale 50% - Chỉ hôm nay!',
-    message: 'Giảm đến 50% cho hàng trăm sản phẩm. Nhanh tay kẻo hết!',
-    time: '5 giờ trước',
-    read: false,
-    link: '/shop?sale=true',
-  },
-  {
-    id: '3',
-    type: 'ai',
-    title: 'AI Stylist có gợi ý mới cho bạn',
-    message: 'Dựa trên phong cách của bạn, chúng tôi tìm thấy 5 items bạn có thể thích!',
-    time: '1 ngày trước',
-    read: true,
-    link: '/shop',
-  },
-  {
-    id: '4',
-    type: 'wishlist',
-    title: 'Sản phẩm yêu thích đang giảm giá',
-    message: 'Silk Evening Gown trong wishlist của bạn đang giảm 10%!',
-    time: '2 ngày trước',
-    read: true,
-    link: '/wishlist',
-  },
-  {
-    id: '5',
-    type: 'order',
-    title: 'Đơn hàng đã được giao thành công',
-    message: 'Đơn hàng ORD-2024002 đã được giao. Cảm ơn bạn đã mua sắm!',
-    time: '3 ngày trước',
-    read: true,
-    link: '/orders/ORD-2024002',
-  },
-];
+import { useNotifications, useMarkAsRead, useMarkAllAsRead, useDeleteNotification, type Notification } from '@/hooks/useNotifications';
+import { toastSuccess, toastError } from '@/stores';
 
 const typeConfig = {
-  order: { icon: Package, color: 'text-blue-600 bg-blue-50' },
-  promo: { icon: Tag, color: 'text-red-500 bg-red-50' },
-  ai: { icon: Sparkles, color: 'text-accent bg-accent/10' },
-  wishlist: { icon: Heart, color: 'text-pink-500 bg-pink-50' },
+  ORDER: { icon: Package, color: 'text-blue-600 bg-blue-50' },
+  PROMO: { icon: Tag, color: 'text-red-500 bg-red-50' },
+  AI: { icon: Sparkles, color: 'text-accent bg-accent/10' },
+  WISHLIST: { icon: Heart, color: 'text-pink-500 bg-pink-50' },
+  SYSTEM: { icon: AlertCircle, color: 'text-gray-600 bg-gray-50' },
 };
 
 const filterTabs = [
@@ -89,28 +45,67 @@ const filterTabs = [
 ];
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState(initialNotifications);
   const [selectedFilter, setSelectedFilter] = useState('all');
+  
+  const { data, isLoading } = useNotifications(selectedFilter);
+  const markAsRead = useMarkAsRead();
+  const markAllAsRead = useMarkAllAsRead();
+  const deleteNotification = useDeleteNotification();
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const notifications = data?.items || [];
+  const unreadCount = data?.unreadCount || 0;
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev => prev.map(n => 
-      n.id === id ? { ...n, read: true } : n
-    ));
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await markAsRead.mutateAsync(id);
+    } catch {
+      // Silent fail - clicking will navigate anyway
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllAsRead.mutateAsync();
+      toastSuccess('Thành công', 'Đã đánh dấu tất cả là đã đọc');
+    } catch {
+      toastError('Lỗi', 'Không thể đánh dấu đã đọc');
+    }
   };
 
-  const deleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteNotification.mutateAsync(id);
+      toastSuccess('Đã xóa', 'Thông báo đã được xóa');
+    } catch {
+      toastError('Lỗi', 'Không thể xóa thông báo');
+    }
   };
 
-  const filteredNotifications = selectedFilter === 'all'
-    ? notifications
-    : notifications.filter(n => n.type === selectedFilter);
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 60) return `${diffMins} phút trước`;
+    if (diffHours < 24) return `${diffHours} giờ trước`;
+    if (diffDays < 7) return `${diffDays} ngày trước`;
+    return date.toLocaleDateString('vi-VN');
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-cream">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <Loader2 className="size-8 animate-spin text-primary" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-cream">
@@ -134,10 +129,15 @@ export default function NotificationsPage() {
           <div className="flex items-center gap-2">
             {unreadCount > 0 && (
               <button
-                onClick={markAllAsRead}
-                className="px-4 py-2 bg-white border border-border hover:bg-secondary-50 text-text-main font-medium rounded-lg flex items-center gap-2 transition-colors"
+                onClick={handleMarkAllAsRead}
+                disabled={markAllAsRead.isPending}
+                className="px-4 py-2 bg-white border border-border hover:bg-secondary-50 text-text-main font-medium rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50"
               >
-                <Check className="size-4" />
+                {markAllAsRead.isPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Check className="size-4" />
+                )}
                 Đọc tất cả
               </button>
             )}
@@ -169,10 +169,10 @@ export default function NotificationsPage() {
 
         {/* Notifications List */}
         <div className="space-y-3">
-          {filteredNotifications.map((notification) => {
-            const config = typeConfig[notification.type as keyof typeof typeConfig];
-            const Icon = config?.icon || Bell;
-            const colorClass = config?.color || 'text-gray-600 bg-gray-50';
+          {notifications.map((notification) => {
+            const config = typeConfig[notification.type as keyof typeof typeConfig] || typeConfig.SYSTEM;
+            const Icon = config.icon;
+            const colorClass = config.color;
 
             return (
               <div
@@ -187,26 +187,31 @@ export default function NotificationsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4 mb-1">
-                      <h3 className={`font-bold ${notification.read ? 'text-text-main' : 'text-text-main'}`}>
+                      <h3 className="font-bold text-text-main">
                         {notification.title}
                         {!notification.read && (
                           <span className="inline-block size-2 bg-red-500 rounded-full ml-2" />
                         )}
                       </h3>
-                      <span className="text-xs text-text-muted whitespace-nowrap">{notification.time}</span>
+                      <span className="text-xs text-text-muted whitespace-nowrap">{formatTime(notification.createdAt)}</span>
                     </div>
                     <p className="text-sm text-text-muted mb-3">{notification.message}</p>
                     <div className="flex items-center justify-between">
-                      <Link
-                        href={notification.link}
-                        onClick={() => markAsRead(notification.id)}
-                        className="text-primary text-sm font-medium flex items-center gap-1 hover:underline"
-                      >
-                        Xem chi tiết <ChevronRight className="size-4" />
-                      </Link>
+                      {notification.link ? (
+                        <Link
+                          href={notification.link}
+                          onClick={() => handleMarkAsRead(notification.id)}
+                          className="text-primary text-sm font-medium flex items-center gap-1 hover:underline"
+                        >
+                          Xem chi tiết <ChevronRight className="size-4" />
+                        </Link>
+                      ) : (
+                        <span />
+                      )}
                       <button
-                        onClick={() => deleteNotification(notification.id)}
-                        className="text-text-muted hover:text-red-500 transition-colors"
+                        onClick={() => handleDelete(notification.id)}
+                        disabled={deleteNotification.isPending}
+                        className="text-text-muted hover:text-red-500 transition-colors disabled:opacity-50"
                       >
                         <Trash2 className="size-4" />
                       </button>
@@ -218,7 +223,7 @@ export default function NotificationsPage() {
           })}
         </div>
 
-        {filteredNotifications.length === 0 && (
+        {notifications.length === 0 && (
           <div className="text-center py-16">
             <div className="size-20 bg-secondary-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Bell className="size-10 text-text-muted" />

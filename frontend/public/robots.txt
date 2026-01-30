@@ -1,0 +1,31 @@
+# Robots.txt for Fashion AI - WEARLY
+# https://www.robotstxt.org/
+
+User-agent: *
+Allow: /
+
+# Disallow admin and private areas
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /api/
+Disallow: /checkout
+Disallow: /profile
+Disallow: /settings
+Disallow: /settings/*
+Disallow: /orders
+Disallow: /dashboard
+
+# Disallow search with parameters (to prevent duplicate content)
+Disallow: /search?*
+
+# Allow important assets
+Allow: /images/
+Allow: /icons/
+Allow: /*.js$
+Allow: /*.css$
+
+# Sitemap location
+Sitemap: https://wearly.vn/sitemap.xml
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1

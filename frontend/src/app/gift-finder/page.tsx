@@ -1,11 +1,7 @@
 /**
  * AI Concierge Gift Finder - Fashion AI
  * 
- * Tìm quà tặng với AI:
- * - Chọn người nhận (Bạn gái, Mẹ, Bạn bè, etc.)
- * - Dịp (Sinh nhật, Valentine, Giáng sinh)
- * - Budget slider
- * - AI curated suggestions
+ * Tìm quà tặng với AI integration
  */
 
 'use client';
@@ -25,9 +21,13 @@ import {
   Star,
   ShoppingBag,
   ChevronRight,
-  Wand2
+  Wand2,
+  Loader2
 } from 'lucide-react';
 import { Header, Footer } from '@/components';
+import { useGiftSuggest } from '@/hooks/useAI';
+import { useAddToCart } from '@/hooks/useCart';
+import { toastSuccess, toastError } from '@/stores';
 
 // Recipients
 const recipients = [
@@ -49,57 +49,61 @@ const occasions = [
   { id: 'other', name: 'Khác', icon: PartyPopper, emoji: '🎉' },
 ];
 
-// Mock gift suggestions
-const giftSuggestions = [
-  {
-    id: '1',
-    name: 'Cashmere Scarf Set',
-    price: 2800000,
-    match: 98,
-    image: 'https://images.unsplash.com/photo-1520903920243-00d872a2d1c9?w=400',
-    reason: 'Phù hợp với sở thích thời trang tinh tế',
-  },
-  {
-    id: '2',
-    name: 'Silk Pajama Set',
-    price: 3200000,
-    match: 95,
-    image: 'https://images.unsplash.com/photo-1564415315949-7a0c4c73aab4?w=400',
-    reason: 'Lựa chọn sang trọng và thiết thực',
-  },
-  {
-    id: '3',
-    name: 'Leather Handbag',
-    price: 5500000,
-    match: 92,
-    image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400',
-    reason: 'Đầu tư lâu dài, phong cách cổ điển',
-  },
-  {
-    id: '4',
-    name: 'Pearl Earrings',
-    price: 1800000,
-    match: 88,
-    image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400',
-    reason: 'Trang nhã và phù hợp mọi dịp',
-  },
-];
+interface GiftSuggestion {
+  id: string;
+  name: string;
+  price: number;
+  match: number;
+  image: string;
+  reason: string;
+  variantId?: string;
+}
 
 export default function GiftFinderPage() {
   const [selectedRecipient, setSelectedRecipient] = useState<string | null>(null);
   const [selectedOccasion, setSelectedOccasion] = useState<string | null>(null);
   const [budget, setBudget] = useState(3000000);
-  const [showResults, setShowResults] = useState(false);
+  const [suggestions, setSuggestions] = useState<GiftSuggestion[]>([]);
+
+  const giftSuggest = useGiftSuggest();
+  const addToCart = useAddToCart();
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN').format(price) + '₫';
   };
 
-  const handleFindGifts = () => {
-    if (selectedRecipient && selectedOccasion) {
-      setShowResults(true);
+  const handleFindGifts = async () => {
+    if (!selectedRecipient || !selectedOccasion) return;
+    
+    try {
+      const result = await giftSuggest.mutateAsync({
+        recipient: selectedRecipient,
+        occasion: selectedOccasion,
+
+        budget,
+      });
+      setSuggestions(result || []);
+    } catch {
+      toastError('Lỗi', 'Không thể tìm gợi ý. Vui lòng thử lại.');
     }
   };
+
+  const handleAddToCart = async (gift: GiftSuggestion) => {
+    if (!gift.variantId) {
+      // Redirect to product page if no variant
+      window.location.href = `/products/${gift.id}`;
+      return;
+    }
+    try {
+      await addToCart.mutateAsync({ productId: gift.id, variantId: gift.variantId, quantity: 1 });
+      toastSuccess('Thành công', `Đã thêm ${gift.name} vào giỏ hàng`);
+    } catch {
+      toastError('Lỗi', 'Không thể thêm vào giỏ hàng');
+    }
+  };
+
+
+  const showResults = suggestions.length > 0;
 
   return (
     <div className="min-h-screen flex flex-col bg-cream">
@@ -202,19 +206,25 @@ export default function GiftFinderPage() {
             {/* Find Gifts Button */}
             <button
               onClick={handleFindGifts}
-              disabled={!selectedRecipient || !selectedOccasion}
+              disabled={!selectedRecipient || !selectedOccasion || giftSuggest.isPending}
               className="w-full py-5 bg-gradient-to-r from-accent to-primary hover:opacity-90 disabled:opacity-50 text-white font-bold text-xl rounded-2xl shadow-lg flex items-center justify-center gap-3 transition-all"
             >
-              <Wand2 className="size-6" />
-              Tìm Quà Với AI
-              <Sparkles className="size-5" />
+              {giftSuggest.isPending ? (
+                <Loader2 className="size-6 animate-spin" />
+              ) : (
+                <>
+                  <Wand2 className="size-6" />
+                  Tìm Quà Với AI
+                  <Sparkles className="size-5" />
+                </>
+              )}
             </button>
           </div>
         ) : (
           <div className="space-y-8">
             {/* Back Button */}
             <button
-              onClick={() => setShowResults(false)}
+              onClick={() => setSuggestions([])}
               className="text-primary font-medium flex items-center gap-1 hover:underline"
             >
               ← Thay đổi tiêu chí
@@ -238,7 +248,7 @@ export default function GiftFinderPage() {
 
             {/* Gift Suggestions */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {giftSuggestions.filter(g => g.price <= budget).map((gift) => (
+              {suggestions.map((gift) => (
                 <div
                   key={gift.id}
                   className="bg-white rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-shadow group"
@@ -259,7 +269,11 @@ export default function GiftFinderPage() {
                     <p className="text-sm text-text-muted mb-3">{gift.reason}</p>
                     <div className="flex items-center justify-between">
                       <span className="text-xl font-bold text-primary">{formatPrice(gift.price)}</span>
-                      <button className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg transition-colors">
+                      <button 
+                        onClick={() => handleAddToCart(gift)}
+                        disabled={addToCart.isPending}
+                        className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg transition-colors disabled:opacity-50"
+                      >
                         <ShoppingBag className="size-4" />
                         Thêm
                       </button>
@@ -269,6 +283,14 @@ export default function GiftFinderPage() {
               ))}
             </div>
 
+            {/* Empty state */}
+            {suggestions.length === 0 && (
+              <div className="text-center py-16">
+                <Gift className="size-12 text-text-muted mx-auto mb-4" />
+                <p className="text-text-muted">Không tìm thấy gợi ý phù hợp. Hãy thử tiêu chí khác!</p>
+              </div>
+            )}
+
             {/* Need More Help */}
             <div className="bg-white rounded-2xl border border-border p-6 flex items-center justify-between">
               <div>
@@ -276,7 +298,7 @@ export default function GiftFinderPage() {
                 <p className="text-sm text-text-muted">Chat với AI Concierge để tìm món quà độc đáo hơn</p>
               </div>
               <Link
-                href="/support"
+                href="/chat"
                 className="flex items-center gap-2 px-4 py-2 bg-accent/10 text-accent font-bold rounded-lg hover:bg-accent/20 transition-colors"
               >
                 Chat Ngay
