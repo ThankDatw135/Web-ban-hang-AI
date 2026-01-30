@@ -23,6 +23,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
 import { EventsModule } from './modules/events/events.module';
 import { HealthController } from './health.controller';
 import { LoggerModule } from './common/logger';
+import { CouponsModule } from './modules/coupons/coupons.module';
 
 @Module({
   imports: [
@@ -75,6 +76,7 @@ import { LoggerModule } from './common/logger';
     AiModule,
     ReviewsModule,
     EventsModule,
+    CouponsModule,
   ],
   controllers: [HealthController],
 })
