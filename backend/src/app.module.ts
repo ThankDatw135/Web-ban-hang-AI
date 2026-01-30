@@ -22,6 +22,7 @@ import { AiModule } from './modules/ai/ai.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { EventsModule } from './modules/events/events.module';
 import { HealthController } from './health.controller';
+import { LoggerModule } from './common/logger';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { HealthController } from './health.controller';
     // Core Modules
     PrismaModule,
     RedisModule,
+    LoggerModule,
 
     // Feature Modules
     AuthModule,

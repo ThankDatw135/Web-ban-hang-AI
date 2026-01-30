@@ -137,8 +137,16 @@ model Product {
     orderItems OrderItem[]
     aiJobs     AIJob[]
 
+    // Indexes cho tối ưu query
+    // - categoryId: Lọc theo danh mục
+    // - price: Sắp xếp theo giá
+    // - createdAt: Sắp xếp theo mới nhất
+    // - isActive + categoryId: Query phổ biến nhất
     @@index([categoryId])
     @@index([isActive, isFeatured])
+    @@index([price])
+    @@index([createdAt])
+    @@index([isActive, categoryId, createdAt])
     @@map("products")
 }
 
@@ -269,9 +277,15 @@ model Order {
     items    OrderItem[]
     payments Payment[]
 
+    // Indexes cho tối ưu query
+    // - userId + status: Lọc đơn hàng theo user và trạng thái
+    // - createdAt: Sắp xếp theo ngày
+    // - orderNumber: Tìm kiếm theo mã đơn
     @@index([userId])
     @@index([status])
     @@index([orderNumber])
+    @@index([createdAt])
+    @@index([userId, status, createdAt])
     @@map("orders")
 }
 

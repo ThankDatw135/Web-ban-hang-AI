@@ -1,6 +1,18 @@
+/**
+ * RedisModule - Module Redis với CacheService
+ * 
+ * Exports:
+ * - REDIS_CLIENT: Raw Redis client (ioredis)
+ * - CacheService: Wrapper với caching methods
+ * 
+ * @author Fashion AI Team
+ * @updated 30/01/2026 - Thêm CacheService
+ */
+
 import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
+import { CacheService } from './cache.service';
 
 export const REDIS_CLIENT = 'REDIS_CLIENT';
 
@@ -22,7 +34,9 @@ export const REDIS_CLIENT = 'REDIS_CLIENT';
       },
       inject: [ConfigService],
     },
+    CacheService,
   ],
-  exports: [REDIS_CLIENT],
+  exports: [REDIS_CLIENT, CacheService],
 })
 export class RedisModule {}
+
