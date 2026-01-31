@@ -59,7 +59,4 @@ export interface ResetPasswordRequest {
   password: string;
 }
 
-export interface Verify2FARequest {
-  code: string;
-  sessionId: string;
-}
+

@@ -23,10 +23,8 @@ import {
   Settings,
   Sparkles,
   BarChart3,
-  Boxes,
   Tag,
   MessageSquare,
-  Crown,
   Database,
   Bell,
   LogOut,
@@ -40,10 +38,10 @@ const sidebarItems = [
   { icon: BarChart3, label: 'Tổng quan', href: '/admin/overview' },
   { icon: ShoppingCart, label: 'Đơn hàng', href: '/admin/orders' },
   { icon: Package, label: 'Sản phẩm', href: '/admin/products' },
-  { icon: Boxes, label: 'Kho hàng', href: '/admin/inventory' },
-  { icon: Tag, label: 'Khuyến mãi', href: '/admin/promotions' },
+
+
   { icon: Users, label: 'Khách hàng', href: '/admin/customers' },
-  { icon: Crown, label: 'VIP', href: '/admin/vip' },
+
   { icon: Sparkles, label: 'AI Config', href: '/admin/ai-config' },
   { icon: Database, label: 'Dữ liệu', href: '/admin/data' },
   { icon: MessageSquare, label: 'Đánh giá', href: '/admin/reviews' },

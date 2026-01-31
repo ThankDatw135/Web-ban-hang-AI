@@ -19,7 +19,7 @@ const aiRecommendations = [
     name: 'Silk Evening Gown',
     price: 21990000,
     image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600',
-    material: 'Evening Collection',
+    category: 'Evening Collection',
   },
   {
     id: '2',
@@ -27,7 +27,7 @@ const aiRecommendations = [
     name: 'Cashmere Wrap',
     price: 7890000,
     image: 'https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=600',
-    material: 'Winter Essentials',
+    category: 'Winter Essentials',
   },
   {
     id: '3',
@@ -35,7 +35,7 @@ const aiRecommendations = [
     name: 'Artisan Leather Tote',
     price: 13290000,
     image: 'https://images.unsplash.com/photo-1548036328-c9fa89c34de7?w=600',
-    material: 'Accessories',
+    category: 'Accessories',
   },
   {
     id: '4',
@@ -43,7 +43,7 @@ const aiRecommendations = [
     name: 'Suede Trench',
     price: 29490000,
     image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600',
-    material: 'Outerwear',
+    category: 'Outerwear',
   },
 ];
 

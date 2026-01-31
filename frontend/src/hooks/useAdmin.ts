@@ -226,6 +226,8 @@ export function useAdminCustomers(filters: AdminCustomerFilters = {}) {
   });
 }
 
+
+
 // ==================== PROMOTIONS ====================
 
 export interface Promotion {
@@ -318,79 +320,7 @@ export function useAdminAnalytics(period: 'week' | 'month' | 'year' = 'week') {
   });
 }
 
-// ==================== INVENTORY ====================
 
-export interface InventoryItem {
-  id: string;
-  productId: string;
-  productName: string;
-  variantId: string;
-  sku: string;
-  size: string;
-  color: string;
-  stock: number;
-  reorderLevel: number;
-  status: 'ok' | 'low' | 'critical' | 'outofstock';
-  updatedAt: string;
-}
-
-export interface InventoryFilters {
-  page?: number;
-  limit?: number;
-  search?: string;
-  status?: 'ok' | 'low' | 'critical' | 'outofstock';
-}
-
-export function useAdminInventory(filters: InventoryFilters = {}) {
-  return useQuery({
-    queryKey: ['admin', 'inventory', filters],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (filters.page) params.set('page', String(filters.page));
-      if (filters.limit) params.set('limit', String(filters.limit));
-      if (filters.search) params.set('search', filters.search);
-      if (filters.status) params.set('status', filters.status);
-
-      const response = await apiClient.get<{ 
-        success: boolean; 
-        data: { 
-          items: InventoryItem[]; 
-          meta: { total: number; page: number; totalPages: number };
-          stats: { total: number; low: number; critical: number; outOfStock: number };
-        } 
-      }>(`/admin/inventory?${params.toString()}`);
-      return response.data.data;
-    },
-  });
-}
-
-export function useUpdateInventory() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, stock, reorderLevel }: { id: string; stock?: number; reorderLevel?: number }) => {
-      const response = await apiClient.patch(`/admin/inventory/${id}`, { stock, reorderLevel });
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'inventory'] });
-    },
-  });
-}
-
-export function useAdjustStock() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, adjustment, reason }: { id: string; adjustment: number; reason?: string }) => {
-      const response = await apiClient.post(`/admin/inventory/${id}/adjust`, { adjustment, reason });
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'inventory'] });
-    },
-  });
-}
 
 // ==================== REVIEWS ====================
 
@@ -581,7 +511,7 @@ export interface AdminSettings {
   vnpay: boolean;
   momo: boolean;
   freeShippingThreshold: number;
-  twoFactor: boolean;
+
 }
 
 export function useAdminSettings() {

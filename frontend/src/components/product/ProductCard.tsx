@@ -1,41 +1,37 @@
 'use client';
 
-/**
- * ProductCard Component - Fashion AI
- * 
- * Premium product card với:
- * - Hover zoom effect
- * - AI Try-on button
- * - Badge (New, Sale)
- */
-
 import Image from 'next/image';
 import Link from 'next/link';
-import { View } from 'lucide-react';
+import { useState } from 'react';
 
 interface ProductCardProps {
   id: string;
-  slug: string;
   name: string;
   price: number;
   originalPrice?: number;
   image: string;
-  material?: string;
+  category?: string;
+  slug: string;
   isNew?: boolean;
-  onSale?: boolean;
 }
 
+/**
+ * ProductCard Component - Fashion AI
+ * Hiển thị sản phẩm trong danh sách/lưới
+ */
 export default function ProductCard({
   id,
-  slug,
   name,
   price,
   originalPrice,
   image,
-  material,
-  isNew,
-  onSale,
+  category,
+  slug,
+  isNew = false,
 }: ProductCardProps) {
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
   const formatPrice = (value: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
@@ -44,64 +40,70 @@ export default function ProductCard({
   };
 
   return (
-    <div className="group flex flex-col gap-3">
+    <div
+      className="group flex flex-col gap-4 rounded-2xl bg-white shadow-sm hover:shadow-xl transition-shadow duration-300"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {/* Image Container */}
-      <Link href={`/products/${slug}`} className="relative w-full aspect-[3/4] bg-secondary-100 rounded-lg overflow-hidden cursor-pointer">
-        {/* Product Image */}
-        <div
-          className="w-full h-full bg-center bg-cover product-image-hover"
-          style={{ backgroundImage: `url(${image})` }}
-        />
+      <div className="relative w-full aspect-[3/4] overflow-hidden rounded-t-2xl">
+        <Link href={`/products/${slug}`}>
+          <Image
+            src={image}
+            alt={name}
+            fill
+            className={`object-cover transition-transform duration-500 ${
+              isHovered ? 'scale-105' : 'scale-100'
+            }`}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+          />
+        </Link>
 
-        {/* AI Try-on Button */}
+        {/* Favorite Button */}
         <button
-          className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur rounded-full 
-                     opacity-0 group-hover:opacity-100 transition-opacity 
-                     text-text-main hover:text-accent hover:bg-white"
-          title="Thử đồ với AI"
-          onClick={(e) => {
-            e.preventDefault();
-            // TODO: Open AI try-on modal
-          }}
+          onClick={() => setIsFavorite(!isFavorite)}
+          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center hover:text-red-500 transition-colors"
+          aria-label={isFavorite ? 'Bỏ yêu thích' : 'Thêm yêu thích'}
         >
-          <View className="size-5" />
+          <span className="material-symbols-outlined text-[20px]">
+            {isFavorite ? 'favorite' : 'favorite_border'}
+          </span>
         </button>
 
-        {/* Badges */}
+        {/* New Badge */}
         {isNew && (
-          <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded text-xs font-bold uppercase tracking-wider">
+          <span className="absolute top-3 left-3 px-3 py-1 bg-accent text-white text-xs font-bold rounded-full">
             Mới
-          </div>
+          </span>
         )}
-        {onSale && (
-          <div className="absolute bottom-3 left-3 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold uppercase tracking-wider">
-            Giảm giá
-          </div>
-        )}
-      </Link>
+      </div>
 
       {/* Product Info */}
-      <div className="space-y-1">
-        <div className="flex justify-between items-start">
-          <Link href={`/products/${slug}`}>
-            <h3 className="text-base font-medium text-text-main group-hover:text-primary transition-colors cursor-pointer line-clamp-1">
-              {name}
-            </h3>
-          </Link>
-          <div className="text-right">
-            <p className="text-sm font-bold text-text-main">
-              {formatPrice(price)}
-            </p>
-            {originalPrice && originalPrice > price && (
-              <p className="text-xs text-text-muted line-through">
-                {formatPrice(originalPrice)}
+      <div className="flex flex-col flex-1 p-5 pt-2 gap-4">
+        <div>
+          {category && (
+            <p className="text-secondary-500 text-xs uppercase tracking-wider mb-1">{category}</p>
+          )}
+          <div className="flex justify-between items-start">
+            <Link href={`/products/${slug}`}>
+              <p className="text-secondary-800 text-lg font-bold leading-snug hover:text-primary transition-colors">
+                {name}
               </p>
+            </Link>
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-primary font-bold">{formatPrice(price)}</p>
+            {originalPrice && originalPrice > price && (
+              <p className="text-secondary-400 text-sm line-through">{formatPrice(originalPrice)}</p>
             )}
           </div>
         </div>
-        {material && (
-          <p className="text-xs text-text-muted">{material}</p>
-        )}
+
+        {/* Add to Cart Button */}
+        <button className="flex w-full cursor-pointer items-center justify-center rounded-full h-11 bg-primary text-white text-sm font-bold hover:bg-primary-600 transition-colors gap-2">
+          <span className="material-symbols-outlined text-[18px]">shopping_bag</span>
+          Mua ngay
+        </button>
       </div>
     </div>
   );

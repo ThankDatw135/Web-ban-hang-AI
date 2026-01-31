@@ -33,7 +33,7 @@ const defaultSettings: AdminSettings = {
   vnpay: true,
   momo: true,
   freeShippingThreshold: 500000,
-  twoFactor: true,
+
 };
 
 export default function AdminSettingsPage() {
@@ -293,21 +293,7 @@ export default function AdminSettingsPage() {
               </div>
             )}
 
-            {activeSection === 'security' && (
-              <div className="space-y-4">
-                <h2 className="font-bold text-text-main mb-4">Bảo Mật</h2>
-                <div className="flex items-center justify-between p-4 bg-secondary-50 rounded-xl">
-                  <div>
-                    <p className="font-medium text-text-main">Xác thực 2 bước</p>
-                    <p className="text-sm text-text-muted">Yêu cầu OTP khi đăng nhập admin</p>
-                  </div>
-                  <Toggle 
-                    value={settings.twoFactor} 
-                    onChange={() => updateSetting('twoFactor', !settings.twoFactor)} 
-                  />
-                </div>
-              </div>
-            )}
+
           </div>
         </div>
       </main>

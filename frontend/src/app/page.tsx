@@ -1,19 +1,20 @@
 /**
  * Fashion AI - Homepage
  * 
+ * Design: stitch_trang_ch_fashion_ai/trang_chủ_fashion_ai
+ * 
  * Sections:
- * - Hero: AI-powered fashion tagline
- * - Featured Products: API-driven
- * - New Arrivals: API-driven
- * - Collections: API-driven
- * - AI Try-On CTA
+ * - Hero: Collection badge + "Thời trang Tương lai" gradient text
+ * - Virtual Try-On: Step-by-step guide
+ * - New Collection: Product carousel
+ * - AI Stylist: Chat demo section
  * - Footer
  */
 
 'use client';
 
 import Link from 'next/link';
-import { Sparkles, ArrowRight, View, ChevronRight, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Header, Footer, ProductCard, AIChatWidget } from '@/components';
 import { useFeaturedProducts, useNewArrivals, useFeaturedCollections } from '@/hooks/useHome';
 
@@ -23,81 +24,72 @@ export default function HomePage() {
   const { data: collections, isLoading: collectionsLoading } = useFeaturedCollections(4);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-cream">
       <Header />
 
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="container-custom py-12 md:py-20 lg:py-24">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-            {/* Hero Content */}
-            <div className="flex flex-col gap-6 order-2 lg:order-1 text-center lg:text-left">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight text-text-main">
-                Redefining Luxury with{' '}
-                <span className="text-gradient">Intelligence</span>
-              </h1>
-
-              <p className="text-lg text-text-muted md:max-w-lg mx-auto lg:mx-0">
-                Trải nghiệm tương lai của thời trang. Thử đồ ảo trên bộ sưu tập mới nhất 
-                với công nghệ AI tiên tiến của chúng tôi.
-              </p>
-
-              <div className="flex flex-wrap gap-4 justify-center lg:justify-start pt-4">
-                <Link
-                  href="/try-on"
-                  className="btn-accent btn-lg flex items-center gap-2"
-                >
-                  <View className="size-5" />
-                  Thử đồ với AI
-                </Link>
-                <Link
-                  href="/shop"
-                  className="btn-primary btn-lg"
-                >
-                  Khám phá BST
-                </Link>
+        <section className="relative w-full py-12 md:py-20 lg:py-24">
+          <div className="max-w-[1280px] mx-auto px-4 md:px-10 lg:px-40">
+            <div className="flex flex-col lg:flex-row gap-12 items-center">
+              {/* Hero Content */}
+              <div className="flex flex-col gap-6 flex-1 text-center lg:text-left items-center lg:items-start z-10">
+                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full bg-primary"></span>
+                  Bộ sưu tập Thu Đông 2024
+                </span>
+                
+                <h1 className="text-5xl md:text-6xl lg:text-7xl font-black leading-[1.1] tracking-tight text-secondary-800">
+                  Thời trang <br className="hidden lg:block" />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-[#dcb77d]">
+                    Tương lai
+                  </span>
+                </h1>
+                
+                <p className="text-lg text-secondary-500 max-w-[540px] leading-relaxed">
+                  Trải nghiệm mua sắm đẳng cấp với công nghệ AI. Khám phá phong cách độc bản dành riêng cho bạn.
+                </p>
+                
+                <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mt-4">
+                  <Link
+                    href="/try-on"
+                    className="flex items-center justify-center gap-2 px-8 h-14 rounded-full bg-accent hover:bg-accent/90 text-white text-base font-bold shadow-lg shadow-accent/20 transition-all transform hover:-translate-y-0.5 w-full sm:w-auto"
+                  >
+                    <span className="material-symbols-outlined">view_in_ar</span>
+                    Thử đồ ngay với AI
+                  </Link>
+                  <Link
+                    href="/shop"
+                    className="flex items-center justify-center gap-2 px-8 h-14 rounded-full border border-secondary-300 hover:bg-white text-secondary-800 text-base font-bold transition-all w-full sm:w-auto"
+                  >
+                    Khám phá bộ sưu tập
+                  </Link>
+                </div>
               </div>
 
-              {/* Social Proof */}
-              <div className="pt-8 flex items-center justify-center lg:justify-start gap-4 text-xs font-medium text-text-muted uppercase tracking-widest">
-                <span>Featured In</span>
-                <div className="h-px w-12 bg-primary/30" />
-                <span>Vogue</span>
-                <span>•</span>
-                <span>Elle</span>
-                <span>•</span>
-                <span>Harper's Bazaar</span>
-              </div>
-            </div>
-
-            {/* Hero Image */}
-            <div className="order-1 lg:order-2 w-full relative group">
-              <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-accent/10 rounded-2xl transform rotate-3 group-hover:rotate-2 transition-transform duration-500" />
-              
-              <div className="relative w-full aspect-square md:aspect-[4/5] lg:aspect-square bg-secondary-100 rounded-2xl overflow-hidden shadow-2xl">
-                <div
-                  className="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-                  style={{
-                    backgroundImage: `url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800')`,
-                  }}
-                />
-
-                {/* AI Analysis Overlay */}
-                <div className="absolute bottom-6 left-6 right-6 bg-white/90 backdrop-blur p-4 rounded-xl shadow-lg flex items-center gap-4 animate-slide-up">
-                  <div
-                    className="size-12 rounded-lg bg-cover bg-center flex-shrink-0"
-                    style={{
-                      backgroundImage: `url('https://images.unsplash.com/photo-1558171813-4c088753af8f?w=100')`,
-                    }}
+              {/* Hero Image */}
+              <div className="flex-1 w-full relative group">
+                <div className="absolute -top-10 -right-10 w-[80%] h-[80%] bg-primary/20 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+                <div className="absolute -bottom-10 -left-10 w-[60%] h-[60%] bg-accent/20 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+                
+                <div className="relative w-full aspect-[4/5] md:aspect-square lg:aspect-[4/5] rounded-[2.5rem] overflow-hidden shadow-2xl">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent z-10"></div>
+                  <div 
+                    className="w-full h-full bg-center bg-cover transition-transform duration-700 group-hover:scale-105"
+                    style={{ backgroundImage: `url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800')` }}
                   />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-accent mb-0.5">AI Analysis</p>
-                    <p className="text-sm font-semibold truncate text-text-main">
-                      Silk Blend • 98% Match
-                    </p>
-                  </div>
-                  <div className="size-8 rounded-full bg-accent/10 flex items-center justify-center text-accent">
-                    <Sparkles className="size-4" />
+                  
+                  {/* Featured Product Card */}
+                  <div className="absolute bottom-6 left-6 right-6 z-20">
+                    <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-white/20 flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-bold text-secondary-500 uppercase tracking-wide">Featured</p>
+                        <p className="text-sm font-bold text-secondary-800">Áo khoác Cashmere</p>
+                      </div>
+                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-primary shadow-sm cursor-pointer hover:scale-110 transition-transform">
+                        <span className="material-symbols-outlined">arrow_forward</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -105,195 +97,210 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Featured Products */}
-        <section className="container-custom pt-10 pb-4">
-          <div className="flex items-end justify-between border-b border-primary/20 pb-4">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-text-main tracking-tight">
-                Sản Phẩm Nổi Bật
-              </h2>
-              <p className="text-text-muted mt-1 text-sm">
-                Bộ sưu tập được tuyển chọn cho phong cách hiện đại.
-              </p>
+        {/* Virtual Try-On Section */}
+        <section className="relative w-full py-16 bg-white">
+          <div className="max-w-[1280px] mx-auto px-4 md:px-10 lg:px-40">
+            <div className="grid lg:grid-cols-2 gap-16 items-center">
+              {/* Demo Images */}
+              <div className="relative order-2 lg:order-1">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-4 pt-12">
+                    <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-secondary-100 shadow-lg">
+                      <div 
+                        className="w-full h-full bg-cover bg-center"
+                        style={{ backgroundImage: `url('https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400')` }}
+                      />
+                    </div>
+                    <div className="p-4 bg-cream rounded-xl border border-secondary-100 shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+                          <span className="material-symbols-outlined text-[18px]">check</span>
+                        </div>
+                        <p className="text-sm font-bold">Size M phù hợp 98%</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-cream rounded-xl border border-secondary-100 shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-accent/10 text-accent flex items-center justify-center">
+                          <span className="material-symbols-outlined text-[18px]">magic_button</span>
+                        </div>
+                        <p className="text-sm font-bold">AI Processing...</p>
+                      </div>
+                    </div>
+                    <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-secondary-100 shadow-lg relative">
+                      <div 
+                        className="w-full h-full bg-cover bg-center"
+                        style={{ backgroundImage: `url('https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400')` }}
+                      />
+                      <div className="absolute bottom-3 right-3 bg-accent text-white text-xs px-2 py-1 rounded-md font-bold">
+                        Generated
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="flex flex-col gap-8 order-1 lg:order-2">
+                <div className="flex flex-col gap-4">
+                  <h2 className="text-3xl md:text-4xl font-black text-secondary-800">
+                    Phòng thử đồ ảo <br />
+                    <span className="text-accent">Virtual Try-on</span>
+                  </h2>
+                  <p className="text-lg text-secondary-500">
+                    Không cần đến cửa hàng. Tải ảnh lên và xem trang phục trên người bạn chỉ trong vài giây. 
+                    Công nghệ AI tiên tiến giúp bạn chọn size chuẩn xác và phối đồ hoàn hảo.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  {[
+                    { icon: 'upload_file', title: '1. Tải ảnh lên', desc: 'Chọn ảnh toàn thân rõ nét của bạn để AI phân tích.' },
+                    { icon: 'checkroom', title: '2. Chọn trang phục', desc: 'Duyệt qua bộ sưu tập mới nhất và chọn món đồ yêu thích.' },
+                    { icon: 'auto_awesome', title: '3. Xem kết quả', desc: 'AI sẽ ướm thử đồ lên người bạn ngay lập tức với độ chân thực cao.' },
+                  ].map((step, idx) => (
+                    <div key={idx} className="flex gap-4 items-start">
+                      <div className={`w-12 h-12 shrink-0 rounded-full bg-cream border border-secondary-200 flex items-center justify-center ${idx === 2 ? 'text-accent' : 'text-primary'}`}>
+                        <span className="material-symbols-outlined">{step.icon}</span>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-secondary-800">{step.title}</h3>
+                        <p className="text-sm text-secondary-500">{step.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Link
+                  href="/try-on"
+                  className="w-fit flex items-center justify-center gap-2 px-6 h-12 rounded-full bg-accent text-white text-sm font-bold hover:bg-accent/90 transition-colors mt-4"
+                >
+                  <span className="material-symbols-outlined text-[20px]">camera_alt</span>
+                  Thử ngay bây giờ
+                </Link>
+              </div>
             </div>
-            <Link
-              href="/shop?featured=true"
-              className="hidden sm:flex items-center gap-1 text-sm font-bold text-primary hover:text-accent transition-colors"
-            >
-              Xem tất cả <ArrowRight className="size-4" />
-            </Link>
           </div>
         </section>
 
-        <section className="container-custom pb-16">
-          {featuredLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="size-8 animate-spin text-primary" />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 pt-8">
-              {featuredProducts?.map((product) => (
-                <ProductCard 
-                  key={product.id} 
-                  id={product.id}
-                  slug={product.slug}
-                  name={product.name}
-                  price={product.salePrice || product.price}
-                  originalPrice={product.salePrice ? product.price : undefined}
-                  image={product.images?.[0]?.url || product.image || ''}
-                  isNew={product.isNew}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Mobile View All */}
-          <div className="mt-10 text-center sm:hidden">
-            <Link href="/shop" className="btn-outline btn-lg w-full">
-              Xem tất cả sản phẩm
-            </Link>
-          </div>
-        </section>
-
-        {/* Featured Collections */}
-        <section className="bg-secondary-50 py-16">
-          <div className="container-custom">
-            <div className="flex items-end justify-between mb-8">
+        {/* New Collection Section */}
+        <section className="relative w-full pt-16 pb-6">
+          <div className="max-w-[1280px] mx-auto px-4 md:px-10 lg:px-40">
+            <div className="flex items-end justify-between px-4 pb-3">
               <div>
-                <h2 className="text-2xl md:text-3xl font-bold text-text-main tracking-tight">
-                  Bộ Sưu Tập
-                </h2>
-                <p className="text-text-muted mt-1 text-sm">
-                  Khám phá các bộ sưu tập được yêu thích nhất
-                </p>
+                <span className="text-primary font-bold uppercase tracking-wider text-sm mb-2 block">New Season</span>
+                <h2 className="text-secondary-800 text-3xl md:text-4xl font-bold leading-tight">Bộ Sưu Tập Mới</h2>
               </div>
               <Link
-                href="/collections"
-                className="hidden sm:flex items-center gap-1 text-sm font-bold text-primary hover:text-accent transition-colors"
+                href="/shop"
+                className="hidden sm:flex items-center gap-1 text-sm font-bold text-secondary-800 hover:text-primary transition-colors"
               >
-                Tất cả BST <ArrowRight className="size-4" />
+                Xem tất cả <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
               </Link>
             </div>
+          </div>
+        </section>
 
-            {collectionsLoading ? (
+        <section className="relative w-full pb-16">
+          <div className="max-w-[1280px] mx-auto px-4 md:px-10 lg:px-40">
+            {featuredLoading ? (
               <div className="flex items-center justify-center py-16">
                 <Loader2 className="size-8 animate-spin text-primary" />
               </div>
-            ) : collections && collections.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {collections.map((collection) => (
-                  <Link 
-                    key={collection.id} 
-                    href={`/collections/${collection.slug}`}
-                    className="group relative aspect-[4/5] rounded-2xl overflow-hidden"
-                  >
-                    <div 
-                      className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                      style={{ backgroundImage: `url('${collection.image}')` }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-6">
-                      <h3 className="text-xl font-bold text-white mb-1">{collection.name}</h3>
-                      <p className="text-white/80 text-sm flex items-center gap-1">
-                        {collection.productCount} sản phẩm
-                        <ChevronRight className="size-4" />
-                      </p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Fallback static collections */}
-                {[
-                  { name: 'Xuân Hè 2026', image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600', slug: 'xuan-he-2026', count: 48 },
-                  { name: 'Thu Đông 2025', image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600', slug: 'thu-dong-2025', count: 36 },
-                  { name: 'Essentials', image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=600', slug: 'essentials', count: 24 },
-                  { name: 'Limited Edition', image: 'https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600', slug: 'limited-edition', count: 12 },
-                ].map((col, idx) => (
-                  <Link 
-                    key={idx} 
-                    href={`/collections/${col.slug}`}
-                    className="group relative aspect-[4/5] rounded-2xl overflow-hidden"
-                  >
-                    <div 
-                      className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                      style={{ backgroundImage: `url('${col.image}')` }}
+              <div className="flex overflow-x-auto pb-8 -mx-4 px-4 snap-x snap-mandatory scrollbar-hide gap-6">
+                {(featuredProducts || []).map((product) => (
+                  <div key={product.id} className="snap-start shrink-0 w-[280px] md:w-[320px]">
+                    <ProductCard 
+                      id={product.id}
+                      slug={product.slug}
+                      name={product.name}
+                      price={product.salePrice || product.price}
+                      originalPrice={product.salePrice ? product.price : undefined}
+                      image={product.images?.[0]?.url || product.image || ''}
+                      isNew={product.isNew}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-6">
-                      <h3 className="text-xl font-bold text-white mb-1">{col.name}</h3>
-                      <p className="text-white/80 text-sm flex items-center gap-1">
-                        {col.count} sản phẩm
-                        <ChevronRight className="size-4" />
-                      </p>
-                    </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             )}
           </div>
         </section>
 
-        {/* New Arrivals */}
-        <section className="container-custom py-16">
-          <div className="flex items-end justify-between border-b border-primary/20 pb-4 mb-8">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-text-main tracking-tight">
-                Hàng Mới Về
-              </h2>
-              <p className="text-text-muted mt-1 text-sm">
-                Những sản phẩm mới nhất vừa cập bến
-              </p>
-            </div>
-            <Link
-              href="/shop?sort=newest"
-              className="hidden sm:flex items-center gap-1 text-sm font-bold text-primary hover:text-accent transition-colors"
-            >
-              Xem tất cả <ArrowRight className="size-4" />
-            </Link>
-          </div>
+        {/* AI Stylist Section */}
+        <section className="relative w-full py-16 lg:py-24 bg-secondary-800 text-white overflow-hidden">
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/20 rounded-full blur-[100px] translate-x-1/3 -translate-y-1/3"></div>
+          <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-primary/20 rounded-full blur-[80px] -translate-x-1/3 translate-y-1/3"></div>
+          
+          <div className="max-w-[1280px] mx-auto px-4 md:px-10 lg:px-40 relative z-10">
+            <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-24">
+              <div className="flex-1 space-y-6 text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/20 bg-white/10 text-xs font-bold uppercase tracking-wider mx-auto lg:mx-0">
+                  <span className="material-symbols-outlined text-[14px]">smart_toy</span>
+                  AI Stylist
+                </div>
+                <h2 className="text-4xl md:text-5xl font-black leading-tight">
+                  Bạn cần lời khuyên <br /> phối đồ?
+                </h2>
+                <p className="text-lg text-secondary-300 max-w-[500px] mx-auto lg:mx-0">
+                  Trợ lý AI của chúng tôi sẵn sàng 24/7 để tư vấn phong cách, gợi ý outfit cho sự kiện, hoặc giúp bạn tìm món đồ hoàn hảo.
+                </p>
+                <Link
+                  href="/ai-stylist"
+                  className="inline-flex items-center justify-center gap-2 px-8 h-12 rounded-full bg-white text-secondary-800 text-base font-bold hover:bg-secondary-100 transition-colors mx-auto lg:mx-0"
+                >
+                  <span className="material-symbols-outlined">chat_bubble</span>
+                  Chat với Stylist
+                </Link>
+              </div>
 
-          {arrivalsLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="size-8 animate-spin text-primary" />
+              {/* Chat Demo */}
+              <div className="flex-1 w-full max-w-[480px]">
+                <div className="bg-white text-secondary-800 rounded-3xl p-6 shadow-2xl space-y-4">
+                  <div className="flex gap-3">
+                    <div className="w-10 h-10 rounded-full bg-accent text-white flex items-center justify-center shrink-0">
+                      <span className="material-symbols-outlined text-[20px]">auto_awesome</span>
+                    </div>
+                    <div className="bg-secondary-100 p-4 rounded-2xl rounded-tl-none">
+                      <p className="text-sm">Xin chào! Tôi là AI Stylist của bạn. Bạn đang tìm trang phục cho dịp nào?</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 flex-row-reverse">
+                    <div className="w-10 h-10 rounded-full bg-secondary-200 flex items-center justify-center shrink-0">
+                      <span className="material-symbols-outlined text-[20px]">person</span>
+                    </div>
+                    <div className="bg-primary/20 p-4 rounded-2xl rounded-tr-none">
+                      <p className="text-sm">Tôi cần một bộ đồ cho tiệc tối cocktail, phong cách thanh lịch.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="w-10 h-10 rounded-full bg-accent text-white flex items-center justify-center shrink-0">
+                      <span className="material-symbols-outlined text-[20px]">auto_awesome</span>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="bg-secondary-100 p-4 rounded-2xl rounded-tl-none">
+                        <p className="text-sm">Tuyệt vời! Tôi gợi ý chiếc váy lụa Silk Evening Dress kết hợp với giày cao gót Classic Pumps.</p>
+                      </div>
+                      <div className="flex gap-3 bg-secondary-50 p-2 rounded-xl border border-secondary-100 items-center">
+                        <div 
+                          className="w-12 h-16 bg-secondary-200 rounded-lg bg-cover bg-center"
+                          style={{ backgroundImage: `url('https://images.unsplash.com/photo-1518611012118-696072aa579a?w=100')` }}
+                        />
+                        <div className="flex-1">
+                          <p className="text-xs font-bold">Silk Evening Dress</p>
+                          <p className="text-xs text-primary font-bold">$450</p>
+                        </div>
+                        <button className="w-8 h-8 flex items-center justify-center bg-primary text-white rounded-full">
+                          <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-              {newArrivals?.map((product) => (
-                <ProductCard 
-                  key={product.id} 
-                  id={product.id}
-                  slug={product.slug}
-                  name={product.name}
-                  price={product.salePrice || product.price}
-                  originalPrice={product.salePrice ? product.price : undefined}
-                  image={product.images?.[0]?.url || product.image || ''}
-                  isNew={true}
-                />
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* AI Try-On Banner */}
-        <section className="bg-gradient-to-r from-accent/5 to-accent/10 py-16 md:py-24">
-          <div className="container-custom text-center">
-            <div className="badge-ai mx-auto mb-6">
-              <Sparkles className="size-3" />
-              Powered by AI
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-text-main mb-4">
-              Thử Đồ Ảo Với AI
-            </h2>
-            <p className="text-text-muted max-w-xl mx-auto mb-8">
-              Upload ảnh của bạn, chọn sản phẩm yêu thích và xem ngay outfit trên cơ thể bạn. 
-              Trải nghiệm mua sắm chưa từng có!
-            </p>
-            <Link href="/try-on" className="btn-accent btn-lg inline-flex items-center gap-2">
-              <View className="size-5" />
-              Bắt đầu thử đồ
-            </Link>
           </div>
         </section>
       </main>
