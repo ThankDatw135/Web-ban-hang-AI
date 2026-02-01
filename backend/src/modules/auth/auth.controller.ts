@@ -22,6 +22,7 @@ import {
   ForgotPasswordDto,
   ResetPasswordDto,
   GoogleLoginDto,
+  VerifyOtpDto,
 } from "./dto";
 
 @ApiTags("Auth")
@@ -76,13 +77,22 @@ export class AuthController {
 
   @Post("forgot-password")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Yêu cầu đặt lại mật khẩu" })
+  @ApiOperation({ summary: "Yêu cầu mã OTP đặt lại mật khẩu" })
   @ApiResponse({
     status: 200,
-    description: "Email hướng dẫn đã được gửi (nếu email tồn tại)",
+    description: "Mã OTP đã được gửi (nếu email tồn tại)",
   })
   forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto);
+  }
+
+  @Post("verify-otp")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Xác thực mã OTP" })
+  @ApiResponse({ status: 200, description: "Xác thực thành công, trả về token reset" })
+  @ApiResponse({ status: 400, description: "Mã OTP không đúng hoặc hết hạn" })
+  verifyOtp(@Body() dto: VerifyOtpDto) {
+    return this.authService.verifyOtp(dto.email, dto.otp);
   }
 
   @Post("reset-password")

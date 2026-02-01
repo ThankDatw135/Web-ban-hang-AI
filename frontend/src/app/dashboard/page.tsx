@@ -1,312 +1,252 @@
 /**
- * Fashion AI User Dashboard
+ * Fashion AI - User Dashboard Page
  * 
- * Trang dashboard động với API integration:
- * - Current user info
- * - Recent orders
- * - AI recommendations
- * - Quick stats
+ * Trang tổng quan của người dùng với sidebar navigation
  */
 
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { 
-  Sparkles, 
+  User, 
   Package, 
   Heart, 
-  Gift, 
-  Clock, 
+  Sparkles, 
+  Settings, 
+  LogOut,
   ChevronRight,
-  Truck,
-  Star,
-  Shirt,
-  Calendar,
-  Loader2
+  MapPin,
 } from 'lucide-react';
-import { Header, Footer } from '@/components';
-import { useCurrentUser } from '@/hooks/useAuth';
-import { useOrders } from '@/hooks/useOrders';
-import { useFeaturedProducts } from '@/hooks/useProducts';
-import { useWishlistStore } from '@/stores';
+import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
+import { Button } from '@/components/ui/Button';
+import { OrderStatusBadge } from '@/components/ui/Badge';
+import { cn, formatCurrency, formatDate } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth-context';
+import { useProfile } from '@/hooks/use-user';
+import { useOrders } from '@/hooks/use-orders';
+import { Loader2 } from 'lucide-react';
+import type { OrderStatus } from '@/types/api';
+
+// Status mapping for OrderStatusBadge
+const statusMap: Record<OrderStatus, 'processing' | 'shipped' | 'delivered' | 'cancelled'> = {
+  PENDING: 'processing',
+  CONFIRMED: 'processing',
+  PROCESSING: 'processing',
+  SHIPPED: 'shipped',
+  DELIVERED: 'delivered',
+  CANCELLED: 'cancelled',
+  REFUNDED: 'cancelled',
+};
+
+// Sidebar navigation items
+const navItems = [
+  { href: '/dashboard', label: 'Tổng quan', icon: User },
+  { href: '/dashboard/orders', label: 'Đơn hàng', icon: Package },
+  { href: '/dashboard/wishlist', label: 'Yêu thích', icon: Heart },
+  { href: '/dashboard/ai-history', label: 'Lịch sử AI', icon: Sparkles },
+  { href: '/dashboard/addresses', label: 'Địa chỉ', icon: MapPin },
+  { href: '/dashboard/settings', label: 'Cài đặt', icon: Settings },
+];
 
 export default function DashboardPage() {
-  // Fetch data
-  const { data: user, isLoading: userLoading } = useCurrentUser();
-  const { data: ordersData } = useOrders(undefined, 1);
-  const { data: recommendations } = useFeaturedProducts(3);
-  const wishlist = useWishlistStore();
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN').format(price) + '₫';
-  };
+  const pathname = usePathname();
+  const { user } = useAuth();
+  
+  // Fetch profile and recent orders
+  const { data: profile, isLoading: profileLoading } = useProfile();
+  const { data: ordersData, isLoading: ordersLoading } = useOrders({ limit: 3 });
+  
+  const recentOrders = ordersData?.data || [];
+  const memberSince = profile?.createdAt 
+    ? new Date(profile.createdAt).toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' })
+    : '--';
 
   // Loading state
-  if (userLoading) {
+  if (profileLoading) {
     return (
-      <div className="min-h-screen flex flex-col bg-cream">
+      <>
         <Header />
-        <main className="flex-1 flex items-center justify-center">
-          <Loader2 className="size-8 animate-spin text-primary" />
-          <span className="ml-3 text-text-muted">Đang tải...</span>
+        <main className="flex-1 bg-gray-50 dark:bg-[#151210]">
+          <div className="container-app py-20 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
         </main>
         <Footer />
-      </div>
+      </>
     );
   }
 
-  // Stats
-  const stats = [
-    { label: 'Đơn hàng', value: ordersData?.meta?.total || 0, icon: Package, color: 'text-blue-600 bg-blue-50' },
-    { label: 'Wishlist', value: wishlist.items.length, icon: Heart, color: 'text-red-500 bg-red-50' },
-    { label: 'Điểm tích lũy', value: '0', icon: Star, color: 'text-amber-500 bg-amber-50' },
-    { label: 'Ưu đãi', value: 0, icon: Gift, color: 'text-purple-600 bg-purple-50' },
-  ];
-
-  // Quick actions
-  const quickActions = [
-    { label: 'Thử đồ AI', href: '/try-on', icon: Shirt, color: 'bg-accent' },
-    { label: 'Tủ đồ của tôi', href: '/wardrobe', icon: Shirt, color: 'bg-primary' },
-    { label: 'Đặt lịch styling', href: '/stylist', icon: Calendar, color: 'bg-green-600' },
-    { label: 'Hỗ trợ', href: '/support', icon: Gift, color: 'bg-blue-600' },
-  ];
-
-  const recentOrders = ordersData?.items?.slice(0, 2) || [];
-
   return (
-    <div className="min-h-screen flex flex-col bg-cream">
-      <Header />
+    <>
+      <Header isLoggedIn cartItemsCount={2} />
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-8 py-8">
-        {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 rounded-3xl p-8 mb-8 relative overflow-hidden">
-          <div className="absolute -right-20 -top-20 size-60 bg-primary/10 rounded-full blur-3xl" />
-          <div className="absolute -left-10 -bottom-10 size-40 bg-accent/10 rounded-full blur-2xl" />
-          <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
-              {user?.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt={user.firstName}
-                  className="size-16 rounded-2xl object-cover border-2 border-white shadow-lg"
-                />
-              ) : (
-                <div className="size-16 rounded-2xl bg-primary/20 flex items-center justify-center text-primary text-2xl font-bold">
-                  {user?.firstName?.[0]}{user?.lastName?.[0]}
-                </div>
-              )}
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <Sparkles className="size-4 text-accent" />
-                  <span className="text-xs font-bold text-accent uppercase tracking-wide">AI Stylist Greeting</span>
-                </div>
-                <h1 className="text-2xl font-bold text-text-main">
-                  Xin chào, {user?.firstName || 'Bạn'}! ✨
-                </h1>
-                <p className="text-text-muted">
-                  Hôm nay là ngày tuyệt vời để khám phá phong cách mới!
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Link href="/profile" className="px-4 py-2 bg-white rounded-xl border border-border hover:border-primary transition-colors">
-                <p className="text-xs text-text-muted">Tài khoản</p>
-                <p className="font-bold text-primary">{user?.email}</p>
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <div
-                key={stat.label}
-                className="bg-white rounded-2xl p-5 border border-border hover:shadow-md transition-shadow"
-              >
-                <div className={`size-10 rounded-xl ${stat.color} flex items-center justify-center mb-3`}>
-                  <Icon className="size-5" />
-                </div>
-                <p className="text-2xl font-bold text-text-main">{stat.value}</p>
-                <p className="text-sm text-text-muted">{stat.label}</p>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Recent Orders */}
-            <section className="bg-white rounded-2xl border border-border p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-text-main">Đơn Hàng Gần Đây</h2>
-                <Link href="/orders" className="text-primary text-sm font-medium flex items-center gap-1 hover:underline">
-                  Xem tất cả <ChevronRight className="size-4" />
-                </Link>
-              </div>
-              {recentOrders.length > 0 ? (
-                <div className="space-y-4">
-                  {recentOrders.map((order: any) => (
-                    <div
-                      key={order.id}
-                      className="flex items-center gap-4 p-4 bg-secondary-50 rounded-xl hover:bg-secondary-100 transition-colors"
-                    >
-                      <div className="size-16 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Package className="size-6 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-bold text-text-main">{order.orderNumber}</p>
-                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                            order.status === 'DELIVERED' ? 'text-green-600 bg-green-50' :
-                            order.status === 'SHIPPED' ? 'text-blue-600 bg-blue-50' :
-                            order.status === 'CANCELLED' ? 'text-red-600 bg-red-50' :
-                            'text-amber-600 bg-amber-50'
-                          }`}>
-                            {order.status === 'PENDING' ? 'Chờ xác nhận' :
-                             order.status === 'CONFIRMED' ? 'Đã xác nhận' :
-                             order.status === 'PROCESSING' ? 'Đang xử lý' :
-                             order.status === 'SHIPPED' ? 'Đang giao' :
-                             order.status === 'DELIVERED' ? 'Đã giao' :
-                             order.status === 'CANCELLED' ? 'Đã hủy' : order.status}
-                          </span>
-                        </div>
-                        <p className="text-sm text-text-muted">
-                          {order.itemCount || 1} sản phẩm • {new Date(order.createdAt).toLocaleDateString('vi-VN')}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-primary">{formatPrice(order.total)}</p>
-                        <Link href={`/orders/${order.id}`} className="text-xs text-text-muted hover:text-primary">
-                          Chi tiết →
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Package className="size-12 text-text-muted mx-auto mb-3 opacity-50" />
-                  <p className="text-text-muted">Chưa có đơn hàng nào</p>
-                  <Link href="/shop" className="text-primary font-medium hover:underline mt-2 inline-block">
-                    Bắt đầu mua sắm
-                  </Link>
-                </div>
-              )}
-            </section>
-
-            {/* AI Recommendations */}
-            {recommendations && recommendations.length > 0 && (
-              <section className="bg-white rounded-2xl border border-border p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="size-5 text-accent" />
-                    <h2 className="text-xl font-bold text-text-main">AI Gợi Ý Cho Bạn</h2>
+      <main className="flex-1 bg-gray-50 dark:bg-[#151210]">
+        <div className="container-app py-8">
+          <div className="lg:flex lg:gap-8">
+            {/* Sidebar */}
+            <aside className="lg:w-64 shrink-0 mb-8 lg:mb-0">
+              <div className="bg-white dark:bg-[#1a1814] rounded-2xl p-6 shadow-sm">
+                {/* User info */}
+                <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-100 dark:border-gray-700">
+                  <div
+                    className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center"
+                  >
+                    <User className="w-6 h-6 text-primary" />
                   </div>
-                  <Link href="/shop" className="text-primary text-sm font-medium flex items-center gap-1 hover:underline">
-                    Khám phá thêm <ChevronRight className="size-4" />
-                  </Link>
+                  <div>
+                    <h3 className="font-bold">{user?.firstName} {user?.lastName}</h3>
+                    <p className="text-sm text-secondary">Thành viên từ {memberSince}</p>
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {recommendations.map((item: any) => (
+
+                {/* Navigation */}
+                <nav className="space-y-1">
+                  {navItems.map(item => (
                     <Link
-                      key={item.id}
-                      href={`/products/${item.slug}`}
-                      className="group"
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        'flex items-center gap-3 px-4 py-3 rounded-xl transition-colors',
+                        pathname === item.href
+                          ? 'bg-primary/10 text-primary'
+                          : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                      )}
                     >
-                      <div className="aspect-[3/4] rounded-xl overflow-hidden bg-secondary-100 mb-3 relative">
-                        <img
-                          src={item.images?.[0]?.url || 'https://via.placeholder.com/300x400'}
-                          alt={item.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                        <div className="absolute top-2 right-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded-full">
-                          AI Pick
-                        </div>
-                      </div>
-                      <h3 className="font-medium text-text-main group-hover:text-primary transition-colors line-clamp-1">{item.name}</h3>
-                      <p className="text-primary font-bold">{formatPrice(item.salePrice || item.price)}</p>
+                      <item.icon className="w-5 h-5" />
+                      <span className="font-medium flex-1">{item.label}</span>
                     </Link>
                   ))}
-                </div>
-              </section>
-            )}
-          </div>
+                </nav>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <section className="bg-white rounded-2xl border border-border p-6">
-              <h2 className="text-lg font-bold text-text-main mb-4">Truy Cập Nhanh</h2>
-              <div className="grid grid-cols-2 gap-3">
-                {quickActions.map((action) => {
-                  const Icon = action.icon;
-                  return (
-                    <Link
-                      key={action.label}
-                      href={action.href}
-                      className="p-4 rounded-xl bg-secondary-50 hover:bg-secondary-100 transition-colors flex flex-col items-center gap-2 text-center"
-                    >
-                      <div className={`size-10 rounded-xl ${action.color} text-white flex items-center justify-center`}>
-                        <Icon className="size-5" />
-                      </div>
-                      <span className="text-xs font-medium text-text-main">{action.label}</span>
-                    </Link>
-                  );
-                })}
+                {/* Logout */}
+                <button className="flex items-center gap-3 px-4 py-3 w-full mt-4 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
+                  <LogOut className="w-5 h-5" />
+                  <span className="font-medium">Đăng xuất</span>
+                </button>
               </div>
-            </section>
+            </aside>
 
-            {/* Upcoming Delivery */}
-            {recentOrders.some((o: any) => o.status === 'SHIPPED') && (
-              <section className="bg-gradient-to-br from-blue-50 to-white rounded-2xl border border-blue-100 p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Truck className="size-5 text-blue-600" />
-                  <h2 className="text-lg font-bold text-text-main">Giao Hàng Sắp Đến</h2>
+            {/* Main content */}
+            <div className="flex-1 space-y-8">
+              {/* Welcome banner */}
+              <div className="bg-gradient-to-r from-primary to-primary-600 rounded-2xl p-6 text-white">
+                <h1 className="text-2xl font-extrabold mb-2">
+                  Xin chào, {user?.lastName || 'bạn'}! 👋
+                </h1>
+                <p className="text-white/80">
+                  Chào mừng trở lại với Fashion AI. Hôm nay bạn muốn khám phá gì?
+                </p>
+                <div className="flex gap-4 mt-6">
+                  <Link href="/products">
+                    <Button variant="outline" className="border-white text-white hover:bg-white/10">
+                      Khám phá sản phẩm
+                    </Button>
+                  </Link>
+                  <Link href="/ai-studio">
+                    <Button className="bg-white text-primary hover:bg-white/90" leftIcon={<Sparkles className="w-5 h-5" />}>
+                      Thử đồ AI
+                    </Button>
+                  </Link>
                 </div>
-                {recentOrders.filter((o: any) => o.status === 'SHIPPED').slice(0, 1).map((order: any) => (
-                  <div key={order.id} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-blue-100">
-                    <div className="size-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                      <Package className="size-6 text-blue-600" />
+              </div>
+
+              {/* Stats cards */}
+              <div className="grid sm:grid-cols-3 gap-4">
+                {[
+                  { label: 'Đơn hàng', value: '12', icon: Package },
+                  { label: 'Yêu thích', value: '8', icon: Heart },
+                  { label: 'AI Try-ons', value: '23', icon: Sparkles },
+                ].map(stat => (
+                  <div
+                    key={stat.label}
+                    className="bg-white dark:bg-[#1a1814] rounded-2xl p-6 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-secondary">{stat.label}</p>
+                        <p className="text-3xl font-extrabold mt-1">{stat.value}</p>
+                      </div>
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <stat.icon className="w-6 h-6 text-primary" />
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-text-main text-sm">{order.orderNumber}</p>
-                      <p className="text-xs text-text-muted">Đang giao hàng</p>
-                    </div>
-                    <Link href={`/orders/${order.id}`} className="text-blue-600 text-sm font-medium">
-                      Theo dõi
-                    </Link>
                   </div>
                 ))}
-              </section>
-            )}
-
-            {/* Account Settings */}
-            <section className="bg-white rounded-2xl border border-border p-6">
-              <h2 className="text-lg font-bold text-text-main mb-4">Tài Khoản</h2>
-              <div className="space-y-2">
-                <Link href="/profile" className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary-50 transition-colors">
-                  <span className="text-sm text-text-main">Thông tin cá nhân</span>
-                  <ChevronRight className="size-4 text-text-muted" />
-                </Link>
-                <Link href="/settings/addresses" className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary-50 transition-colors">
-                  <span className="text-sm text-text-main">Sổ địa chỉ</span>
-                  <ChevronRight className="size-4 text-text-muted" />
-                </Link>
-                <Link href="/notifications" className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary-50 transition-colors">
-                  <span className="text-sm text-text-main">Thông báo</span>
-                  <ChevronRight className="size-4 text-text-muted" />
-                </Link>
               </div>
-            </section>
+
+              {/* Recent orders */}
+              <div className="bg-white dark:bg-[#1a1814] rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-bold">Đơn hàng gần đây</h2>
+                  <Link href="/dashboard/orders" className="text-sm text-primary hover:underline">
+                    Xem tất cả
+                  </Link>
+                </div>
+
+                <div className="space-y-4">
+                  {ordersLoading ? (
+                    <div className="flex justify-center py-6">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    </div>
+                  ) : recentOrders.length > 0 ? recentOrders.map(order => (
+                    <Link
+                      key={order.id}
+                      href={`/dashboard/orders/${order.id}`}
+                      className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <div>
+                        <p className="font-bold">{order.orderNumber}</p>
+                        <p className="text-sm text-secondary mt-1">
+                          {formatDate(new Date(order.createdAt))} • {order.items?.length || 0} sản phẩm
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="font-bold">{formatCurrency(order.total)}</p>
+                          <OrderStatusBadge status={statusMap[order.status]} />
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-secondary" />
+                      </div>
+                    </Link>
+                  )) : (
+                    <p className="text-center text-secondary py-6">Chưa có đơn hàng nào</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Recent AI try-ons */}
+              <div className="bg-white dark:bg-[#1a1814] rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-bold flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-accent" />
+                    Thử đồ AI
+                  </h2>
+                  <Link href="/ai-studio" className="text-sm text-primary hover:underline">
+                    Thử ngay
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {/* Try new */}
+                  <Link
+                    href="/ai-studio"
+                    className="aspect-[3/4] rounded-xl border-2 border-dashed border-accent/30 flex flex-col items-center justify-center gap-2 hover:border-accent hover:bg-accent/5 transition-colors"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
+                      <Sparkles className="w-6 h-6 text-accent" />
+                    </div>
+                    <span className="text-sm font-medium text-accent">Thử đồ mới</span>
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </main>
 
       <Footer />
-    </div>
+    </>
   );
 }

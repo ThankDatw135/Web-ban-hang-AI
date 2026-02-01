@@ -1,296 +1,216 @@
 /**
- * AI Data & Privacy Policy - Fashion AI
+ * Fashion AI - Privacy Policy Page
  * 
- * Chính sách bảo mật dữ liệu:
- * - Privacy policy content
- * - AI data usage explanation
- * - User data controls
- * - Cookie settings
+ * Chính sách bảo mật và quyền riêng tư
  */
 
 'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { 
-  Shield, 
-  Lock, 
-  Eye, 
-  Database,
-  Trash2,
-  Download,
-  ChevronDown,
-  ChevronUp,
-  Bot,
-  Camera,
-  MapPin,
-  ShoppingBag
-} from 'lucide-react';
-import { Header, Footer } from '@/components';
+import { cn } from '@/lib/utils';
+import { ChevronDown, Shield, Lock, Eye, Database, Mail, Phone } from 'lucide-react';
 
-// Privacy sections
-const privacySections = [
+interface Section {
+  id: string;
+  icon: React.ElementType;
+  title: string;
+  content: string[];
+}
+
+const sections: Section[] = [
   {
     id: 'collection',
-    title: 'Dữ Liệu Chúng Tôi Thu Thập',
     icon: Database,
-    content: `Chúng tôi thu thập các loại dữ liệu sau để cung cấp trải nghiệm tốt nhất:
-
-**Thông tin cá nhân:**
-- Họ tên, email, số điện thoại khi đăng ký tài khoản
-- Địa chỉ giao hàng và thanh toán
-- Lịch sử đơn hàng và giao dịch
-
-**Dữ liệu AI:**
-- Số đo cơ thể từ AI Body Scan (được mã hóa và bảo mật)
-- Sở thích phong cách và màu sắc
-- Lịch sử thử đồ ảo
-
-**Dữ liệu kỹ thuật:**
-- Địa chỉ IP, loại trình duyệt
-- Cookies và dữ liệu phiên làm việc`,
+    title: '1. Thu thập thông tin',
+    content: [
+      'Chúng tôi thu thập thông tin bạn cung cấp trực tiếp, bao gồm: họ tên, email, số điện thoại, địa chỉ giao hàng khi bạn đăng ký tài khoản hoặc đặt hàng.',
+      'Thông tin thanh toán được xử lý an toàn qua các đối tác thanh toán được cấp phép và chúng tôi không lưu trữ thông tin thẻ.',
+      'Khi sử dụng tính năng AI Try-on, ảnh của bạn được xử lý để tạo hình ảnh thử đồ ảo. Bạn có quyền yêu cầu xóa dữ liệu này bất cứ lúc nào.',
+    ],
   },
   {
     id: 'usage',
-    title: 'Cách Chúng Tôi Sử Dụng Dữ Liệu',
     icon: Eye,
-    content: `Dữ liệu của bạn được sử dụng để:
-
-**Dịch vụ cốt lõi:**
-- Xử lý đơn hàng và giao hàng
-- Cung cấp gợi ý sản phẩm cá nhân hóa
-- Hỗ trợ tính năng AI Try-On và AI Stylist
-
-**Cải thiện trải nghiệm:**
-- Phân tích để cải thiện sản phẩm và dịch vụ
-- Gửi thông báo về đơn hàng và ưu đãi (nếu bạn đồng ý)
-- Nghiên cứu và phát triển tính năng mới
-
-**Bảo mật:**
-- Phát hiện và ngăn chặn gian lận
-- Bảo vệ tài khoản người dùng`,
-  },
-  {
-    id: 'ai-data',
-    title: 'Dữ Liệu AI & Machine Learning',
-    icon: Bot,
-    content: `Chúng tôi cam kết minh bạch về cách AI sử dụng dữ liệu của bạn:
-
-**AI Body Scan:**
-- Hình ảnh được xử lý tức thì và không lưu trữ
-- Chỉ lưu số đo dạng text, được mã hóa AES-256
-- Bạn có thể xóa dữ liệu số đo bất kỳ lúc nào
-
-**AI Try-On:**
-- Ảnh thử đồ được lưu trong 30 ngày trừ khi bạn lưu vĩnh viễn
-- Không sử dụng ảnh của bạn để huấn luyện AI mà không có sự đồng ý
-
-**AI Recommendations:**
-- Dựa trên lịch sử duyệt và mua hàng
-- Bạn có thể tắt cá nhân hóa trong cài đặt`,
+    title: '2. Sử dụng thông tin',
+    content: [
+      'Xử lý đơn hàng, giao hàng và cung cấp dịch vụ khách hàng.',
+      'Cá nhân hóa trải nghiệm mua sắm và đề xuất sản phẩm phù hợp thông qua AI.',
+      'Gửi thông báo về đơn hàng, chương trình khuyến mãi (nếu bạn đồng ý nhận).',
+      'Cải thiện website và các tính năng AI dựa trên phản hồi và hành vi sử dụng ẩn danh.',
+    ],
   },
   {
     id: 'protection',
-    title: 'Bảo Vệ Dữ Liệu',
     icon: Lock,
-    content: `Chúng tôi áp dụng các biện pháp bảo mật cao nhất:
-
-**Mã hóa:**
-- Tất cả dữ liệu được mã hóa khi truyền tải (TLS 1.3)
-- Dữ liệu nhạy cảm được mã hóa AES-256 khi lưu trữ
-
-**Tuân thủ:**
-- Tuân thủ GDPR cho khách hàng EU
-- Tuân thủ PDPA cho khách hàng Singapore
-- Đạt chứng nhận ISO 27001
-
-**Kiểm soát truy cập:**
-- Chỉ nhân viên được ủy quyền mới có quyền truy cập
-- Ghi log tất cả các truy cập dữ liệu`,
+    title: '3. Bảo vệ dữ liệu',
+    content: [
+      'Chúng tôi sử dụng mã hóa SSL/TLS cho tất cả giao dịch và truyền tải dữ liệu.',
+      'Dữ liệu được lưu trữ trên máy chủ bảo mật với kiểm soát truy cập nghiêm ngặt.',
+      'Thường xuyên kiểm tra và cập nhật các biện pháp bảo mật.',
+      'Nhân viên chỉ được phép truy cập thông tin cần thiết để thực hiện công việc.',
+    ],
+  },
+  {
+    id: 'sharing',
+    icon: Shield,
+    title: '4. Chia sẻ thông tin',
+    content: [
+      'Chúng tôi KHÔNG bán hoặc cho thuê thông tin cá nhân của bạn cho bên thứ ba.',
+      'Thông tin có thể được chia sẻ với: đối tác vận chuyển (để giao hàng), đối tác thanh toán (để xử lý thanh toán), cơ quan pháp luật (khi được yêu cầu theo quy định).',
+      'Các đối tác đều cam kết bảo mật thông tin theo tiêu chuẩn tương đương.',
+    ],
+  },
+  {
+    id: 'ai',
+    icon: Shield,
+    title: '5. Dữ liệu AI và Thử đồ ảo',
+    content: [
+      'Ảnh tải lên cho tính năng AI Try-on chỉ được sử dụng để tạo hình ảnh thử đồ.',
+      'Dữ liệu được xử lý bởi mô hình AI và có thể được lưu tạm thời để cải thiện chất lượng.',
+      'Bạn có quyền yêu cầu xóa tất cả dữ liệu AI liên quan đến tài khoản của mình.',
+      'Chúng tôi không sử dụng ảnh của bạn cho mục đích quảng cáo mà không có sự đồng ý.',
+    ],
   },
   {
     id: 'rights',
-    title: 'Quyền Của Bạn',
     icon: Shield,
-    content: `Bạn có toàn quyền kiểm soát dữ liệu của mình:
-
-**Quyền truy cập:**
-- Xem tất cả dữ liệu chúng tôi có về bạn
-- Tải xuống bản sao dữ liệu của bạn
-
-**Quyền chỉnh sửa:**
-- Cập nhật thông tin cá nhân bất kỳ lúc nào
-- Chỉnh sửa sở thích và cài đặt AI
-
-**Quyền xóa:**
-- Xóa tài khoản và tất cả dữ liệu liên quan
-- Xóa riêng dữ liệu AI (số đo, ảnh thử đồ)
-
-**Quyền từ chối:**
-- Tắt email marketing
-- Tắt cá nhân hóa AI`,
+    title: '6. Quyền của bạn',
+    content: [
+      'Truy cập: Yêu cầu xem thông tin cá nhân chúng tôi lưu trữ về bạn.',
+      'Chỉnh sửa: Cập nhật hoặc sửa thông tin không chính xác.',
+      'Xóa: Yêu cầu xóa tài khoản và dữ liệu cá nhân.',
+      'Từ chối: Hủy đăng ký nhận email marketing bất cứ lúc nào.',
+      'Để thực hiện quyền, vui lòng liên hệ privacy@fashionai.vn',
+    ],
   },
 ];
 
-// Data controls
-const dataControls = [
-  {
-    id: 'body-scan',
-    title: 'Dữ liệu AI Body Scan',
-    description: 'Số đo cơ thể từ quét AI',
-    icon: Camera,
-    hasData: true,
-  },
-  {
-    id: 'location',
-    title: 'Lịch sử địa chỉ',
-    description: 'Địa chỉ giao hàng đã lưu',
-    icon: MapPin,
-    hasData: true,
-  },
-  {
-    id: 'purchase',
-    title: 'Lịch sử mua hàng',
-    description: 'Đơn hàng và giao dịch',
-    icon: ShoppingBag,
-    hasData: true,
-  },
-];
+const navItems = sections.map(s => ({ id: s.id, title: s.title.replace(/^\d+\.\s*/, '') }));
 
 export default function PrivacyPage() {
-  const [expandedSections, setExpandedSections] = useState<string[]>(['collection']);
+  const [openSection, setOpenSection] = useState<string | null>(sections[0].id);
+  const [activeNav, setActiveNav] = useState(sections[0].id);
 
-  const toggleSection = (id: string) => {
-    setExpandedSections(prev =>
-      prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
-    );
+  const scrollToSection = (id: string) => {
+    setActiveNav(id);
+    const element = document.getElementById(id);
+    element?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-cream">
-      <Header />
-
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 md:px-8 py-8">
-        {/* Page Header */}
+    <div className="min-h-screen bg-cream dark:bg-background-dark">
+      <div className="max-w-[1200px] mx-auto px-4 md:px-10 lg:px-20 py-12">
+        
+        {/* Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-bold tracking-wide mb-4">
-            <Shield className="size-5" />
-            Bảo Mật & Quyền Riêng Tư
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-6">
+            <Shield className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-4xl font-bold text-text-main mb-4">
-            Chính Sách Bảo Mật
+          <h1 className="text-3xl md:text-4xl font-black text-text-main dark:text-white tracking-tight mb-4">
+            Chính sách Bảo mật
           </h1>
-          <p className="text-text-muted">
-            Cập nhật lần cuối: 15/01/2024
+          <p className="text-secondary max-w-2xl mx-auto">
+            Tại Fashion AI, chúng tôi cam kết bảo vệ quyền riêng tư và dữ liệu cá nhân của bạn. 
+            Chính sách này giải thích cách chúng tôi thu thập, sử dụng và bảo vệ thông tin của bạn.
+          </p>
+          <p className="text-secondary text-sm mt-4">
+            Cập nhật lần cuối: 01/02/2026
           </p>
         </div>
 
-        {/* Quick Summary */}
-        <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-2xl p-6 mb-10">
-          <h2 className="font-bold text-text-main mb-3">Tóm Tắt Nhanh</h2>
-          <ul className="space-y-2 text-sm text-text-muted">
-            <li className="flex items-start gap-2">
-              <Lock className="size-4 text-primary mt-0.5 flex-shrink-0" />
-              Dữ liệu của bạn được mã hóa và bảo mật theo tiêu chuẩn cao nhất
-            </li>
-            <li className="flex items-start gap-2">
-              <Eye className="size-4 text-primary mt-0.5 flex-shrink-0" />
-              Chúng tôi minh bạch về cách AI sử dụng dữ liệu của bạn
-            </li>
-            <li className="flex items-start gap-2">
-              <Shield className="size-4 text-primary mt-0.5 flex-shrink-0" />
-              Bạn có toàn quyền kiểm soát và xóa dữ liệu bất kỳ lúc nào
-            </li>
-          </ul>
-        </div>
+        <div className="grid lg:grid-cols-12 gap-10">
+          {/* Sidebar Navigation */}
+          <aside className="lg:col-span-3 hidden lg:block">
+            <div className="sticky top-24 bg-white dark:bg-[#1a1a1a] rounded-xl p-4 border border-border dark:border-[#333]">
+              <h3 className="font-bold text-text-main dark:text-white mb-4">Mục lục</h3>
+              <nav className="space-y-1">
+                {navItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => scrollToSection(item.id)}
+                    className={cn(
+                      'w-full text-left px-3 py-2 rounded-lg text-sm transition-colors',
+                      activeNav === item.id
+                        ? 'bg-primary/10 text-primary font-medium'
+                        : 'text-secondary hover:bg-cream dark:hover:bg-[#252525]'
+                    )}
+                  >
+                    {item.title}
+                  </button>
+                ))}
+              </nav>
+            </div>
+          </aside>
 
-        {/* Privacy Sections */}
-        <div className="space-y-4 mb-12">
-          {privacySections.map((section) => {
-            const Icon = section.icon;
-            const isExpanded = expandedSections.includes(section.id);
-            return (
-              <div
-                key={section.id}
-                className="bg-white rounded-2xl border border-border overflow-hidden"
-              >
-                <button
-                  onClick={() => toggleSection(section.id)}
-                  className="w-full p-6 flex items-center justify-between text-left hover:bg-secondary-50 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Icon className="size-5 text-primary" />
-                    </div>
-                    <span className="font-bold text-text-main">{section.title}</span>
-                  </div>
-                  {isExpanded ? (
-                    <ChevronUp className="size-5 text-text-muted" />
-                  ) : (
-                    <ChevronDown className="size-5 text-text-muted" />
-                  )}
-                </button>
-                {isExpanded && (
-                  <div className="px-6 pb-6">
-                    <div className="pt-4 border-t border-border prose prose-sm max-w-none text-text-muted">
-                      <div className="whitespace-pre-line">{section.content}</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Data Controls */}
-        <section className="bg-white rounded-2xl border border-border p-8 mb-8">
-          <h2 className="text-xl font-bold text-text-main mb-6">Quản Lý Dữ Liệu Của Bạn</h2>
-          <div className="space-y-4">
-            {dataControls.map((control) => {
-              const Icon = control.icon;
+          {/* Main Content */}
+          <main className="lg:col-span-9 space-y-4">
+            {sections.map((section) => {
+              const Icon = section.icon;
+              const isOpen = openSection === section.id;
+              
               return (
                 <div
-                  key={control.id}
-                  className="flex items-center justify-between p-4 bg-secondary-50 rounded-xl"
+                  key={section.id}
+                  id={section.id}
+                  className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-border dark:border-[#333] overflow-hidden"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="size-10 rounded-xl bg-white flex items-center justify-center">
-                      <Icon className="size-5 text-text-muted" />
+                  <button
+                    onClick={() => setOpenSection(isOpen ? null : section.id)}
+                    className="w-full flex items-center justify-between p-6 hover:bg-cream dark:hover:bg-[#252525] transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Icon className="w-5 h-5 text-primary" />
+                      </div>
+                      <h2 className="font-bold text-lg text-text-main dark:text-white text-left">
+                        {section.title}
+                      </h2>
                     </div>
-                    <div>
-                      <h3 className="font-medium text-text-main">{control.title}</h3>
-                      <p className="text-sm text-text-muted">{control.description}</p>
+                    <ChevronDown className={cn(
+                      'w-5 h-5 text-secondary transition-transform',
+                      isOpen && 'rotate-180'
+                    )} />
+                  </button>
+                  
+                  {isOpen && (
+                    <div className="px-6 pb-6 pt-2 border-t border-border dark:border-[#333]">
+                      <ul className="space-y-3 text-secondary">
+                        {section.content.map((item, index) => (
+                          <li key={index} className="flex gap-3">
+                            <span className="text-primary font-bold shrink-0">•</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button className="px-3 py-1.5 bg-white border border-border rounded-lg text-sm font-medium text-text-main hover:border-primary transition-colors flex items-center gap-1">
-                      <Download className="size-4" />
-                      Tải xuống
-                    </button>
-                    <button className="px-3 py-1.5 bg-white border border-border rounded-lg text-sm font-medium text-red-600 hover:border-red-300 hover:bg-red-50 transition-colors flex items-center gap-1">
-                      <Trash2 className="size-4" />
-                      Xóa
-                    </button>
-                  </div>
+                  )}
                 </div>
               );
             })}
-          </div>
-        </section>
+          </main>
+        </div>
 
-        {/* Contact */}
-        <div className="text-center text-sm text-text-muted">
-          <p>Có câu hỏi về quyền riêng tư?</p>
-          <p>
-            Liên hệ:{' '}
-            <a href="mailto:privacy@fashionai.vn" className="text-primary hover:underline">
+        {/* Contact CTA */}
+        <div className="mt-12 bg-white dark:bg-[#1a1a1a] rounded-xl p-8 border border-border dark:border-[#333] text-center">
+          <h2 className="text-xl font-bold text-text-main dark:text-white mb-4">
+            Có câu hỏi về bảo mật?
+          </h2>
+          <p className="text-secondary mb-6 max-w-xl mx-auto">
+            Đội ngũ bảo mật của chúng tôi luôn sẵn sàng hỗ trợ. Liên hệ ngay nếu bạn có bất kỳ thắc mắc nào.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="mailto:privacy@fashionai.vn" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-text-main font-bold rounded-lg hover:bg-primary-600 transition-colors">
+              <Mail className="w-5 h-5" />
               privacy@fashionai.vn
             </a>
-          </p>
+            <a href="tel:19001234" className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-border dark:border-[#333] text-text-main dark:text-white font-bold rounded-lg hover:bg-cream dark:hover:bg-[#252525] transition-colors">
+              <Phone className="w-5 h-5" />
+              1900 1234
+            </a>
+          </div>
         </div>
-      </main>
-
-      <Footer />
+      </div>
     </div>
   );
 }

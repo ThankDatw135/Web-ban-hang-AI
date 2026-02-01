@@ -11,6 +11,7 @@ import type { Config } from 'tailwindcss';
  */
 
 const config: Config = {
+  darkMode: 'class', // Force manual dark mode control
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',

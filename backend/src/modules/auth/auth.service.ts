@@ -8,6 +8,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { PrismaService } from "../prisma/prisma.service";
+import { EmailService } from "../email/email.service";
 import {
   RegisterDto,
   LoginDto,
@@ -27,6 +28,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private firebaseService: FirebaseService,
+    private emailService: EmailService,
     @Inject("REDIS_CLIENT") private redis: Redis,
   ) {}
 
@@ -221,24 +223,61 @@ export class AuthService {
     // Always return success to prevent email enumeration
     if (!user) {
       return {
-        message:
-          "Nếu email tồn tại, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu",
+        message: "Nếu email tồn tại, bạn sẽ nhận được mã OTP qua email",
       };
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Store OTP in Redis with 10 minute expiry (key: otp_email)
+    await this.redis.set(`otp_${dto.email}`, otp, "EX", 600);
+
+    // Send OTP via email
+    await this.emailService.sendOtpEmail(user.email, otp);
+
+    return {
+      message: "Nếu email tồn tại, bạn sẽ nhận được mã OTP qua email",
+    };
+  }
+
+  async verifyOtp(email: string, otp: string) {
+    // Get stored OTP from Redis
+    const storedOtp = await this.redis.get(`otp_${email}`);
+
+    if (!storedOtp) {
+      throw new BadRequestException(
+        "Mã OTP đã hết hạn. Vui lòng yêu cầu mã mới.",
+      );
+    }
+
+    if (storedOtp !== otp) {
+      throw new BadRequestException("Mã OTP không đúng");
+    }
+
+    // OTP is valid - generate reset token
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new BadRequestException("Email không tồn tại");
     }
 
     // Generate reset token
     const resetToken = randomBytes(32).toString("hex");
     const hashedToken = await bcrypt.hash(resetToken, 10);
 
-    // Store in Redis with 1 hour expiry
+    // Store reset token in Redis with 1 hour expiry
     await this.redis.set(`reset_${user.id}`, hashedToken, "EX", 3600);
 
-    // TODO: Send email with reset link
-    // For now, just log the token
-    console.log(`Reset token for ${user.email}: ${resetToken}`);
+    // Delete used OTP
+    await this.redis.del(`otp_${email}`);
 
+    // Return full token (userId.token format)
     return {
-      message: "Nếu email tồn tại, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu",
+      token: `${user.id}.${resetToken}`,
+      message: "Xác thực thành công",
     };
   }
 
@@ -263,13 +302,16 @@ export class AuthService {
 
     // Update password
     const hashedPassword = await bcrypt.hash(dto.newPassword, 12);
-    await this.prisma.user.update({
+    const user = await this.prisma.user.update({
       where: { id: userId },
       data: { password: hashedPassword },
     });
 
     // Delete reset token
     await this.redis.del(`reset_${userId}`);
+
+    // Send success email notification
+    await this.emailService.sendPasswordResetSuccessEmail(user.email);
 
     return { message: "Đặt lại mật khẩu thành công" };
   }

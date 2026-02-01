@@ -1,6 +1,8 @@
 /**
- * Layout Components - Export barrel
+ * Fashion AI - Layout Components Index
+ * 
+ * Export tất cả layout components
  */
 
-export { default as Header } from './Header';
-export { default as Footer } from './Footer';
+export { Header } from './Header';
+export { Footer } from './Footer';

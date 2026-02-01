@@ -1,142 +1,154 @@
+/**
+ * Fashion AI - Footer Component
+ * 
+ * Footer với logo, links, newsletter form, và social links
+ */
+
+'use client';
+
 import Link from 'next/link';
+import { Diamond, Instagram, Facebook, Twitter } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+
+// Footer navigation sections
+const footerSections = [
+  {
+    title: 'Khám phá',
+    links: [
+      { href: '/products?category=new', label: 'New Arrivals' },
+      { href: '/products?category=women', label: 'Women' },
+      { href: '/products?category=men', label: 'Men' },
+      { href: '/products?category=accessories', label: 'Accessories' },
+      { href: '/ai-studio', label: 'AI Studio' },
+    ],
+  },
+  {
+    title: 'Hỗ trợ',
+    links: [
+      { href: '/faq', label: 'FAQ' },
+      { href: '/shipping', label: 'Vận chuyển & Đổi trả' },
+      { href: '/size-guide', label: 'Hướng dẫn chọn size' },
+      { href: '/privacy', label: 'Chính sách bảo mật' },
+      { href: '/contact', label: 'Liên hệ' },
+    ],
+  },
+];
+
+// Social links
+const socialLinks = [
+  { href: 'https://instagram.com', label: 'Instagram', icon: Instagram, abbr: 'IG' },
+  { href: 'https://facebook.com', label: 'Facebook', icon: Facebook, abbr: 'FB' },
+  { href: 'https://tiktok.com', label: 'TikTok', icon: Twitter, abbr: 'TT' },
+];
+
+interface FooterProps {
+  className?: string;
+}
 
 /**
- * Footer Component - Fashion AI
- * Chân trang với các liên kết, newsletter và mạng xã hội
+ * Footer component với navigation, newsletter, và social links
  */
-export default function Footer() {
+export function Footer({ className }: FooterProps) {
   return (
-    <footer className="w-full bg-white pt-16 pb-8 border-t border-secondary-200">
-      <div className="max-w-[1280px] mx-auto px-4 md:px-10 lg:px-12">
+    <footer
+      className={cn(
+        'w-full bg-white dark:bg-[#1a1814] pt-16 pb-8',
+        'border-t border-border dark:border-[#332f28]',
+        className
+      )}
+    >
+      <div className="container-app">
+        {/* Main footer content */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-          {/* Brand */}
+          {/* Brand section */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-secondary-800">
-              <span className="material-symbols-outlined text-[24px] text-primary">diamond</span>
-              <h2 className="text-lg font-extrabold tracking-tight">Fashion AI</h2>
-            </div>
-            <p className="text-sm text-secondary-500 leading-relaxed">
-              Tiên phong trong cuộc cách mạng thời trang kỹ thuật số. Mang đến trải nghiệm mua sắm
-              được cá nhân hóa hoàn hảo bởi trí tuệ nhân tạo.
+            <Link href="/" className="flex items-center gap-2 text-text-main dark:text-white">
+              <Diamond className="w-6 h-6 text-primary" />
+              <span className="text-lg font-extrabold tracking-tight">Fashion AI</span>
+            </Link>
+            <p className="text-sm text-secondary leading-relaxed">
+              Tiên phong trong cuộc cách mạng thời trang kỹ thuật số. 
+              Mang đến trải nghiệm mua sắm được cá nhân hóa hoàn hảo bởi trí tuệ nhân tạo.
             </p>
-            {/* Social Links */}
-            <div className="flex gap-4 mt-4">
-              <a
-                href="#"
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-secondary-100 text-secondary-600 hover:bg-primary hover:text-white transition-colors"
-                aria-label="Instagram"
-              >
-                <span className="font-bold text-xs">IG</span>
-              </a>
-              <a
-                href="#"
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-secondary-100 text-secondary-600 hover:bg-primary hover:text-white transition-colors"
-                aria-label="Facebook"
-              >
-                <span className="font-bold text-xs">FB</span>
-              </a>
-              <a
-                href="#"
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-secondary-100 text-secondary-600 hover:bg-primary hover:text-white transition-colors"
-                aria-label="TikTok"
-              >
-                <span className="font-bold text-xs">TT</span>
-              </a>
+            
+            {/* Social links */}
+            <div className="flex gap-3 pt-2">
+              {socialLinks.map((social) => (
+                <a
+                  key={social.href}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    'w-9 h-9 rounded-full flex items-center justify-center',
+                    'bg-gray-100 dark:bg-gray-800 text-secondary',
+                    'hover:bg-primary hover:text-white transition-colors'
+                  )}
+                  aria-label={social.label}
+                >
+                  <span className="text-xs font-bold">{social.abbr}</span>
+                </a>
+              ))}
             </div>
           </div>
 
-          {/* Explore Links */}
-          <div>
-            <h3 className="font-bold text-secondary-800 mb-6">Khám phá</h3>
-            <ul className="space-y-3 text-sm text-secondary-500">
-              <li>
-                <Link href="/collections" className="hover:text-primary transition-colors">
-                  Hàng mới về
-                </Link>
-              </li>
-              <li>
-                <Link href="/shop?category=women" className="hover:text-primary transition-colors">
-                  Nữ
-                </Link>
-              </li>
-              <li>
-                <Link href="/shop?category=men" className="hover:text-primary transition-colors">
-                  Nam
-                </Link>
-              </li>
-              <li>
-                <Link href="/try-on" className="hover:text-primary transition-colors">
-                  AI Studio
-                </Link>
-              </li>
-            </ul>
-          </div>
+          {/* Navigation sections */}
+          {footerSections.map((section) => (
+            <div key={section.title}>
+              <h3 className="font-bold text-text-main dark:text-white mb-6">
+                {section.title}
+              </h3>
+              <ul className="space-y-3">
+                {section.links.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-secondary hover:text-primary transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
 
-          {/* Support Links */}
+          {/* Newsletter section */}
           <div>
-            <h3 className="font-bold text-secondary-800 mb-6">Hỗ trợ</h3>
-            <ul className="space-y-3 text-sm text-secondary-500">
-              <li>
-                <Link href="/faq" className="hover:text-primary transition-colors">
-                  FAQ
-                </Link>
-              </li>
-              <li>
-                <Link href="/shipping" className="hover:text-primary transition-colors">
-                  Vận chuyển & Đổi trả
-                </Link>
-              </li>
-              <li>
-                <Link href="/size-guide" className="hover:text-primary transition-colors">
-                  Hướng dẫn chọn size
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacy" className="hover:text-primary transition-colors">
-                  Chính sách bảo mật
-                </Link>
-              </li>
-              <li>
-                <Link href="/support" className="hover:text-primary transition-colors">
-                  Liên hệ
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Newsletter */}
-          <div>
-            <h3 className="font-bold text-secondary-800 mb-6">Đăng ký nhận tin</h3>
-            <p className="text-sm text-secondary-500 mb-4">
+            <h3 className="font-bold text-text-main dark:text-white mb-6">
+              Đăng ký nhận tin
+            </h3>
+            <p className="text-sm text-secondary mb-4">
               Nhận thông tin về bộ sưu tập mới và ưu đãi độc quyền.
             </p>
-            <form className="flex flex-col gap-3">
-              <input
+            <form className="flex flex-col gap-3" onSubmit={(e) => e.preventDefault()}>
+              <Input
                 type="email"
                 placeholder="Email của bạn"
-                className="w-full h-11 px-4 rounded-full border border-secondary-300 bg-transparent text-sm outline-none focus:border-primary transition-colors"
+                size="md"
               />
-              <button
-                type="submit"
-                className="w-full h-11 rounded-full bg-secondary-800 text-white text-sm font-bold hover:opacity-90 transition-opacity"
-              >
+              <Button variant="primary" fullWidth>
                 Đăng ký
-              </button>
+              </Button>
             </form>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="pt-8 border-t border-secondary-100 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-secondary-400">© 2024 Fashion AI. All rights reserved.</p>
-          <div className="flex gap-6 text-xs text-secondary-400">
-            <Link href="/privacy" className="hover:text-primary">
+        {/* Bottom bar */}
+        <div className="pt-8 border-t border-gray-100 dark:border-[#332f28] flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-xs text-gray-400">
+            © 2024 Fashion AI. All rights reserved.
+          </p>
+          <div className="flex gap-6 text-xs text-gray-400">
+            <Link href="/terms" className="hover:text-primary transition-colors">
               Terms
             </Link>
-            <Link href="/privacy" className="hover:text-primary">
+            <Link href="/privacy" className="hover:text-primary transition-colors">
               Privacy
             </Link>
-            <Link href="/privacy" className="hover:text-primary">
+            <Link href="/cookies" className="hover:text-primary transition-colors">
               Cookies
             </Link>
           </div>
@@ -145,3 +157,5 @@ export default function Footer() {
     </footer>
   );
 }
+
+export default Footer;

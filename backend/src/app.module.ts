@@ -11,6 +11,7 @@ import {
 } from "./config";
 import { PrismaModule } from "./modules/prisma/prisma.module";
 import { RedisModule } from "./modules/redis/redis.module";
+import { EmailModule } from "./modules/email/email.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsersModule } from "./modules/users/users.module";
 import { ProductsModule } from "./modules/products/products.module";
@@ -64,6 +65,7 @@ import { CouponsModule } from "./modules/coupons/coupons.module";
     PrismaModule,
     RedisModule,
     LoggerModule,
+    EmailModule,
 
     // Feature Modules
     AuthModule,

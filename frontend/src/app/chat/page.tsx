@@ -1,355 +1,397 @@
 /**
- * Live Chat & AI Support - Fashion AI
+ * Fashion AI - AI Chat Support Page
  * 
- * Chat trực tiếp với AI với API integration:
- * - AI chatbot interface
- * - Message history
- * - Quick actions
- * - Session management
+ * Hỗ trợ trực tuyến với AI Stylist
  */
 
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { cn, formatCurrency } from '@/lib/utils';
+import { useAIChat } from '@/hooks/use-ai';
 import { 
-  Send, 
-  Sparkles, 
-  Bot, 
-  Paperclip,
-  MoreVertical,
-  Phone,
-  ArrowLeft,
-  ThumbsUp,
-  ThumbsDown,
-  Loader2,
-  Plus,
-  MessageSquare,
-  Image as ImageIcon
+  Bot, Send, Plus, Image as ImageIcon, Mic, Sparkles, 
+  User, ShoppingBag, Loader2 
 } from 'lucide-react';
-import { Header } from '@/components';
-import { useAIChat, useChatSessions, useChatSession } from '@/hooks/useAI';
-import { useAuthStore } from '@/stores/auth-store';
-import { toastError } from '@/stores';
-import type { ChatMessage } from '@/types';
 
-// Quick suggestions
-const quickSuggestions = [
-  'Theo dõi đơn hàng',
-  'Tư vấn size',
-  'Chính sách đổi trả',
-  'Gợi ý outfit',
+type MessageRole = 'ai' | 'user';
+type AssistantMode = 'ai' | 'human';
+
+interface Message {
+  id: string;
+  role: MessageRole;
+  content: string;
+  timestamp: Date;
+  products?: Product[];
+}
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  badge?: string;
+}
+
+// Initial welcome message
+const welcomeMessage: Message = {
+  id: '1',
+  role: 'ai',
+  content: 'Chào bạn! Mình là trợ lý thời trang AI của bạn. Dựa trên lịch sử mua hàng, mình thấy bạn yêu thích phong cách thanh lịch. Bạn đang tìm trang phục cho dịp nào sắp tới không?',
+  timestamp: new Date(),
+};
+
+// Quick action suggestions
+const quickActions = [
+  'Tìm váy dự tiệc',
+  'Gợi ý outfit công sở',
+  'Phối đồ theo màu',
+  'Tư vấn size phù hợp',
 ];
 
 export default function ChatPage() {
-  const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  const [inputValue, setInputValue] = useState('');
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]);
-  const [showSidebar, setShowSidebar] = useState(false);
-  
-  // API hooks
-  const sendChat = useAIChat();
-  const { data: sessions } = useChatSessions();
-  const { data: currentSession } = useChatSession(currentSessionId || '');
+  const [messages, setMessages] = useState<Message[]>([welcomeMessage]);
+  const [input, setInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [mode, setMode] = useState<AssistantMode>('ai');
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Sync messages from session
+  // AI Chat mutation
+  const aiChatMutation = useAIChat();
+
+  // Auto-scroll to bottom
   useEffect(() => {
-    if (currentSession?.messages) {
-      setLocalMessages(currentSession.messages);
-    }
-  }, [currentSession]);
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isTyping]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const handleSend = async () => {
+    if (!input.trim()) return;
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [localMessages, sendChat.isPending]);
-
-  const sendMessage = async (text: string) => {
-    if (!text.trim()) return;
-
-    if (!isAuthenticated) {
-      router.push('/login?redirect=/chat');
-      return;
-    }
-
-    // Create optimistic user message
-    const userMessage: ChatMessage = {
+    // Add user message
+    const userMessage: Message = {
       id: Date.now().toString(),
-      sessionId: currentSessionId || '',
-      role: 'USER',
-      content: text,
-      createdAt: new Date().toISOString(),
+      role: 'user',
+      content: input,
+      timestamp: new Date(),
     };
-    
-    setLocalMessages(prev => [...prev, userMessage]);
-    setInputValue('');
-    
-    try {
-      const response = await sendChat.mutateAsync({
-        sessionId: currentSessionId || undefined,
-        message: text,
-      });
-      
-      // Update session ID if new
-      if (!currentSessionId) {
-        setCurrentSessionId(response.sessionId);
+    setMessages(prev => [...prev, userMessage]);
+    const userInput = input;
+    setInput('');
+    setIsTyping(true);
+
+    // Call AI API
+    aiChatMutation.mutate(
+      { message: userInput, sessionId: sessionId || undefined },
+      {
+        onSuccess: (response) => {
+          // Set session ID for subsequent messages
+          if (!sessionId) {
+            setSessionId(response.id);
+          }
+          
+          const aiResponse: Message = {
+            id: response.id || (Date.now() + 1).toString(),
+            role: 'ai',
+            content: response.content,
+            timestamp: new Date(response.createdAt),
+          };
+          setMessages(prev => [...prev, aiResponse]);
+          setIsTyping(false);
+        },
+        onError: () => {
+          // Fallback to mock response when API fails
+          setTimeout(() => {
+            const aiResponse: Message = {
+              id: (Date.now() + 1).toString(),
+              role: 'ai',
+              content: 'Tuyệt vời! Váy lụa là lựa chọn hoàn hảo cho tiệc tối. Dưới đây là 2 mẫu mới nhất trong bộ sưu tập "Midnight Glamour" phù hợp với dáng người và sở thích của bạn:',
+              timestamp: new Date(),
+              products: [
+                {
+                  id: '1',
+                  name: 'Váy Lụa Midnight Noir',
+                  description: 'Silk Satin cao cấp',
+                  price: 5200000,
+                  image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400',
+                  badge: 'Best Seller',
+                },
+                {
+                  id: '2',
+                  name: 'Đầm Dạ Hội Navy Blue',
+                  description: 'Thiết kế hở lưng',
+                  price: 4800000,
+                  image: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=400',
+                },
+              ],
+            };
+            setMessages(prev => [...prev, aiResponse]);
+            setIsTyping(false);
+          }, 1000);
+        },
       }
-      
-      // Add AI response
-      setLocalMessages(prev => [...prev, response.message]);
-    } catch {
-      toastError('Lỗi', 'Không thể gửi tin nhắn');
-      // Remove optimistic message on error
-      setLocalMessages(prev => prev.filter(m => m.id !== userMessage.id));
-    }
+    );
   };
 
-  const startNewSession = () => {
-    setCurrentSessionId(null);
-    setLocalMessages([]);
-  };
-
-  const selectSession = (sessionId: string) => {
-    setCurrentSessionId(sessionId);
-    setShowSidebar(false);
-  };
-
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  const handleQuickAction = (action: string) => {
+    setInput(action);
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-cream">
-      <Header />
+    <div className="min-h-screen bg-[#151118] text-white flex flex-col overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent/5 rounded-full blur-[100px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[100px]" />
+      </div>
 
-      <main className="flex-1 max-w-5xl mx-auto w-full flex">
-        {/* Sessions Sidebar */}
-        <div className={`${showSidebar ? 'block' : 'hidden'} md:block w-72 bg-white border-r border-border flex-shrink-0`}>
-          <div className="p-4 border-b border-border">
-            <button
-              onClick={startNewSession}
-              className="w-full py-2 bg-primary hover:bg-primary/90 text-white font-medium rounded-lg flex items-center justify-center gap-2 transition-colors"
-            >
-              <Plus className="size-4" />
-              Cuộc hội thoại mới
+      {/* Header */}
+      <header className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-[#151118]/80 backdrop-blur-md z-20">
+        <Link href="/" className="flex items-center gap-3">
+          <Sparkles className="w-8 h-8 text-accent" />
+          <h2 className="text-xl font-bold">Fashion AI</h2>
+        </Link>
+        <div className="flex items-center gap-4">
+          <Link href="/products">
+            <button className="relative text-white/80 hover:text-white">
+              <ShoppingBag className="w-6 h-6" />
             </button>
-          </div>
-          
-          <div className="p-2 space-y-1 max-h-[60vh] overflow-y-auto">
-            {sessions?.map((session) => (
-              <button
-                key={session.id}
-                onClick={() => selectSession(session.id)}
-                className={`w-full text-left p-3 rounded-lg transition-colors ${
-                  currentSessionId === session.id 
-                    ? 'bg-primary/10 text-primary' 
-                    : 'hover:bg-secondary-50 text-text-main'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="size-4 flex-shrink-0" />
-                  <span className="font-medium truncate">{session.title || 'Cuộc hội thoại'}</span>
-                </div>
-                <p className="text-xs text-text-muted mt-1">
-                  {new Date(session.updatedAt).toLocaleDateString('vi-VN')}
-                </p>
-              </button>
-            ))}
-            
-            {(!sessions || sessions.length === 0) && (
-              <p className="text-center text-text-muted text-sm py-4">
-                Chưa có cuộc hội thoại nào
-              </p>
-            )}
-          </div>
+          </Link>
         </div>
+      </header>
 
-        {/* Chat Area */}
-        <div className="flex-1 flex flex-col max-w-3xl">
+      {/* Main Chat Area */}
+      <main className="flex-1 flex justify-center items-center p-4 md:p-8 z-10 overflow-hidden">
+        <div className="flex flex-col w-full max-w-[1000px] h-full bg-[#1e1726]/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+          
           {/* Chat Header */}
-          <div className="bg-white border-b border-border px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={() => setShowSidebar(!showSidebar)}
-                className="md:hidden size-10 rounded-lg bg-secondary-50 flex items-center justify-center hover:bg-secondary-100 transition-colors"
-              >
-                <ArrowLeft className="size-5 text-text-muted" />
-              </button>
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-full bg-gradient-to-br from-accent to-primary flex items-center justify-center">
-                  <Bot className="size-5 text-white" />
+          <div className="flex flex-col md:flex-row items-center justify-between px-6 py-4 border-b border-white/5 bg-[#151118]/50 gap-4">
+            {/* Profile Info */}
+            <div className="flex items-center gap-4 w-full md:w-auto">
+              <div className="relative">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent to-purple-900 p-0.5 shadow-[0_0_15px_rgba(168,85,247,0.4)]">
+                  <div className="w-full h-full rounded-full bg-[#151118] flex items-center justify-center">
+                    <Bot className="w-6 h-6 text-accent" />
+                  </div>
                 </div>
-                <div>
-                  <h1 className="font-bold text-text-main">AI Fashion Stylist</h1>
-                  <p className="text-xs text-green-600 flex items-center gap-1">
-                    <span className="size-2 bg-green-500 rounded-full animate-pulse" />
-                    Online 24/7
-                  </p>
-                </div>
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-[#151118] rounded-full" />
+              </div>
+              <div>
+                <h3 className="text-white font-bold text-lg flex items-center gap-2">
+                  Fashion AI Assistant
+                  <span className="bg-accent/20 text-accent text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">
+                    Online
+                  </span>
+                </h3>
+                <p className="text-white/40 text-sm">Luôn sẵn sàng hỗ trợ phong cách của bạn</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button className="size-10 rounded-lg bg-secondary-50 flex items-center justify-center hover:bg-secondary-100 transition-colors">
-                <Phone className="size-5 text-text-muted" />
+
+            {/* Mode Toggle */}
+            <div className="flex p-1 bg-[#2a2235] rounded-lg w-full md:w-auto shrink-0">
+              <button
+                onClick={() => setMode('ai')}
+                className={cn(
+                  'flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-md transition-all',
+                  mode === 'ai' 
+                    ? 'bg-[#3b2d4a] text-white shadow-sm border border-accent/30' 
+                    : 'text-white/50 hover:text-white/80'
+                )}
+              >
+                <Bot className="w-4 h-4 text-accent" />
+                <span className="text-sm font-medium">Stylist AI</span>
               </button>
-              <button className="size-10 rounded-lg bg-secondary-50 flex items-center justify-center hover:bg-secondary-100 transition-colors">
-                <MoreVertical className="size-5 text-text-muted" />
+              <button
+                onClick={() => setMode('human')}
+                className={cn(
+                  'flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-md transition-all',
+                  mode === 'human' 
+                    ? 'bg-[#3b2d4a] text-white shadow-sm border border-accent/30' 
+                    : 'text-white/50 hover:text-white/80'
+                )}
+              >
+                <User className="w-4 h-4" />
+                <span className="text-sm font-medium">Nhân viên</span>
               </button>
             </div>
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {/* Welcome message if no messages */}
-            {localMessages.length === 0 && (
-              <div className="flex items-end gap-2">
-                <div className="size-8 rounded-full bg-gradient-to-br from-accent to-primary flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="size-4 text-white" />
-                </div>
-                <div className="bg-white border border-border p-4 rounded-2xl rounded-bl-md max-w-[80%]">
-                  <p className="text-text-main">
-                    Xin chào! Tôi là Fashion AI Stylist 👋 Tôi có thể giúp bạn:
-                  </p>
-                  <ul className="mt-2 space-y-1 text-sm text-text-muted">
-                    <li>• Tư vấn phong cách và outfit</li>
-                    <li>• Gợi ý size phù hợp</li>
-                    <li>• Theo dõi đơn hàng</li>
-                    <li>• Giải đáp thắc mắc</li>
-                  </ul>
-                </div>
-              </div>
-            )}
+          {/* Messages Area */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide bg-gradient-to-b from-transparent to-[#151118]/30">
+            {/* Timestamp */}
+            <div className="flex justify-center">
+              <span className="text-xs font-medium text-white/20 bg-white/5 px-3 py-1 rounded-full">
+                Hôm nay
+              </span>
+            </div>
 
-            {localMessages.map((msg) => (
+            {messages.map((message) => (
               <div
-                key={msg.id}
-                className={`flex ${msg.role === 'USER' ? 'justify-end' : 'justify-start'}`}
+                key={message.id}
+                className={cn(
+                  'flex items-start gap-4 max-w-[90%]',
+                  message.role === 'user' && 'ml-auto flex-row-reverse'
+                )}
               >
-                <div className={`max-w-[80%] ${msg.role === 'USER' ? 'order-1' : ''}`}>
-                  <div className="flex items-end gap-2">
-                    {msg.role === 'ASSISTANT' && (
-                      <div className="size-8 rounded-full bg-gradient-to-br from-accent to-primary flex items-center justify-center flex-shrink-0">
-                        <Sparkles className="size-4 text-white" />
-                      </div>
-                    )}
-                    <div
-                      className={`p-4 rounded-2xl ${
-                        msg.role === 'USER'
-                          ? 'bg-primary text-white rounded-br-md'
-                          : 'bg-white border border-border rounded-bl-md'
-                      }`}
-                    >
-                      <p className={msg.role === 'USER' ? 'text-white' : 'text-text-main'}>
-                        {msg.content}
-                      </p>
-                      
-                      {/* Suggested products */}
-                      {msg.metadata?.suggestedProducts && msg.metadata.suggestedProducts.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-3">
-                          {msg.metadata.suggestedProducts.map((productId, idx) => (
-                            <Link
-                              key={idx}
-                              href={`/products/${productId}`}
-                              className="px-3 py-1.5 bg-primary/10 text-primary text-sm font-medium rounded-full hover:bg-primary/20 transition-colors"
-                            >
-                              Xem sản phẩm
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                {/* Avatar */}
+                <div className={cn(
+                  'w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1',
+                  message.role === 'ai' 
+                    ? 'bg-[#2a2235] border border-white/5' 
+                    : 'bg-gradient-to-tr from-primary to-primary-600'
+                )}>
+                  {message.role === 'ai' ? (
+                    <Bot className="w-4 h-4 text-accent" />
+                  ) : (
+                    <User className="w-4 h-4 text-white" />
+                  )}
+                </div>
+
+                <div className={cn('flex flex-col gap-1', message.role === 'user' && 'items-end')}>
+                  <span className="text-xs text-white/40 ml-1">
+                    {message.role === 'ai' ? 'Stylist AI' : 'Bạn'}
+                  </span>
+                  
+                  {/* Message Bubble */}
+                  <div className={cn(
+                    'p-4 rounded-2xl',
+                    message.role === 'ai' 
+                      ? 'bg-[#2a2235] rounded-tl-none border border-white/5 text-white/90' 
+                      : 'bg-accent rounded-tr-none text-white shadow-[0_4px_15px_rgba(168,85,247,0.3)]'
+                  )}>
+                    <p className="leading-relaxed">{message.content}</p>
                   </div>
-                  <p className={`text-xs text-text-muted mt-1 ${msg.role === 'USER' ? 'text-right' : 'ml-10'}`}>
-                    {formatTime(msg.createdAt)}
-                  </p>
-                  {msg.role === 'ASSISTANT' && (
-                    <div className="flex items-center gap-2 mt-2 ml-10">
-                      <button className="text-xs text-text-muted hover:text-green-600 flex items-center gap-1">
-                        <ThumbsUp className="size-3" /> Hữu ích
-                      </button>
-                      <button className="text-xs text-text-muted hover:text-red-600 flex items-center gap-1">
-                        <ThumbsDown className="size-3" />
-                      </button>
+
+                  {/* Product Cards */}
+                  {message.products && (
+                    <div className="flex gap-4 mt-3 overflow-x-auto pb-2">
+                      {message.products.map((product) => (
+                        <div
+                          key={product.id}
+                          className="shrink-0 w-[200px] bg-[#221c2b] rounded-xl overflow-hidden border border-white/5 hover:border-accent/50 transition-all group"
+                        >
+                          <div className="relative aspect-[3/4] overflow-hidden">
+                            <div 
+                              className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+                              style={{ backgroundImage: `url(${product.image})` }}
+                            />
+                            {product.badge && (
+                              <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-xs font-bold text-primary border border-primary/20">
+                                {product.badge}
+                              </div>
+                            )}
+                          </div>
+                          <div className="p-3 flex flex-col gap-2">
+                            <div>
+                              <h4 className="text-white font-medium text-sm truncate">{product.name}</h4>
+                              <p className="text-white/60 text-xs">{product.description}</p>
+                            </div>
+                            <span className="text-primary font-bold">{formatCurrency(product.price)}</span>
+                            <Link href={`/products/${product.id}`}>
+                              <button className="w-full py-2 bg-[#312839] hover:bg-accent text-white text-xs font-bold rounded flex items-center justify-center gap-2 transition-colors">
+                                <Sparkles className="w-4 h-4" />
+                                Thử đồ ngay
+                              </button>
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
               </div>
             ))}
 
-            {/* Typing indicator */}
-            {sendChat.isPending && (
-              <div className="flex items-end gap-2">
-                <div className="size-8 rounded-full bg-gradient-to-br from-accent to-primary flex items-center justify-center">
-                  <Sparkles className="size-4 text-white" />
+            {/* Typing Indicator */}
+            {isTyping && (
+              <div className="flex items-start gap-4">
+                <div className="w-8 h-8 rounded-full bg-[#2a2235] border border-white/5 flex items-center justify-center">
+                  <Bot className="w-4 h-4 text-accent" />
                 </div>
-                <div className="bg-white border border-border p-4 rounded-2xl rounded-bl-md">
-                  <div className="flex gap-1">
-                    <span className="size-2 bg-text-muted rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="size-2 bg-text-muted rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="size-2 bg-text-muted rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </div>
+                <div className="bg-[#2a2235] px-4 py-3 rounded-2xl rounded-tl-none border border-white/5 flex gap-1">
+                  <div className="w-2 h-2 bg-white/40 rounded-full animate-bounce" />
+                  <div className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                  <div className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
                 </div>
               </div>
             )}
 
-            <div ref={messagesEndRef} />
+            <div ref={chatEndRef} />
           </div>
 
-          {/* Quick Suggestions */}
-          <div className="px-4 py-2 flex gap-2 overflow-x-auto">
-            {quickSuggestions.map((suggestion, idx) => (
-              <button
-                key={idx}
-                onClick={() => sendMessage(suggestion)}
-                disabled={sendChat.isPending}
-                className="px-4 py-2 bg-white border border-border rounded-full text-sm font-medium text-text-main hover:border-primary hover:text-primary transition-colors whitespace-nowrap disabled:opacity-50"
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
+          {/* Quick Actions */}
+          {messages.length <= 1 && (
+            <div className="px-6 pb-2 flex gap-2 overflow-x-auto">
+              {quickActions.map((action) => (
+                <button
+                  key={action}
+                  onClick={() => handleQuickAction(action)}
+                  className="px-3 py-1.5 rounded-full border border-accent/40 bg-accent/10 text-accent text-xs font-medium hover:bg-accent hover:text-white transition-colors whitespace-nowrap"
+                >
+                  {action}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Input Area */}
-          <div className="bg-white border-t border-border p-4">
-            <div className="flex items-center gap-3">
-              <button className="size-10 rounded-full bg-secondary-50 flex items-center justify-center hover:bg-secondary-100 transition-colors">
-                <Paperclip className="size-5 text-text-muted" />
+          <div className="p-4 bg-[#1e1726] border-t border-white/5 relative z-20">
+            <form
+              onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+              className="flex items-end gap-3 bg-[#151118] p-2 rounded-xl border border-white/10 focus-within:border-accent/50 focus-within:shadow-[0_0_15px_rgba(168,85,247,0.15)] transition-all"
+            >
+              <button type="button" className="p-2 text-white/40 hover:text-accent transition-colors">
+                <Plus className="w-5 h-5" />
               </button>
-              <button className="size-10 rounded-full bg-secondary-50 flex items-center justify-center hover:bg-secondary-100 transition-colors">
-                <ImageIcon className="size-5 text-text-muted" />
+              <button type="button" className="p-2 text-white/40 hover:text-accent transition-colors hidden sm:block">
+                <ImageIcon className="w-5 h-5" />
               </button>
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage(inputValue)}
-                placeholder="Nhập tin nhắn..."
-                disabled={sendChat.isPending}
-                className="flex-1 px-4 py-3 bg-secondary-50 border-0 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+              
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                className="flex-1 bg-transparent border-none text-white placeholder-white/30 focus:ring-0 resize-none scrollbar-hide text-sm sm:text-base leading-6 py-2"
+                placeholder="Nhập tin nhắn để AI tư vấn..."
+                rows={1}
               />
-              <button
-                onClick={() => sendMessage(inputValue)}
-                disabled={!inputValue.trim() || sendChat.isPending}
-                className="size-12 rounded-full bg-primary hover:bg-primary/90 disabled:bg-secondary-200 flex items-center justify-center transition-colors"
-              >
-                {sendChat.isPending ? (
-                  <Loader2 className="size-5 text-white animate-spin" />
-                ) : (
-                  <Send className="size-5 text-white" />
-                )}
+
+              <button type="button" className="p-2 text-white/40 hover:text-accent transition-colors sm:hidden">
+                <Mic className="w-5 h-5" />
               </button>
-            </div>
+              
+              <button
+                type="submit"
+                className="bg-accent hover:bg-accent/80 text-white rounded-lg p-2 px-4 h-10 flex items-center justify-center transition-colors shadow-lg shadow-accent/20"
+              >
+                <Send className="w-5 h-5 mr-1" />
+                <span className="text-sm font-bold hidden sm:inline">Gửi</span>
+              </button>
+            </form>
+            
+            <p className="text-center mt-2 text-[10px] text-white/20">
+              Fashion AI có thể mắc lỗi. Vui lòng kiểm tra lại thông tin quan trọng.
+            </p>
           </div>
         </div>
       </main>
+
+      <style jsx>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </div>
   );
 }

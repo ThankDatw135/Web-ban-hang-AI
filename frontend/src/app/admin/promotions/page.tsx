@@ -1,227 +1,288 @@
 /**
- * Admin Promotions Management - Fashion AI
+ * Fashion AI - Admin Promotions Management Page
  * 
- * Quản lý khuyến mãi với API integration
+ * Quản lý chiến dịch khuyến mãi
  */
 
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, Plus, Tag, Percent, Edit, Trash2, ToggleLeft, ToggleRight, Loader2, RefreshCw, Ticket } from 'lucide-react';
-import { useAdminPromotions, useUpdatePromotion, useDeletePromotion, type Promotion } from '@/hooks/useAdmin';
-import { toastSuccess, toastError } from '@/stores';
+import { cn, formatCurrency } from '@/lib/utils';
+import { 
+  Plus, Search, Edit, Trash2, Eye, TrendingUp, 
+  Tag, DollarSign, BarChart3, Sparkles, Calendar
+} from 'lucide-react';
 
-export default function AdminPromotions() {
-  const [page, setPage] = useState(1);
-  const { data, isLoading, refetch } = useAdminPromotions(page);
-  const updatePromotion = useUpdatePromotion();
-  const deletePromotion = useDeletePromotion();
+interface Campaign {
+  id: string;
+  name: string;
+  code: string;
+  type: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_SHIPPING';
+  value: number;
+  issued: number;
+  used: number;
+  revenue: number;
+  startDate: string;
+  endDate: string;
+  status: 'RUNNING' | 'ENDED' | 'SCHEDULED';
+}
 
-  const promotions = data?.items || [];
+const mockCampaigns: Campaign[] = [
+  {
+    id: '1',
+    name: 'Ưu đãi Thử đồ AI',
+    code: 'TRYON2024',
+    type: 'PERCENTAGE',
+    value: 20,
+    issued: 4200,
+    used: 1344,
+    revenue: 450000000,
+    startDate: '2026-01-01',
+    endDate: '2026-12-31',
+    status: 'RUNNING',
+  },
+  {
+    id: '2',
+    name: 'Quét Dáng Người Mới',
+    code: 'SCAN3DFIT',
+    type: 'PERCENTAGE',
+    value: 15,
+    issued: 2150,
+    used: 451,
+    revenue: 210000000,
+    startDate: '2026-01-15',
+    endDate: '2026-06-30',
+    status: 'RUNNING',
+  },
+  {
+    id: '3',
+    name: 'Mùa Lễ Hội 2025',
+    code: 'XMAS2923',
+    type: 'FIXED_AMOUNT',
+    value: 500000,
+    issued: 5000,
+    used: 5000,
+    revenue: 580000000,
+    startDate: '2025-12-01',
+    endDate: '2025-12-31',
+    status: 'ENDED',
+  },
+  {
+    id: '4',
+    name: 'Bộ Sưu Tập AI Gen',
+    code: 'AIGENFALL',
+    type: 'PERCENTAGE',
+    value: 10,
+    issued: 0,
+    used: 0,
+    revenue: 0,
+    startDate: '2026-03-01',
+    endDate: '2026-05-31',
+    status: 'SCHEDULED',
+  },
+];
 
-  const formatDiscount = (promo: Promotion) => {
-    if (promo.type === 'PERCENTAGE') return `${promo.value}%`;
-    if (promo.type === 'FIXED_AMOUNT') return new Intl.NumberFormat('vi-VN').format(promo.value) + '₫';
-    return 'Miễn phí ship';
+const statusLabels: Record<string, { label: string; class: string }> = {
+  RUNNING: { label: 'Đang chạy', class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
+  ENDED: { label: 'Kết thúc', class: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' },
+  SCHEDULED: { label: 'Lên lịch', class: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+};
+
+export default function AdminPromotionsPage() {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const stats = {
+    totalIssued: mockCampaigns.reduce((sum, c) => sum + c.issued, 0),
+    avgUsageRate: Math.round(
+      mockCampaigns.reduce((sum, c) => sum + (c.issued > 0 ? (c.used / c.issued) * 100 : 0), 0) / 
+      mockCampaigns.filter(c => c.issued > 0).length
+    ),
+    totalRevenue: mockCampaigns.reduce((sum, c) => sum + c.revenue, 0),
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('vi-VN');
-  };
-
-  const toggleActive = async (promo: Promotion) => {
-    try {
-      await updatePromotion.mutateAsync({
-        id: promo.id,
-        data: { isActive: !promo.isActive },
-      });
-      toastSuccess('Thành công', promo.isActive ? 'Đã tắt khuyến mãi' : 'Đã bật khuyến mãi');
-    } catch {
-      toastError('Lỗi', 'Không thể cập nhật trạng thái');
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Bạn có chắc muốn xóa khuyến mãi này?')) return;
-    
-    try {
-      await deletePromotion.mutateAsync(id);
-      toastSuccess('Đã xóa', 'Khuyến mãi đã được xóa');
-    } catch {
-      toastError('Lỗi', 'Không thể xóa khuyến mãi');
-    }
-  };
-
-  const activeCount = promotions.filter(p => p.isActive).length;
-  const totalUsage = promotions.reduce((sum, p) => sum + p.usedCount, 0);
+  const filteredCampaigns = mockCampaigns.filter(c =>
+    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    c.code.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <div className="min-h-screen bg-cream">
-      <header className="bg-white border-b border-border px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/admin" className="size-10 flex items-center justify-center rounded-lg hover:bg-secondary-50">
-              <ArrowLeft className="size-5 text-text-muted" />
-            </Link>
-            <h1 className="text-xl font-bold text-text-main">Quản Lý Khuyến Mãi</h1>
+    <div className="min-h-screen bg-[#0f0a18] text-white p-6 md:p-8">
+      <div className="max-w-[1400px] mx-auto space-y-8">
+        
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <p className="text-gray-400 text-sm">Admin &gt; Khuyến mãi</p>
+            <h1 className="text-2xl md:text-3xl font-bold mt-1">
+              Quản lý Chiến dịch Khuyến mãi
+            </h1>
+            <p className="text-gray-400 text-sm mt-1">
+              Theo dõi, đo lường và tối ưu hóa các chương trình ưu đãi của Fashion AI.
+            </p>
           </div>
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => refetch()}
-              className="size-10 rounded-lg bg-secondary-50 flex items-center justify-center hover:bg-secondary-100"
-            >
-              <RefreshCw className="size-5 text-text-muted" />
-            </button>
-            <Link 
-              href="/admin/promotions/new"
-              className="px-4 py-2 bg-primary text-white rounded-lg font-medium flex items-center gap-2 hover:bg-primary/90"
-            >
-              <Plus className="size-5" />
-              Tạo khuyến mãi
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-white rounded-xl border border-border p-4">
-            <p className="text-sm text-text-muted">Đang hoạt động</p>
-            <p className="text-2xl font-bold text-green-600">{activeCount}</p>
-          </div>
-          <div className="bg-white rounded-xl border border-border p-4">
-            <p className="text-sm text-text-muted">Tổng lượt dùng</p>
-            <p className="text-2xl font-bold text-text-main">{totalUsage}</p>
-          </div>
-          <div className="bg-white rounded-xl border border-border p-4">
-            <p className="text-sm text-text-muted">Tổng khuyến mãi</p>
-            <p className="text-2xl font-bold text-text-main">{data?.meta.total || 0}</p>
-          </div>
+          <button className="flex items-center gap-2 bg-accent hover:bg-accent/80 text-white font-bold px-6 py-3 rounded-lg transition-colors">
+            <Plus className="w-5 h-5" />
+            Tạo khuyến mãi mới
+          </button>
         </div>
 
-        {/* Promotions List */}
-        <div className="bg-white rounded-2xl border border-border overflow-hidden">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="size-8 animate-spin text-primary" />
-            </div>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-secondary-50 border-b border-border">
-                      <th className="text-left py-4 px-6 text-sm font-medium text-text-muted">Tên</th>
-                      <th className="text-left py-4 px-6 text-sm font-medium text-text-muted">Code</th>
-                      <th className="text-center py-4 px-6 text-sm font-medium text-text-muted">Giảm</th>
-                      <th className="text-center py-4 px-6 text-sm font-medium text-text-muted">Thời gian</th>
-                      <th className="text-center py-4 px-6 text-sm font-medium text-text-muted">Đã dùng</th>
-                      <th className="text-center py-4 px-6 text-sm font-medium text-text-muted">Trạng thái</th>
-                      <th className="text-center py-4 px-6 text-sm font-medium text-text-muted">Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {promotions.map((promo) => (
-                      <tr key={promo.id} className="border-b border-border last:border-0 hover:bg-secondary-50">
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-3">
-                            <div className={`size-10 rounded-xl flex items-center justify-center ${
-                              promo.type === 'PERCENTAGE' ? 'bg-purple-50' : 'bg-green-50'
-                            }`}>
-                              {promo.type === 'PERCENTAGE' ? (
-                                <Percent className="size-5 text-purple-600" />
-                              ) : (
-                                <Tag className="size-5 text-green-600" />
-                              )}
-                            </div>
-                            <span className="font-medium text-text-main">{promo.name}</span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <code className="px-2 py-1 bg-secondary-100 rounded text-sm font-mono">{promo.code}</code>
-                        </td>
-                        <td className="py-4 px-6 text-center font-bold text-primary">{formatDiscount(promo)}</td>
-                        <td className="py-4 px-6 text-center text-text-muted text-sm">
-                          {formatDate(promo.startDate)} - {formatDate(promo.endDate)}
-                        </td>
-                        <td className="py-4 px-6 text-center text-text-main">
-                          {promo.usedCount}{promo.usageLimit ? `/${promo.usageLimit}` : ''}
-                        </td>
-                        <td className="py-4 px-6 text-center">
-                          <button 
-                            onClick={() => toggleActive(promo)}
-                            disabled={updatePromotion.isPending}
-                            className="disabled:opacity-50"
-                          >
-                            {promo.isActive ? (
-                              <ToggleRight className="size-8 text-green-600" />
-                            ) : (
-                              <ToggleLeft className="size-8 text-text-muted" />
-                            )}
-                          </button>
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center justify-center gap-2">
-                            <Link 
-                              href={`/admin/promotions/${promo.id}/edit`}
-                              className="size-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center hover:bg-amber-100"
-                            >
-                              <Edit className="size-4" />
-                            </Link>
-                            <button 
-                              onClick={() => handleDelete(promo.id)}
-                              disabled={deletePromotion.isPending}
-                              className="size-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 disabled:opacity-50"
-                            >
-                              <Trash2 className="size-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-[#1a1225] rounded-xl p-6 border border-white/5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
+                <Tag className="w-5 h-5 text-accent" />
               </div>
+              <span className="text-gray-400 text-sm">Tổng mã đã phát</span>
+            </div>
+            <p className="text-3xl font-bold">{stats.totalIssued.toLocaleString()}</p>
+            <p className="text-green-400 text-xs mt-1 flex items-center gap-1">
+              <TrendingUp className="w-3 h-3" />
+              +12% so với tháng trước
+            </p>
+          </div>
 
-              {/* Empty state */}
-              {promotions.length === 0 && (
-                <div className="text-center py-16">
-                  <Ticket className="size-12 text-text-muted mx-auto mb-4" />
-                  <p className="text-text-muted">Không có khuyến mãi nào</p>
-                </div>
-              )}
+          <div className="bg-[#1a1225] rounded-xl p-6 border border-white/5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-green-400" />
+              </div>
+              <span className="text-gray-400 text-sm">Tỷ lệ sử dụng trung bình</span>
+            </div>
+            <p className="text-3xl font-bold">{stats.avgUsageRate}%</p>
+            <div className="w-full bg-white/10 h-1.5 rounded-full mt-2">
+              <div className="bg-green-400 h-full rounded-full" style={{ width: `${stats.avgUsageRate}%` }} />
+            </div>
+          </div>
 
-              {/* Pagination */}
-              {data && promotions.length > 0 && (
-                <div className="flex items-center justify-between px-6 py-4 border-t border-border">
-                  <p className="text-sm text-text-muted">
-                    Trang {data.meta.page} / {data.meta.totalPages} ({data.meta.total} khuyến mãi)
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={() => setPage(p => Math.max(1, p - 1))}
-                      disabled={page <= 1}
-                      className="px-3 py-1 border border-border rounded-lg text-sm disabled:opacity-50"
-                    >
-                      Trước
-                    </button>
-                    <span className="px-3 py-1 bg-primary text-white rounded-lg text-sm">{page}</span>
-                    <button 
-                      onClick={() => setPage(p => p + 1)}
-                      disabled={page >= data.meta.totalPages}
-                      className="px-3 py-1 border border-border rounded-lg text-sm disabled:opacity-50"
-                    >
-                      Sau
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
+          <div className="bg-[#1a1225] rounded-xl p-6 border border-white/5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-gray-400 text-sm">Doanh thu từ Voucher</span>
+            </div>
+            <p className="text-3xl font-bold">{formatCurrency(stats.totalRevenue).replace('₫', '')} <span className="text-lg">đ</span></p>
+            <p className="text-green-400 text-xs mt-1 flex items-center gap-1">
+              <TrendingUp className="w-3 h-3" />
+              +15% so với tháng trước
+            </p>
+          </div>
         </div>
-      </main>
+
+        {/* Campaign Table */}
+        <div className="bg-[#1a1225] rounded-xl border border-white/5 overflow-hidden">
+          <div className="p-6 border-b border-white/5 flex flex-col md:flex-row justify-between gap-4">
+            <h2 className="text-lg font-bold">Danh sách chiến dịch</h2>
+            <div className="relative w-full md:w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Tìm tên chiến dịch..."
+                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-gray-500 focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-white/5 text-gray-400 text-xs uppercase">
+                <tr>
+                  <th className="px-6 py-4 text-left font-medium">Tên chiến dịch / Điều kiện AI</th>
+                  <th className="px-6 py-4 text-left font-medium">Mã voucher</th>
+                  <th className="px-6 py-4 text-left font-medium">Đã phát</th>
+                  <th className="px-6 py-4 text-left font-medium">Tỷ lệ sử dụng</th>
+                  <th className="px-6 py-4 text-left font-medium">Doanh thu</th>
+                  <th className="px-6 py-4 text-left font-medium">Trạng thái</th>
+                  <th className="px-6 py-4 text-left font-medium">Hành động</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {filteredCampaigns.map((campaign) => {
+                  const usageRate = campaign.issued > 0 
+                    ? Math.round((campaign.used / campaign.issued) * 100) 
+                    : 0;
+                  const status = statusLabels[campaign.status];
+                  
+                  return (
+                    <tr key={campaign.id} className="hover:bg-white/5 transition-colors">
+                      <td className="px-6 py-4">
+                        <div>
+                          <p className="font-medium text-white">{campaign.name}</p>
+                          <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                            <Sparkles className="w-3 h-3 text-accent" />
+                            Sau khi dùng AI Try-on
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <code className="px-2 py-1 bg-accent/20 text-accent rounded text-xs font-mono">
+                          {campaign.code}
+                        </code>
+                      </td>
+                      <td className="px-6 py-4 text-white">{campaign.issued.toLocaleString()}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 bg-white/10 h-1.5 rounded-full">
+                            <div 
+                              className="bg-accent h-full rounded-full" 
+                              style={{ width: `${usageRate}%` }} 
+                            />
+                          </div>
+                          <span className="text-white">{usageRate}%</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-white">{formatCurrency(campaign.revenue).replace('₫', 'đ')}</td>
+                      <td className="px-6 py-4">
+                        <span className={cn('px-2 py-1 rounded text-xs font-medium', status.class)}>
+                          {status.label}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <button className="p-2 hover:bg-white/10 rounded transition-colors">
+                            <Eye className="w-4 h-4 text-gray-400" />
+                          </button>
+                          <button className="p-2 hover:bg-white/10 rounded transition-colors">
+                            <Edit className="w-4 h-4 text-gray-400" />
+                          </button>
+                          <button className="p-2 hover:bg-white/10 rounded transition-colors">
+                            <Trash2 className="w-4 h-4 text-gray-400" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="p-4 border-t border-white/5 flex justify-between items-center text-sm text-gray-400">
+            <span>Hiển thị 4/4 chiến dịch</span>
+            <div className="flex gap-2">
+              <button className="px-3 py-1 rounded border border-white/10 hover:bg-white/10">Trước</button>
+              <button className="px-3 py-1 rounded bg-accent text-white">1</button>
+              <button className="px-3 py-1 rounded border border-white/10 hover:bg-white/10">Sau</button>
+            </div>
+          </div>
+        </div>
+
+        {/* AI Tip */}
+        <div className="bg-gradient-to-r from-accent/20 to-primary/20 rounded-xl p-6 border border-accent/30 flex items-start gap-4">
+          <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
+            <Sparkles className="w-6 h-6 text-accent" />
+          </div>
+          <div>
+            <h3 className="font-bold text-white mb-1">Mẹo tối ưu: Kết hợp AI Try-on</h3>
+            <p className="text-gray-300 text-sm">
+              Dữ liệu cho thấy voucher được cấp ngay sau khi người dùng thực hiện <span className="text-accent font-medium">thử đồ ảo (Virtual Try-on)</span> có tỷ lệ chuyển đổi cao hơn <span className="font-bold text-white">24%</span> so với voucher truyền thống. Hãy cân nhắc thiết lập điều kiện này cho chiến dịch tiếp theo.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

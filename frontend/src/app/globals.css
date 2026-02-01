@@ -1,133 +1,267 @@
 /**
- * Fashion AI - Global Styles
+ * Fashion AI - Globals CSS
  * 
- * Color System:
- * - Background: #FAF7F2 (cream)
- * - Primary: #C7A26A (gold)
- * - Accent: #A855F7 (purple AI)
- * - Text: #1F2937
+ * Định nghĩa CSS variables, base styles, và custom utilities
+ * Phong cách: Cao cấp – Nhẹ nhàng – Thời trang – Premium
  */
 
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap");
+/* Google Fonts - Manrope */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
+
+/* Material Symbols */
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   CSS Variables - Theme Colors
+   ============================================ */
+:root {
+  /* Background colors */
+  --color-cream: #FAF7F2;
+  --color-white: #FFFFFF;
+  
+  /* Primary - Gold Champagne */
+  --color-primary: #C7A26A;
+  --color-primary-50: #FCF8F3;
+  --color-primary-100: #F5EBD9;
+  --color-primary-200: #E8D4B4;
+  --color-primary-300: #DBBF90;
+  --color-primary-400: #D1AC7A;
+  --color-primary-500: #C7A26A;
+  --color-primary-600: #B8915A;
+  --color-primary-700: #A07B4A;
+  
+  /* Accent - Purple for AI */
+  --color-accent: #A855F7;
+  --color-accent-50: #F5F3FF;
+  --color-accent-100: #EDE9FE;
+  --color-accent-500: #A855F7;
+  --color-accent-600: #9333EA;
+  
+  /* Secondary - Warm Gray */
+  --color-secondary: #6B7280;
+  --color-secondary-800: #1F2937;
+  
+  /* Text */
+  --color-text-main: #1F2937;
+  --color-text-muted: #6B7280;
+  
+  /* Border */
+  --color-border: #E5E7EB;
+  
+  /* Semantic colors */
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
+  
+  /* Shadows */
+  --shadow-primary: 0 10px 40px rgba(199, 162, 106, 0.2);
+  --shadow-accent: 0 10px 40px rgba(168, 85, 247, 0.2);
+}
+
+/* Dark mode variables */
+.dark {
+  --color-cream: #1e1a14;
+  --color-white: #25221d;
+  --color-text-main: #FFFFFF;
+  --color-text-muted: #9CA3AF;
+  --color-border: #332f28;
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
 @layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+  
   html {
     scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-
+  
   body {
-    @apply bg-cream text-text-main font-display antialiased;
+    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: var(--color-cream);
+    color: var(--color-text-main);
+    overflow-x: hidden;
+    line-height: 1.5;
   }
-
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
+  
+  /* Headings */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    line-height: 1.2;
   }
-  ::-webkit-scrollbar-track {
-    @apply bg-cream;
+  
+  /* Links */
+  a {
+    color: inherit;
+    text-decoration: none;
   }
-  ::-webkit-scrollbar-thumb {
-    @apply bg-primary rounded;
+  
+  /* Images */
+  img {
+    max-width: 100%;
+    height: auto;
   }
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-primary-600;
+  
+  /* Focus states - Accessibility */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 }
 
+/* ============================================
+   Component Utilities
+   ============================================ */
 @layer components {
   /* Container */
-  .container-custom {
-    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  .container-app {
+    @apply max-w-[1280px] mx-auto px-4 md:px-10 lg:px-40;
   }
-
-  /* Buttons */
-  .btn {
-    @apply inline-flex items-center justify-center rounded-lg font-semibold 
-           transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 
-           disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5;
-  }
-
-  .btn-primary {
-    @apply btn bg-primary text-white hover:bg-primary-600 focus:ring-primary-400
-           shadow-lg shadow-primary/20 hover:shadow-primary/40;
-  }
-
-  .btn-accent {
-    @apply btn bg-accent text-white hover:bg-accent-600 focus:ring-accent-400
-           shadow-lg shadow-accent/20 hover:shadow-accent/40;
-  }
-
-  .btn-outline {
-    @apply btn border border-border text-text-main bg-white
-           hover:bg-secondary-50 focus:ring-secondary-300;
-  }
-
-  .btn-ghost {
-    @apply btn text-text-muted hover:text-text-main hover:bg-secondary-100;
-  }
-
-  .btn-sm {
-    @apply px-4 py-2 text-sm;
-  }
-
-  .btn-md {
-    @apply px-6 py-3 text-sm;
-  }
-
-  .btn-lg {
-    @apply px-8 py-4 text-base;
-  }
-
-  /* Inputs */
-  .input {
-    @apply block w-full rounded-lg border border-border bg-white
-           px-4 py-3 text-text-main placeholder-text-muted
-           focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary
-           transition-all duration-200;
-  }
-
-  /* Cards */
+  
+  /* Card base */
   .card {
-    @apply bg-white rounded-xl border border-border;
+    @apply bg-white dark:bg-[#2c2822] rounded-2xl shadow-sm;
   }
-
-  .card-hover {
-    @apply card transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
-  }
-
-  /* Glass effect */
-  .glass {
-    @apply bg-cream/90 backdrop-blur-md;
-  }
-
-  /* Badge AI */
-  .badge-ai {
-    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full
-           bg-accent-100 text-accent-700 text-xs font-semibold;
-  }
-
+  
   /* Gradient text */
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent to-accent-400;
+  .gradient-text {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-primary to-[#dcb77d];
   }
-
-  .text-gradient-gold {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-400;
+  
+  /* AI glow effect */
+  .ai-glow {
+    @apply relative;
+  }
+  .ai-glow::before {
+    content: '';
+    @apply absolute inset-0 bg-accent/20 blur-3xl -z-10;
   }
 }
 
+/* ============================================
+   Custom Utilities
+   ============================================ */
 @layer utilities {
-  /* AI glow effect */
-  .ai-glow {
-    @apply shadow-lg shadow-accent/30;
+  /* Hide scrollbar nhưng vẫn scroll được */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  /* Text balance cho headings */
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  /* Aspect ratios */
+  .aspect-product {
+    aspect-ratio: 3/4;
+  }
+  
+  .aspect-hero {
+    aspect-ratio: 4/5;
+  }
+}
 
-  /* Product image hover */
-  .product-image-hover {
-    @apply transition-transform duration-500 group-hover:scale-110;
+/* ============================================
+   Animations
+   ============================================ */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    transform: translateY(20px); 
+    opacity: 0; 
   }
+  to { 
+    transform: translateY(0); 
+    opacity: 1; 
+  }
+}
+
+@keyframes slideDown {
+  from { 
+    transform: translateY(-20px); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateY(0); 
+    opacity: 1; 
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Animation classes */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.5s ease-out;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s infinite;
+}
+
+/* ============================================
+   Material Symbols Configuration
+   ============================================ */
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+/* Filled icons */
+.material-symbols-outlined.filled {
+  font-variation-settings:
+    'FILL' 1,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
 }
