@@ -2,7 +2,8 @@
 // Database: PostgreSQL
 
 generator client {
-    provider = "prisma-client-js"
+    provider      = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-openssl-3.0.x", "linux-musl", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -44,6 +45,7 @@ model User {
     aiJobs        AIJob[]
     reviews       Review[]
     chatSessions  ChatSession[]
+    wishlist      Wishlist?
 
     @@map("users")
 }
@@ -129,13 +131,14 @@ model Product {
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
 
-    category   Category         @relation(fields: [categoryId], references: [id])
-    images     ProductImage[]
-    variants   ProductVariant[]
-    reviews    Review[]
-    cartItems  CartItem[]
-    orderItems OrderItem[]
-    aiJobs     AIJob[]
+    category      Category         @relation(fields: [categoryId], references: [id])
+    images        ProductImage[]
+    variants      ProductVariant[]
+    reviews       Review[]
+    cartItems     CartItem[]
+    orderItems    OrderItem[]
+    aiJobs        AIJob[]
+    wishlistItems WishlistItem[]
 
     // Indexes cho tối ưu query
     // - categoryId: Lọc theo danh mục
@@ -239,6 +242,35 @@ model CartItem {
 
     @@unique([cartId, variantId])
     @@map("cart_items")
+}
+
+// =====================================================
+// DANH SÁCH YÊU THÍCH
+// =====================================================
+
+model Wishlist {
+    id        String   @id @default(cuid())
+    userId    String   @unique @map("user_id")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+    items WishlistItem[]
+
+    @@map("wishlists")
+}
+
+model WishlistItem {
+    id         String   @id @default(cuid())
+    wishlistId String   @map("wishlist_id")
+    productId  String   @map("product_id")
+    addedAt    DateTime @default(now()) @map("added_at")
+
+    wishlist Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+    product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+    @@unique([wishlistId, productId])
+    @@map("wishlist_items")
 }
 
 // =====================================================

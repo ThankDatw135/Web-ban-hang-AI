@@ -8,29 +8,55 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useMutation } from '@tanstack/react-query';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { cn } from '@/lib/utils';
+import { searchProducts } from '@/lib/api/products';
+import type { Product } from '@/types/api';
 
-// Mock search results
-const mockResults = [
-  { id: '1', name: 'Silk Evening Dress', price: '2.500.000đ', category: 'Đầm', image: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=400' },
-  { id: '2', name: 'Silk Blouse', price: '890.000đ', category: 'Áo', image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400' },
-  { id: '3', name: 'Silk Scarf', price: '450.000đ', category: 'Phụ kiện', image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400' },
-];
+// Format price for Vietnamese market
+function formatPrice(price: number): string {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+  }).format(price);
+}
+
+interface SearchResult {
+  id: string;
+  slug: string;
+  name: string;
+  price: string;
+  category: string;
+  image: string;
+}
 
 export default function SearchPage() {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<typeof mockResults>([]);
+  const [results, setResults] = useState<SearchResult[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+
+  const searchMutation = useMutation({
+    mutationFn: (searchQuery: string) => searchProducts(searchQuery, 20),
+    onSuccess: (products) => {
+      setResults(products.map((p: Product) => ({
+        id: p.id,
+        slug: p.slug,
+        name: p.name,
+        price: formatPrice(p.salePrice || p.price),
+        category: p.category?.name || 'Sản phẩm',
+        image: p.images?.[0]?.url || 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=400',
+      })));
+      setHasSearched(true);
+    },
+  });
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setHasSearched(true);
-    // Mock search - filter by query
-    setResults(mockResults.filter(p => 
-      p.name.toLowerCase().includes(query.toLowerCase())
-    ));
+    if (query.trim()) {
+      searchMutation.mutate(query);
+    }
   };
 
   return (
@@ -66,7 +92,7 @@ export default function SearchPage() {
                 <p className="text-gray-600 mb-6">Tìm thấy {results.length} kết quả cho "{query}"</p>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {results.map((product) => (
-                    <Link key={product.id} href={`/products/${product.id}`} className="group">
+                    <Link key={product.id} href={`/products/${product.slug}`} className="group">
                       <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                         <div className="aspect-[3/4] overflow-hidden">
                           <div 

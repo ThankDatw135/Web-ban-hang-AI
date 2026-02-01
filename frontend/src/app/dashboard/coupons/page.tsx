@@ -18,76 +18,6 @@ const tabs = [
   { key: 'expired' as const, label: 'Hết hạn' },
 ];
 
-// Fallback mock data when API is not available
-const mockCoupons: UserCoupon[] = [
-  {
-    id: '1',
-    code: 'TRYON20',
-    name: 'Quà tặng trải nghiệm AI',
-    description: 'Áp dụng cho mọi đơn hàng thử đồ AI lần đầu.',
-    type: 'PERCENTAGE',
-    value: 20,
-    endDate: '2026-12-31',
-    startDate: '2026-01-01',
-    isActive: true,
-    usagePerUser: 1,
-    usedCount: 0,
-    createdAt: '2026-01-01',
-    updatedAt: '2026-01-01',
-    status: 'available',
-  },
-  {
-    id: '2',
-    code: 'VIP500K',
-    name: 'Ưu đãi khách hàng VIP',
-    description: 'Giảm giá trực tiếp cho bộ sưu tập Mùa Đông.',
-    type: 'FIXED_AMOUNT',
-    value: 500000,
-    endDate: '2026-01-15',
-    startDate: '2026-01-01',
-    isActive: true,
-    usagePerUser: 1,
-    usedCount: 0,
-    minOrderValue: 2000000,
-    createdAt: '2026-01-01',
-    updatedAt: '2026-01-01',
-    status: 'available',
-  },
-  {
-    id: '3',
-    code: 'FREESHIP',
-    name: 'Tri ân Fashion AI',
-    description: 'Miễn phí vận chuyển toàn quốc cho đơn từ 2tr.',
-    type: 'FREE_SHIPPING',
-    value: 0,
-    endDate: '2026-12-20',
-    startDate: '2026-01-01',
-    isActive: true,
-    usagePerUser: 1,
-    usedCount: 0,
-    minOrderValue: 2000000,
-    createdAt: '2026-01-01',
-    updatedAt: '2026-01-01',
-    status: 'available',
-  },
-  {
-    id: '4',
-    code: 'BDAY10',
-    name: 'Chúc mừng sinh nhật',
-    description: 'Dành riêng cho tháng sinh nhật của bạn.',
-    type: 'PERCENTAGE',
-    value: 10,
-    endDate: '2026-02-28',
-    startDate: '2026-01-01',
-    isActive: true,
-    usagePerUser: 1,
-    usedCount: 0,
-    createdAt: '2026-01-01',
-    updatedAt: '2026-01-01',
-    status: 'available',
-  },
-];
-
 export default function CouponsPage() {
   const [activeTab, setActiveTab] = useState<CouponStatus>('available');
   const [promoCode, setPromoCode] = useState('');
@@ -97,8 +27,8 @@ export default function CouponsPage() {
   const { data: apiCoupons, isLoading, error } = useMyCoupons();
   const applyCouponMutation = useApplyCoupon();
 
-  // Use API data if available, otherwise use mock data
-  const coupons = apiCoupons || mockCoupons;
+  // Use API data only - no mock fallback
+  const coupons = apiCoupons || [];
   const filteredCoupons = coupons.filter(c => c.status === activeTab);
   const availableCount = coupons.filter(c => c.status === 'available').length;
 

@@ -7,36 +7,20 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { cn } from '@/lib/utils';
+import { getWishlist, removeFromWishlist } from '@/lib/api/wishlist';
+import { Loader2 } from 'lucide-react';
 
-// Mock wishlist
-const mockWishlist = [
-  {
-    id: '1',
-    name: 'Silk Evening Dress',
-    price: '2.500.000đ',
-    originalPrice: '3.000.000đ',
-    image: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=400',
-    inStock: true,
-  },
-  {
-    id: '2',
-    name: 'Linen Blazer',
-    price: '1.200.000đ',
-    image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400',
-    inStock: true,
-  },
-  {
-    id: '3',
-    name: 'Signature Bag',
-    price: '4.500.000đ',
-    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400',
-    inStock: false,
-  },
-];
+// Format price for Vietnamese market
+function formatPrice(price: number): string {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+  }).format(price);
+}
 
 // Sidebar items
 const sidebarItems = [
@@ -48,10 +32,34 @@ const sidebarItems = [
 ];
 
 export default function WishlistPage() {
-  const [items, setItems] = useState(mockWishlist);
+  const queryClient = useQueryClient();
 
-  const removeItem = (id: string) => {
-    setItems(items.filter(item => item.id !== id));
+  // Fetch wishlist from API
+  const { data: wishlistData, isLoading } = useQuery({
+    queryKey: ['wishlist'],
+    queryFn: getWishlist,
+  });
+
+  // Remove from wishlist mutation
+  const removeMutation = useMutation({
+    mutationFn: removeFromWishlist,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+    },
+  });
+
+  const items = wishlistData?.items?.map(item => ({
+    id: item.productId,
+    name: item.product.name,
+    slug: item.product.slug,
+    price: formatPrice(item.product.salePrice || item.product.price),
+    originalPrice: item.product.salePrice ? formatPrice(item.product.price) : undefined,
+    image: item.product.images?.[0]?.url || 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=400',
+    inStock: true, // TODO: Check from variant stock
+  })) || [];
+
+  const removeItem = (productId: string) => {
+    removeMutation.mutate(productId);
   };
 
   return (

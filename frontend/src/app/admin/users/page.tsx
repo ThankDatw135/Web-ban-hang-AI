@@ -7,30 +7,38 @@
 'use client';
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
+import { getAdminUsers } from '@/lib/api/admin/users';
+import { Loader2 } from 'lucide-react';
 
-// Mock users
-const mockUsers = [
-  { id: '1', name: 'Nguyễn Văn A', email: 'a@email.com', phone: '0901234567', orders: 12, spent: '15.200.000đ', joined: '15/01/2026' },
-  { id: '2', name: 'Trần Thị B', email: 'b@email.com', phone: '0909876543', orders: 8, spent: '9.800.000đ', joined: '10/01/2026' },
-  { id: '3', name: 'Lê Văn C', email: 'c@email.com', phone: '0908765432', orders: 3, spent: '2.500.000đ', joined: '05/01/2026' },
-  { id: '4', name: 'Phạm Thị D', email: 'd@email.com', phone: '0907654321', orders: 25, spent: '42.000.000đ', joined: '01/12/2025' },
-];
+// Format currency for Vietnamese market
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
 
 export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
 
-  const filteredUsers = mockUsers.filter(u => 
-    u.name.toLowerCase().includes(search.toLowerCase()) ||
-    u.email.toLowerCase().includes(search.toLowerCase())
-  );
+  // Fetch users from API
+  const { data: usersData, isLoading } = useQuery({
+    queryKey: ['admin-users', search],
+    queryFn: () => getAdminUsers({ search: search || undefined, limit: 50 }),
+  });
+
+  const users = usersData?.items || [];
+  const totalCount = usersData?.meta?.total || 0;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold">Khách hàng</h1>
-        <p className="text-gray-600">{mockUsers.length} khách hàng</p>
+        <p className="text-gray-600">{totalCount} khách hàng</p>
       </div>
 
       {/* Search */}
@@ -59,35 +67,53 @@ export default function AdminUsersPage() {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {filteredUsers.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50">
-                <td className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="material-symbols-outlined text-primary text-[20px]">person</span>
-                    </div>
-                    <div>
-                      <p className="font-semibold">{user.name}</p>
-                      <p className="text-sm text-gray-500">{user.email}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="p-4 text-gray-600">{user.phone}</td>
-                <td className="p-4">{user.orders}</td>
-                <td className="p-4 font-semibold text-primary">{user.spent}</td>
-                <td className="p-4 text-gray-600">{user.joined}</td>
-                <td className="p-4">
-                  <div className="flex items-center justify-center gap-2">
-                    <button className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center">
-                      <span className="material-symbols-outlined text-[18px]">visibility</span>
-                    </button>
-                    <button className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center">
-                      <span className="material-symbols-outlined text-[18px]">mail</span>
-                    </button>
-                  </div>
+            {isLoading ? (
+              <tr>
+                <td colSpan={6} className="p-8 text-center">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
                 </td>
               </tr>
-            ))}
+            ) : users.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="p-8 text-center text-gray-500">
+                  Không tìm thấy khách hàng
+                </td>
+              </tr>
+            ) : (
+              users.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50">
+                  <td className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        {user.avatar ? (
+                          <img src={user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                        ) : (
+                          <span className="material-symbols-outlined text-primary text-[20px]">person</span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-semibold">{user.firstName} {user.lastName}</p>
+                        <p className="text-sm text-gray-500">{user.email}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="p-4 text-gray-600">{user.phone || '-'}</td>
+                  <td className="p-4">{user._count?.orders || 0}</td>
+                  <td className="p-4 font-semibold text-primary">-</td>
+                  <td className="p-4 text-gray-600">{new Date(user.createdAt).toLocaleDateString('vi-VN')}</td>
+                  <td className="p-4">
+                    <div className="flex items-center justify-center gap-2">
+                      <button className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-[18px]">visibility</span>
+                      </button>
+                      <button className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-[18px]">mail</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

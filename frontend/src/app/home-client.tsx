@@ -8,44 +8,39 @@
 'use client';
 
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
+import { getProducts, getFeaturedProducts } from '@/lib/api/products';
+import type { Product } from '@/types/api';
 
-// Mock products data
-const newCollectionProducts = [
-  {
-    id: '1',
-    name: 'Silk Evening Dress',
-    price: '$450',
-    description: 'Lụa tơ tằm cao cấp',
-    imageUrl: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=800',
-  },
-  {
-    id: '2',
-    name: 'Linen Blazer',
-    price: '$320',
-    description: 'Thiết kế Minimalist',
-    imageUrl: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=800',
-  },
-  {
-    id: '3',
-    name: 'Signature Bag',
-    price: '$890',
-    description: 'Da thật 100%',
-    imageUrl: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800',
-  },
-  {
-    id: '4',
-    name: 'Classic Pumps',
-    price: '$150',
-    description: 'Êm ái mỗi bước đi',
-    imageUrl: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=800',
-  },
-];
+// Format price for Vietnamese market
+function formatPrice(price: number): string {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+  }).format(price);
+}
 
 export default function HomePageClient() {
+  // Fetch featured/new products from API
+  const { data: productsData, isLoading } = useQuery({
+    queryKey: ['featured-products'],
+    queryFn: () => getProducts({ limit: 4, sort: 'newest' }),
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+
+  const newCollectionProducts = productsData?.data?.map((product: Product) => ({
+    id: product.id,
+    slug: product.slug,
+    name: product.name,
+    price: formatPrice(product.salePrice || product.price),
+    description: product.category?.name || 'Thời trang cao cấp',
+    imageUrl: product.images?.[0]?.url || 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=800',
+  })) || [];
+
   return (
     <>
       <Header cartItemsCount={2} />

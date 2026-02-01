@@ -12,7 +12,7 @@
 
 import { Injectable, Inject } from "@nestjs/common";
 import Redis from "ioredis";
-import { REDIS_CLIENT } from "../redis/redis.module";
+import { REDIS_CLIENT } from "./redis.constants";
 
 // TTL Constants (tính bằng giây)
 export const CACHE_TTL = {

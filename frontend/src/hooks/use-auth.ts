@@ -135,3 +135,36 @@ export function useResetPassword() {
     },
   });
 }
+
+/**
+ * Hook đăng nhập bằng Google
+ */
+export function useGoogleLogin() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      // Import dynamically to avoid SSR issues
+      const { signInWithGoogle } = await import('@/lib/firebase');
+      const idToken = await signInWithGoogle();
+      return authApi.loginGoogle(idToken);
+    },
+    onSuccess: (response) => {
+      // Lưu tokens
+      localStorage.setItem('accessToken', response.accessToken);
+      localStorage.setItem('refreshToken', response.refreshToken);
+      
+      // Invalidate user query
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+      
+      // Redirect based on role
+      if (response.user.role === 'ADMIN') {
+        router.push('/admin');
+      } else {
+        router.push('/');
+      }
+    },
+  });
+}
+

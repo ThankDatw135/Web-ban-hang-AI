@@ -11,7 +11,6 @@ import {
 } from "./config";
 import { PrismaModule } from "./modules/prisma/prisma.module";
 import { RedisModule } from "./modules/redis/redis.module";
-import { EmailModule } from "./modules/email/email.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsersModule } from "./modules/users/users.module";
 import { ProductsModule } from "./modules/products/products.module";
@@ -25,6 +24,7 @@ import { EventsModule } from "./modules/events/events.module";
 import { HealthController } from "./health.controller";
 import { LoggerModule } from "./common/logger";
 import { CouponsModule } from "./modules/coupons/coupons.module";
+import { WishlistModule } from "./modules/wishlist/wishlist.module";
 
 @Module({
   imports: [
@@ -65,7 +65,6 @@ import { CouponsModule } from "./modules/coupons/coupons.module";
     PrismaModule,
     RedisModule,
     LoggerModule,
-    EmailModule,
 
     // Feature Modules
     AuthModule,
@@ -79,6 +78,7 @@ import { CouponsModule } from "./modules/coupons/coupons.module";
     ReviewsModule,
     EventsModule,
     CouponsModule,
+    WishlistModule,
   ],
   controllers: [HealthController],
 })
