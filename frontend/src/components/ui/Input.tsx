@@ -1,144 +1,125 @@
 /**
  * Fashion AI - Input Component
  * 
- * Input fields với nhiều types và states
- * Focus: Gold border, accessible, error handling
+ * Reusable input component với các variants
  */
 
 'use client';
 
-import { forwardRef, type InputHTMLAttributes, type ReactNode, useState } from 'react';
-import { cn } from '@/lib/utils';
-import { Eye, EyeOff } from 'lucide-react';
+import { forwardRef, useState } from 'react';
+import { Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 
-export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
-  hint?: string;
-  leftIcon?: ReactNode;
-  rightIcon?: ReactNode;
-  size?: 'sm' | 'md' | 'lg';
+  success?: string;
+  helperText?: string;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  isPassword?: boolean;
 }
 
-const inputSizes = {
-  sm: 'h-10 text-sm px-3',
-  md: 'h-12 text-sm px-4',
-  lg: 'h-14 text-base px-5',
-};
-
-/**
- * Input component với label, error, và icon support
- * 
- * @example
- * <Input label="Email" type="email" placeholder="example@email.com" />
- * <Input type="password" error="Mật khẩu không đúng" />
- */
-export const Input = forwardRef<HTMLInputElement, InputProps>(
-  (
-    {
-      className,
-      type = 'text',
-      label,
-      error,
-      hint,
-      leftIcon,
-      rightIcon,
-      size = 'md',
-      disabled,
-      id,
-      ...props
-    },
-    ref
-  ) => {
-    // State cho password visibility toggle
+const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ 
+    className = '', 
+    label,
+    error,
+    success,
+    helperText,
+    leftIcon,
+    rightIcon,
+    isPassword,
+    type = 'text',
+    disabled,
+    ...props 
+  }, ref) => {
     const [showPassword, setShowPassword] = useState(false);
-    const isPassword = type === 'password';
-    const inputType = isPassword && showPassword ? 'text' : type;
-
-    // Generate ID nếu không có
-    const inputId = id || `input-${Math.random().toString(36).slice(2, 9)}`;
+    
+    // Determine input type
+    const inputType = isPassword ? (showPassword ? 'text' : 'password') : type;
+    
+    // Status styles
+    const getStatusStyles = () => {
+      if (error) return 'border-error focus:border-error focus:ring-error/20';
+      if (success) return 'border-success focus:border-success focus:ring-success/20';
+      return 'border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-primary/20';
+    };
 
     return (
       <div className="w-full">
         {/* Label */}
         {label && (
-          <label
-            htmlFor={inputId}
-            className="block text-sm font-medium text-text-main dark:text-white mb-2"
-          >
+          <label className="block text-sm font-medium mb-2">
             {label}
           </label>
         )}
-
+        
         {/* Input wrapper */}
         <div className="relative">
           {/* Left icon */}
           {leftIcon && (
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
               {leftIcon}
-            </span>
+            </div>
           )}
-
-          {/* Input field */}
+          
+          {/* Input */}
           <input
             ref={ref}
-            id={inputId}
             type={inputType}
-            className={cn(
-              // Base styles
-              'w-full rounded-xl border bg-transparent',
-              'outline-none transition-all duration-200',
-              'placeholder:text-secondary/60',
-              // Focus states
-              'focus:border-primary focus:ring-2 focus:ring-primary/20',
-              // Size
-              inputSizes[size],
-              // Border color
-              error
-                ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
-                : 'border-gray-300 dark:border-gray-600',
-              // Disabled state
-              disabled && 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-60',
-              // Padding cho icons
-              leftIcon && 'pl-11',
-              (rightIcon || isPassword) && 'pr-11',
-              className
-            )}
             disabled={disabled}
-            aria-invalid={error ? 'true' : undefined}
-            aria-describedby={error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined}
+            className={`
+              w-full h-12 px-4 rounded-xl border bg-white dark:bg-[#2c2822]
+              text-sm outline-none transition-all duration-200
+              focus:ring-2
+              disabled:opacity-50 disabled:cursor-not-allowed
+              ${leftIcon ? 'pl-10' : ''}
+              ${(rightIcon || isPassword) ? 'pr-10' : ''}
+              ${getStatusStyles()}
+              ${className}
+            `}
             {...props}
           />
-
-          {/* Right icon hoặc Password toggle */}
-          {isPassword ? (
-            <button
-              type="button"
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-secondary hover:text-text-main transition-colors"
-              onClick={() => setShowPassword(!showPassword)}
-              tabIndex={-1}
-              aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-            >
-              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-            </button>
-          ) : rightIcon ? (
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-secondary">
-              {rightIcon}
-            </span>
-          ) : null}
+          
+          {/* Right icon / Password toggle */}
+          {(rightIcon || isPassword) && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              {isPassword ? (
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              ) : (
+                <span className="text-gray-400">{rightIcon}</span>
+              )}
+            </div>
+          )}
+          
+          {/* Status icon */}
+          {(error || success) && !rightIcon && !isPassword && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              {error ? (
+                <AlertCircle className="w-5 h-5 text-error" />
+              ) : (
+                <CheckCircle className="w-5 h-5 text-success" />
+              )}
+            </div>
+          )}
         </div>
-
-        {/* Error message */}
-        {error && (
-          <p id={`${inputId}-error`} className="mt-2 text-sm text-red-500" role="alert">
-            {error}
-          </p>
-        )}
-
-        {/* Hint text */}
-        {hint && !error && (
-          <p id={`${inputId}-hint`} className="mt-2 text-sm text-secondary">
-            {hint}
+        
+        {/* Helper text / Error / Success */}
+        {(helperText || error || success) && (
+          <p className={`mt-1.5 text-xs ${
+            error ? 'text-error' : success ? 'text-success' : 'text-secondary'
+          }`}>
+            {error || success || helperText}
           </p>
         )}
       </div>

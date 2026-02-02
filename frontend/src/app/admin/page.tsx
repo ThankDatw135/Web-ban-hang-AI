@@ -1,163 +1,198 @@
 /**
  * Fashion AI - Admin Dashboard
  * 
- * Trang tổng quan admin với stats và charts
+ * Trang tổng quan quản trị với thống kê
  */
 
-'use client';
-
+import { 
+  DollarSign, 
+  ShoppingCart, 
+  Users, 
+  Package,
+  TrendingUp,
+  TrendingDown,
+  ArrowRight,
+  Eye
+} from 'lucide-react';
 import Link from 'next/link';
-import { cn, formatCurrency } from '@/lib/utils';
-import { useOrders } from '@/hooks/use-orders';
-import { useProducts } from '@/hooks/use-products';
-import { Loader2 } from 'lucide-react';
-import type { OrderStatus } from '@/types/api';
 
-// Status badge mapping
-const statusBadge: Record<OrderStatus, { label: string; class: string }> = {
-  PENDING: { label: 'Chờ xử lý', class: 'bg-gray-100 text-gray-700' },
-  CONFIRMED: { label: 'Đã xác nhận', class: 'bg-blue-100 text-blue-700' },
-  PROCESSING: { label: 'Đang xử lý', class: 'bg-yellow-100 text-yellow-700' },
-  SHIPPED: { label: 'Đang giao', class: 'bg-blue-100 text-blue-700' },
-  DELIVERED: { label: 'Đã giao', class: 'bg-green-100 text-green-700' },
-  CANCELLED: { label: 'Đã hủy', class: 'bg-red-100 text-red-700' },
-  REFUNDED: { label: 'Đã hoàn tiền', class: 'bg-purple-100 text-purple-700' },
-};
-
-// Mock stats (would come from analytics API in production)
+// Mock stats data
 const stats = [
-  { label: 'Doanh thu hôm nay', value: '12.5M', change: '+12%', icon: 'payments', color: 'text-green-600 bg-green-100' },
-  { label: 'Đơn hàng mới', value: '48', change: '+8%', icon: 'shopping_bag', color: 'text-blue-600 bg-blue-100' },
-  { label: 'Khách hàng mới', value: '156', change: '+24%', icon: 'person_add', color: 'text-purple-600 bg-purple-100' },
-  { label: 'AI Jobs đang chạy', value: '12', change: '', icon: 'smart_toy', color: 'text-amber-600 bg-amber-100' },
+  { 
+    label: 'Doanh thu', 
+    value: '125.5M', 
+    unit: 'VNĐ',
+    change: '+12.5%', 
+    trend: 'up',
+    icon: DollarSign,
+    color: 'text-green-500 bg-green-500/10'
+  },
+  { 
+    label: 'Đơn hàng', 
+    value: '1,234', 
+    unit: '',
+    change: '+8.2%', 
+    trend: 'up',
+    icon: ShoppingCart,
+    color: 'text-blue-500 bg-blue-500/10'
+  },
+  { 
+    label: 'Khách hàng', 
+    value: '5,678', 
+    unit: '',
+    change: '+15.3%', 
+    trend: 'up',
+    icon: Users,
+    color: 'text-purple-500 bg-purple-500/10'
+  },
+  { 
+    label: 'Sản phẩm', 
+    value: '456', 
+    unit: '',
+    change: '-2.1%', 
+    trend: 'down',
+    icon: Package,
+    color: 'text-orange-500 bg-orange-500/10'
+  },
 ];
 
-export default function AdminDashboard() {
-  // Fetch recent orders
-  const { data: ordersData, isLoading: ordersLoading } = useOrders({ limit: 5 });
-  const recentOrders = ordersData?.data || [];
-  
-  // Fetch top products (by popularity/sales)
-  const { data: productsData, isLoading: productsLoading } = useProducts({ limit: 4, sort: 'popular' });
-  const topProducts = productsData?.data || [];
+// Mock recent orders
+const recentOrders = [
+  { id: 'FA-001', customer: 'Nguyễn Văn A', total: 850000, status: 'Đang xử lý' },
+  { id: 'FA-002', customer: 'Trần Thị B', total: 1250000, status: 'Đang giao' },
+  { id: 'FA-003', customer: 'Lê Văn C', total: 650000, status: 'Đã giao' },
+  { id: 'FA-004', customer: 'Phạm Thị D', total: 950000, status: 'Đang xử lý' },
+  { id: 'FA-005', customer: 'Hoàng Văn E', total: 750000, status: 'Đã hủy' },
+];
 
+// Format giá tiền
+const formatPrice = (price: number) => {
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+};
+
+export default function AdminDashboard() {
   return (
     <div className="space-y-6">
-      {/* Page header */}
-      <div>
+      <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-gray-600">Tổng quan hoạt động kinh doanh</p>
+        <p className="text-sm text-secondary">Cập nhật: 02/02/2026, 12:00</p>
       </div>
 
-      {/* Stats grid */}
+      {/* Stats Grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-xl p-5 shadow-sm">
-            <div className="flex items-start justify-between mb-3">
-              <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', stat.color)}>
-                <span className="material-symbols-outlined text-[20px]">{stat.icon}</span>
+          <div key={stat.label} className="card p-5">
+            <div className="flex items-start justify-between">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.color}`}>
+                <stat.icon className="w-6 h-6" />
               </div>
-              {stat.change && (
-                <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                  {stat.change}
-                </span>
-              )}
+              <div className={`flex items-center gap-1 text-sm font-medium ${
+                stat.trend === 'up' ? 'text-green-500' : 'text-red-500'
+              }`}>
+                {stat.trend === 'up' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                {stat.change}
+              </div>
             </div>
-            <p className="text-2xl font-bold">{stat.value}</p>
-            <p className="text-sm text-gray-600">{stat.label}</p>
+            <div className="mt-4">
+              <p className="text-2xl font-bold">
+                {stat.value}
+                {stat.unit && <span className="text-sm font-normal text-secondary ml-1">{stat.unit}</span>}
+              </p>
+              <p className="text-sm text-secondary">{stat.label}</p>
+            </div>
           </div>
         ))}
       </div>
 
+      {/* Recent Orders & Quick Actions */}
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Recent orders */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm">
-          <div className="flex items-center justify-between p-5 border-b">
+        {/* Recent Orders */}
+        <div className="lg:col-span-2 card">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
             <h2 className="font-bold">Đơn hàng gần đây</h2>
-            <Link href="/admin/orders" className="text-sm text-primary font-semibold hover:underline">
+            <Link href="/admin/orders" className="text-sm text-primary hover:underline flex items-center gap-1">
               Xem tất cả
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-          <div className="divide-y">
-            {ordersLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
-              </div>
-            ) : recentOrders.length > 0 ? recentOrders.map((order) => (
-              <div key={order.id} className="p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">{order.orderNumber}</span>
-                    <span className={cn('px-2 py-0.5 rounded-full text-xs font-bold', statusBadge[order.status].class)}>
-                      {statusBadge[order.status].label}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-500">{order.shippingAddress?.fullName || 'N/A'}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold">{formatCurrency(order.total)}</p>
-                  <p className="text-xs text-gray-500">{new Date(order.createdAt).toLocaleString('vi-VN')}</p>
-                </div>
-              </div>
-            )) : (
-              <p className="text-center text-gray-500 py-8">Chưa có đơn hàng nào</p>
-            )}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="text-left text-sm text-secondary border-b border-gray-200 dark:border-gray-700">
+                  <th className="p-4 font-medium">Mã đơn</th>
+                  <th className="p-4 font-medium">Khách hàng</th>
+                  <th className="p-4 font-medium">Tổng tiền</th>
+                  <th className="p-4 font-medium">Trạng thái</th>
+                  <th className="p-4 font-medium"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentOrders.map((order) => (
+                  <tr key={order.id} className="border-b border-gray-100 dark:border-gray-800 last:border-0">
+                    <td className="p-4 font-medium">{order.id}</td>
+                    <td className="p-4 text-sm">{order.customer}</td>
+                    <td className="p-4 text-sm font-medium text-primary">{formatPrice(order.total)}</td>
+                    <td className="p-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                        order.status === 'Đã giao' ? 'bg-green-500/10 text-green-500' :
+                        order.status === 'Đang giao' ? 'bg-blue-500/10 text-blue-500' :
+                        order.status === 'Đang xử lý' ? 'bg-yellow-500/10 text-yellow-500' :
+                        'bg-red-500/10 text-red-500'
+                      }`}>
+                        {order.status}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <Link href={`/admin/orders/${order.id}`} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 inline-flex">
+                        <Eye className="w-4 h-4 text-secondary" />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        {/* Top products */}
-        <div className="bg-white rounded-xl shadow-sm">
-          <div className="p-5 border-b">
-            <h2 className="font-bold">Sản phẩm nổi bật</h2>
-          </div>
-          <div className="p-4 space-y-4">
-            {productsLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
-              </div>
-            ) : topProducts.length > 0 ? topProducts.map((product, idx) => (
-              <div key={product.id} className="flex items-center gap-3">
-                <span className={cn(
-                  'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold',
-                  idx === 0 ? 'bg-yellow-100 text-yellow-700' :
-                  idx === 1 ? 'bg-gray-100 text-gray-700' :
-                  idx === 2 ? 'bg-amber-100 text-amber-700' : 'bg-gray-50 text-gray-600'
-                )}>
-                  {idx + 1}
-                </span>
-                <div className="flex-1">
-                  <p className="font-semibold text-sm">{product.name}</p>
-                  <p className="text-xs text-gray-500">{product.category?.name || 'Uncategorized'}</p>
+        {/* Quick Actions */}
+        <div className="card p-4">
+          <h2 className="font-bold mb-4">Thao tác nhanh</h2>
+          <div className="space-y-3">
+            <Link href="/admin/products/new" className="block p-4 rounded-xl bg-primary/5 hover:bg-primary/10 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Package className="w-5 h-5 text-primary" />
                 </div>
-                <span className="text-sm font-semibold text-primary">{formatCurrency(product.price)}</span>
+                <div>
+                  <p className="font-medium">Thêm sản phẩm mới</p>
+                  <p className="text-xs text-secondary">Tạo sản phẩm mới</p>
+                </div>
               </div>
-            )) : (
-              <p className="text-center text-gray-500 py-4">Chưa có sản phẩm</p>
-            )}
+            </Link>
+            <Link href="/admin/coupons/new" className="block p-4 rounded-xl bg-accent/5 hover:bg-accent/10 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 text-accent" />
+                </div>
+                <div>
+                  <p className="font-medium">Tạo mã giảm giá</p>
+                  <p className="text-xs text-secondary">Tạo coupon mới</p>
+                </div>
+              </div>
+            </Link>
+            <Link href="/admin/ai-jobs" className="block p-4 rounded-xl bg-purple-500/5 hover:bg-purple-500/10 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center">
+                  <Eye className="w-5 h-5 text-purple-500" />
+                </div>
+                <div>
+                  <p className="font-medium">Xem AI Jobs</p>
+                  <p className="text-xs text-secondary">Theo dõi xử lý AI</p>
+                </div>
+              </div>
+            </Link>
           </div>
         </div>
-      </div>
-
-      {/* Quick actions */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Thêm sản phẩm', icon: 'add_box', href: '/admin/products/new' },
-          { label: 'Xử lý đơn hàng', icon: 'package', href: '/admin/orders' },
-          { label: 'Xem AI Jobs', icon: 'smart_toy', href: '/admin/ai-jobs' },
-          { label: 'Báo cáo', icon: 'bar_chart', href: '/admin/reports' },
-        ].map((action) => (
-          <Link 
-            key={action.label}
-            href={action.href}
-            className="flex items-center gap-3 p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-primary text-[20px]">{action.icon}</span>
-            </div>
-            <span className="font-semibold">{action.label}</span>
-            <span className="material-symbols-outlined text-gray-400 ml-auto">arrow_forward</span>
-          </Link>
-        ))}
       </div>
     </div>
   );

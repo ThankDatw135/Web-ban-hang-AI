@@ -1,51 +1,76 @@
 /**
- * Fashion AI - 404 Not Found Page
+ * Fashion AI - 404 Not Found
  * 
- * Trang lỗi khi không tìm thấy nội dung
+ * Trang hiển thị khi không tìm thấy route
  */
 
+'use client';
+
+import { Search, Home, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 
 export default function NotFound() {
   return (
-    <>
-      <Header />
-      
-      <main className="flex-1 bg-cream flex items-center justify-center py-16">
-        <div className="text-center px-4">
-          {/* 404 Icon */}
-          <div className="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-8">
-            <span className="material-symbols-outlined text-6xl text-primary">search_off</span>
+    <div className="min-h-screen flex items-center justify-center bg-cream dark:bg-[#1e1a14] px-4">
+      <div className="text-center max-w-md">
+        {/* 404 illustration */}
+        <div className="mb-8">
+          <div className="relative">
+            {/* Large 404 text */}
+            <h1 className="text-[150px] md:text-[200px] font-black text-gray-100 dark:text-gray-800 leading-none select-none">
+              404
+            </h1>
+            {/* Search icon overlay */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
+                <Search className="w-12 h-12 text-primary" />
+              </div>
+            </div>
           </div>
-
-          {/* Text */}
-          <h1 className="text-6xl font-bold text-primary mb-4">404</h1>
-          <h2 className="text-2xl font-bold mb-4">Không tìm thấy trang</h2>
-          <p className="text-gray-600 mb-8 max-w-md mx-auto">
-            Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển đến địa chỉ khác.
-          </p>
-
-          {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/">
-              <button className="px-8 h-12 rounded-full bg-primary text-white font-bold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined text-[20px]">home</span>
-                Về trang chủ
-              </button>
+        </div>
+        
+        {/* Message */}
+        <h2 className="text-2xl md:text-3xl font-bold text-text-main dark:text-white mb-4">
+          Không tìm thấy trang
+        </h2>
+        <p className="text-secondary mb-8">
+          Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển. 
+          Hãy kiểm tra lại đường dẫn hoặc quay về trang chủ.
+        </p>
+        
+        {/* Action buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Link href="/" className="btn-primary">
+            <Home className="w-5 h-5" />
+            Về trang chủ
+          </Link>
+          <button 
+            onClick={() => window.history.back()}
+            className="btn-outline"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Quay lại
+          </button>
+        </div>
+        
+        {/* Quick links */}
+        <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-secondary mb-4">Hoặc xem các trang phổ biến:</p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Link href="/products" className="text-sm text-primary hover:underline">
+              Sản phẩm
             </Link>
-            <Link href="/products">
-              <button className="px-8 h-12 rounded-full border border-gray-300 font-bold hover:bg-white transition-colors flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined text-[20px]">shopping_bag</span>
-                Xem sản phẩm
-              </button>
+            <span className="text-gray-300">•</span>
+            <Link href="/ai-studio" className="text-sm text-primary hover:underline">
+              AI Studio
+            </Link>
+            <span className="text-gray-300">•</span>
+            <Link href="/contact" className="text-sm text-primary hover:underline">
+              Liên hệ
             </Link>
           </div>
         </div>
-      </main>
-
-      <Footer />
-    </>
+      </div>
+    </div>
   );
 }

@@ -164,6 +164,65 @@ export class CouponsService {
   }
 
   /**
+   * Lấy danh sách mã giảm giá khả dụng cho user
+   * Trả về các mã đang active, trong thời gian hiệu lực, còn lượt sử dụng
+   */
+  async getAvailableCoupons(userId: string) {
+    const now = new Date();
+
+    // Lấy tất cả coupon đang hoạt động
+    const coupons = await this.prisma.coupon.findMany({
+      where: {
+        isActive: true,
+        startDate: { lte: now },
+        endDate: { gte: now },
+      },
+      orderBy: { endDate: "asc" }, // Sắp xếp theo ngày hết hạn
+    });
+
+    // Lọc ra các coupon user còn có thể dùng
+    const availableCoupons = [];
+
+    for (const coupon of coupons) {
+      // Kiểm tra tổng lượt sử dụng
+      if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
+        continue;
+      }
+
+      // Kiểm tra lượt sử dụng của user
+      const userUsageCount = await this.prisma.couponUsage.count({
+        where: {
+          couponId: coupon.id,
+          userId: userId,
+        },
+      });
+
+      if (userUsageCount >= coupon.usagePerUser) {
+        continue;
+      }
+
+      // Thêm thông tin bổ sung
+      availableCoupons.push({
+        id: coupon.id,
+        code: coupon.code,
+        name: coupon.name,
+        description: coupon.description,
+        type: coupon.type,
+        value: Number(coupon.value),
+        minOrderValue: coupon.minOrderValue ? Number(coupon.minOrderValue) : null,
+        maxDiscount: coupon.maxDiscount ? Number(coupon.maxDiscount) : null,
+        endDate: coupon.endDate,
+        remainingUses: coupon.usagePerUser - userUsageCount,
+      });
+    }
+
+    return {
+      data: availableCoupons,
+      total: availableCoupons.length,
+    };
+  }
+
+  /**
    * Sử dụng coupon cho đơn hàng
    * Gọi sau khi tạo order thành công
    */

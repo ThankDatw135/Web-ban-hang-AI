@@ -1,12 +1,14 @@
 /**
  * Fashion AI - Error Boundary
  * 
- * Xử lý lỗi runtime
+ * Hiển thị khi có lỗi xảy ra
+ * Cung cấp nút retry để thử lại
  */
 
 'use client';
 
 import { useEffect } from 'react';
+import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Error({
@@ -17,46 +19,55 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log error to error reporting service
-    console.error('Error occurred:', error);
+    // Log lỗi ra console để debug
+    console.error('Error boundary caught:', error);
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-cream flex items-center justify-center py-16">
-      <div className="text-center px-4">
-        {/* Error Icon */}
-        <div className="w-32 h-32 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-8">
-          <span className="material-symbols-outlined text-6xl text-red-600">error</span>
+    <div className="min-h-screen flex items-center justify-center bg-cream dark:bg-[#1e1a14] px-4">
+      <div className="text-center max-w-md">
+        {/* Error icon */}
+        <div className="mb-6">
+          <div className="w-20 h-20 rounded-full bg-error/10 flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-10 h-10 text-error" />
+          </div>
         </div>
-
-        {/* Text */}
-        <h1 className="text-3xl font-bold mb-4">Đã xảy ra lỗi</h1>
-        <p className="text-gray-600 mb-8 max-w-md mx-auto">
-          Xin lỗi, đã có lỗi xảy ra trong quá trình xử lý. Vui lòng thử lại sau.
+        
+        {/* Error message */}
+        <h1 className="text-2xl md:text-3xl font-bold text-text-main dark:text-white mb-4">
+          Đã xảy ra lỗi
+        </h1>
+        <p className="text-secondary mb-8">
+          Rất tiếc, đã có lỗi xảy ra khi tải trang này. 
+          Vui lòng thử lại hoặc quay về trang chủ.
         </p>
-
-        {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button 
-            onClick={reset}
-            className="px-8 h-12 rounded-full bg-primary text-white font-bold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+        
+        {/* Action buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <button
+            onClick={() => reset()}
+            className="btn-primary"
           >
-            <span className="material-symbols-outlined text-[20px]">refresh</span>
+            <RefreshCw className="w-5 h-5" />
             Thử lại
           </button>
-          <Link href="/">
-            <button className="px-8 h-12 rounded-full border border-gray-300 font-bold hover:bg-white transition-colors flex items-center justify-center gap-2">
-              <span className="material-symbols-outlined text-[20px]">home</span>
-              Về trang chủ
-            </button>
+          <Link href="/" className="btn-outline">
+            <Home className="w-5 h-5" />
+            Về trang chủ
           </Link>
         </div>
-
-        {/* Error code */}
-        {error.digest && (
-          <p className="mt-8 text-sm text-gray-400">
-            Mã lỗi: {error.digest}
-          </p>
+        
+        {/* Error details (dev only) */}
+        {process.env.NODE_ENV === 'development' && (
+          <details className="mt-8 text-left">
+            <summary className="text-sm text-secondary cursor-pointer hover:text-primary">
+              Chi tiết lỗi (development)
+            </summary>
+            <pre className="mt-2 p-4 bg-gray-100 dark:bg-[#25221d] rounded-xl text-xs overflow-auto">
+              {error.message}
+              {error.digest && `\nDigest: ${error.digest}`}
+            </pre>
+          </details>
         )}
       </div>
     </div>

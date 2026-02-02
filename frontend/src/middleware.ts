@@ -49,8 +49,25 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // TODO: Add admin role check for admin routes
-  // This would require decoding the JWT or making an API call
+  // Admin role check - decode JWT and verify role
+  if (isAdminRoute && accessToken) {
+    try {
+      // Decode JWT payload (base64)
+      const parts = accessToken.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1]));
+        if (payload.role !== 'ADMIN') {
+          // User is not admin, redirect to home
+          return NextResponse.redirect(new URL('/', request.url));
+        }
+      }
+    } catch {
+      // Invalid token, redirect to login
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
 
   return NextResponse.next();
 }

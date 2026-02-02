@@ -26,6 +26,7 @@ export class WishlistService {
                 isActive: true,
                 images: { where: { isMain: true }, take: 1 },
                 category: { select: { id: true, name: true, slug: true } },
+                variants: { select: { id: true, stock: true, size: true } },
               },
             },
           },
@@ -51,6 +52,7 @@ export class WishlistService {
                   isActive: true,
                   images: { where: { isMain: true }, take: 1 },
                   category: { select: { id: true, name: true, slug: true } },
+                  variants: { select: { id: true, stock: true, size: true } },
                 },
               },
             },
@@ -60,23 +62,33 @@ export class WishlistService {
     }
 
     // Transform response
-    const items = wishlist.items.map((item) => ({
-      id: item.id,
-      productId: item.productId,
-      addedAt: item.addedAt,
-      product: {
-        id: item.product.id,
-        name: item.product.name,
-        slug: item.product.slug,
-        price: Number(item.product.price),
-        salePrice: item.product.salePrice
-          ? Number(item.product.salePrice)
-          : null,
-        isActive: item.product.isActive,
-        mainImage: item.product.images[0]?.url || null,
-        category: item.product.category,
-      },
-    }));
+    const items = wishlist.items.map((item) => {
+      // Calculate total stock from all variants
+      const totalStock = item.product.variants?.reduce(
+        (sum, v) => sum + (v.stock || 0),
+        0,
+      ) || 0;
+
+      return {
+        id: item.id,
+        productId: item.productId,
+        addedAt: item.addedAt,
+        product: {
+          id: item.product.id,
+          name: item.product.name,
+          slug: item.product.slug,
+          price: Number(item.product.price),
+          salePrice: item.product.salePrice
+            ? Number(item.product.salePrice)
+            : null,
+          isActive: item.product.isActive,
+          inStock: totalStock > 0, // Stock availability from variants
+          totalStock, // Total stock count
+          mainImage: item.product.images[0]?.url || null,
+          category: item.product.category,
+        },
+      };
+    });
 
     return {
       id: wishlist.id,
@@ -84,6 +96,7 @@ export class WishlistService {
       totalItems: items.length,
     };
   }
+
 
   async addToWishlist(userId: string, dto: AddToWishlistDto) {
     // Verify product exists and is active

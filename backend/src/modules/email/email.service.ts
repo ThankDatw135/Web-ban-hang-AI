@@ -58,7 +58,7 @@ export class EmailService {
             <p class="message">Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.</p>
           </div>
           <div class="footer">
-            © 2024 Fashion AI. All rights reserved.<br>
+            © 2026 Fashion AI. All rights reserved.<br>
             Đây là email tự động, vui lòng không trả lời.
           </div>
         </div>
@@ -112,7 +112,7 @@ export class EmailService {
             <p class="message">Nếu bạn không thực hiện thay đổi này, vui lòng liên hệ với chúng tôi ngay lập tức.</p>
           </div>
           <div class="footer">
-            © 2024 Fashion AI. All rights reserved.
+            © 2026 Fashion AI. All rights reserved.
           </div>
         </div>
       </body>

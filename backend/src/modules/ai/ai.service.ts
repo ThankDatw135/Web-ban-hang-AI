@@ -248,6 +248,142 @@ export class AiService {
     });
   }
 
+  // ========================================
+  // ADMIN METHODS
+  // ========================================
+
+  /**
+   * Lấy tất cả AI jobs (Admin)
+   */
+  async getAllJobs(params: {
+    page: number;
+    limit: number;
+    status?: string;
+    type?: string;
+  }) {
+    const { page, limit, status, type } = params;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (status) where.status = status;
+    if (type) where.type = type;
+
+    const [jobs, total] = await Promise.all([
+      this.prisma.aIJob.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: {
+            select: { id: true, firstName: true, lastName: true, email: true },
+          },
+          product: {
+            select: { id: true, name: true },
+          },
+        },
+      }),
+      this.prisma.aIJob.count({ where }),
+    ]);
+
+    return {
+      data: jobs,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
+   * Lấy chi tiết AI job (Admin)
+   */
+  async getJobById(jobId: string) {
+    const job = await this.prisma.aIJob.findUnique({
+      where: { id: jobId },
+      include: {
+        user: {
+          select: { id: true, firstName: true, lastName: true, email: true },
+        },
+        product: {
+          select: { id: true, name: true, images: true },
+        },
+      },
+    });
+
+    if (!job) {
+      throw new NotFoundException("Không tìm thấy AI job");
+    }
+
+    return job;
+  }
+
+  /**
+   * Hủy AI job (Admin)
+   */
+  async cancelJob(jobId: string) {
+    const job = await this.getJobById(jobId);
+
+    if (job.status === "COMPLETED" || job.status === "FAILED") {
+      return { message: "Job đã hoàn thành hoặc thất bại, không thể hủy" };
+    }
+
+    await this.prisma.aIJob.update({
+      where: { id: jobId },
+      data: {
+        status: "FAILED",
+        errorMessage: "Đã bị hủy bởi Admin",
+        completedAt: new Date(),
+      },
+    });
+
+    return { message: "Đã hủy AI job thành công" };
+  }
+
+  /**
+   * Thống kê AI jobs (Admin)
+   */
+  async getJobStats() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [
+      totalJobs,
+      pendingJobs,
+      processingJobs,
+      completedJobs,
+      failedJobs,
+      todayJobs,
+      jobsByType,
+    ] = await Promise.all([
+      this.prisma.aIJob.count(),
+      this.prisma.aIJob.count({ where: { status: "PENDING" } }),
+      this.prisma.aIJob.count({ where: { status: "PROCESSING" } }),
+      this.prisma.aIJob.count({ where: { status: "COMPLETED" } }),
+      this.prisma.aIJob.count({ where: { status: "FAILED" } }),
+      this.prisma.aIJob.count({ where: { createdAt: { gte: today } } }),
+      this.prisma.aIJob.groupBy({
+        by: ["type"],
+        _count: { type: true },
+      }),
+    ]);
+
+    return {
+      total: totalJobs,
+      pending: pendingJobs,
+      processing: processingJobs,
+      completed: completedJobs,
+      failed: failedJobs,
+      today: todayJobs,
+      byType: jobsByType.map((item) => ({
+        type: item.type,
+        count: item._count.type,
+      })),
+    };
+  }
+
   private async publishToQueue(queue: string, message: any) {
     if (!this.channelWrapper) {
       console.error("RabbitMQ channel not available");

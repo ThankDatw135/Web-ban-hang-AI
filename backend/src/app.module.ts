@@ -25,6 +25,9 @@ import { HealthController } from "./health.controller";
 import { LoggerModule } from "./common/logger";
 import { CouponsModule } from "./modules/coupons/coupons.module";
 import { WishlistModule } from "./modules/wishlist/wishlist.module";
+import { AnalyticsModule } from "./modules/analytics/analytics.module";
+import { TicketsModule } from "./modules/tickets/tickets.module";
+import { CampaignsModule } from "./modules/campaigns/campaigns.module";
 
 @Module({
   imports: [
@@ -79,6 +82,9 @@ import { WishlistModule } from "./modules/wishlist/wishlist.module";
     EventsModule,
     CouponsModule,
     WishlistModule,
+    AnalyticsModule,
+    TicketsModule,
+    CampaignsModule,
   ],
   controllers: [HealthController],
 })

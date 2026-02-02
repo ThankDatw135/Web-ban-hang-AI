@@ -1,93 +1,91 @@
 /**
- * Fashion AI - Order Success Page
+ * Fashion AI - Đặt Hàng Thành Công
  * 
- * Trang xác nhận đơn hàng thành công
+ * Trang hiển thị sau khi đặt hàng thành công
  */
 
-'use client';
-
+import { CheckCircle, Package, Mail, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
+import type { Metadata } from 'next';
 
-export default function OrderSuccessPage() {
-  const orderId = 'ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+export const metadata: Metadata = {
+  title: 'Đặt hàng thành công',
+};
+
+export default function CheckoutSuccessPage() {
+  // Mock order data
+  const order = {
+    id: 'FA-2026020201',
+    total: 2450000,
+    email: 'example@email.com',
+    estimatedDelivery: '3-5 ngày',
+  };
 
   return (
-    <>
-      <Header cartItemsCount={0} />
-      
-      <main className="flex-1 bg-cream">
-        <div className="container-app py-16">
-          <div className="max-w-lg mx-auto text-center">
-            {/* Success icon */}
-            <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
-              <span className="material-symbols-outlined text-5xl text-green-600">check_circle</span>
+    <div className="min-h-screen flex items-center justify-center py-12 px-4">
+      <div className="w-full max-w-lg text-center">
+        {/* Success icon */}
+        <div className="relative mb-8">
+          <div className="w-24 h-24 rounded-full bg-success/10 flex items-center justify-center mx-auto animate-fade-in">
+            <CheckCircle className="w-12 h-12 text-success" />
+          </div>
+          {/* Decorative rings */}
+          <div className="absolute inset-0 w-24 h-24 mx-auto rounded-full border-4 border-success/20 animate-ping" />
+        </div>
+
+        {/* Title */}
+        <h1 className="text-3xl font-bold mb-2 animate-slide-up">Đặt hàng thành công!</h1>
+        <p className="text-secondary mb-8 animate-slide-up">
+          Cảm ơn bạn đã mua sắm tại Fashion AI
+        </p>
+
+        {/* Order info card */}
+        <div className="card p-6 mb-8 text-left animate-slide-up">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <Package className="w-5 h-5 text-primary" />
             </div>
-
-            <h1 className="text-3xl font-bold mb-4">Đặt hàng thành công!</h1>
-            <p className="text-gray-600 mb-8">
-              Cảm ơn bạn đã mua sắm tại Fashion AI. Đơn hàng của bạn đã được tiếp nhận và đang được xử lý.
-            </p>
-
-            {/* Order info card */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm text-left mb-8">
-              <div className="flex items-center justify-between pb-4 border-b mb-4">
-                <span className="text-gray-600">Mã đơn hàng</span>
-                <span className="font-bold text-primary">{orderId}</span>
-              </div>
-              
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Phương thức thanh toán</span>
-                  <span>Thanh toán khi nhận hàng</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Thời gian giao hàng dự kiến</span>
-                  <span>3-5 ngày làm việc</span>
-                </div>
-              </div>
-
-              <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-                <div className="flex items-start gap-3">
-                  <span className="material-symbols-outlined text-primary">local_shipping</span>
-                  <div>
-                    <p className="font-semibold mb-1">Giao hàng đến</p>
-                    <p className="text-sm text-gray-600">
-                      Nguyễn Văn A, 0901234567<br />
-                      123 Đường ABC, Phường Bến Nghé, Quận 1, TP.HCM
-                    </p>
-                  </div>
-                </div>
-              </div>
+            <div>
+              <p className="text-sm text-secondary">Mã đơn hàng</p>
+              <p className="font-bold">{order.id}</p>
             </div>
+          </div>
 
-            {/* Email notification */}
-            <div className="flex items-center justify-center gap-2 text-sm text-gray-600 mb-8">
-              <span className="material-symbols-outlined text-[18px]">mail</span>
-              <span>Thông tin đơn hàng đã được gửi đến email của bạn</span>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+              <span className="text-secondary">Tổng thanh toán</span>
+              <span className="font-bold text-primary">
+                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.total)}
+              </span>
             </div>
-
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/dashboard/orders">
-                <button className="w-full sm:w-auto px-8 h-12 rounded-full bg-primary text-white font-bold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
-                  <span className="material-symbols-outlined text-[20px]">receipt_long</span>
-                  Xem đơn hàng
-                </button>
-              </Link>
-              <Link href="/products">
-                <button className="w-full sm:w-auto px-8 h-12 rounded-full border border-gray-300 font-bold hover:bg-white transition-colors flex items-center justify-center gap-2">
-                  <span className="material-symbols-outlined text-[20px]">shopping_bag</span>
-                  Tiếp tục mua sắm
-                </button>
-              </Link>
+            <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+              <span className="text-secondary">Thời gian giao hàng dự kiến</span>
+              <span className="font-medium">{order.estimatedDelivery}</span>
+            </div>
+            <div className="flex justify-between py-2">
+              <span className="text-secondary">Email xác nhận</span>
+              <span className="font-medium">{order.email}</span>
             </div>
           </div>
         </div>
-      </main>
 
-      <Footer />
-    </>
+        {/* Email notification */}
+        <div className="flex items-center justify-center gap-2 text-sm text-secondary mb-8 animate-slide-up">
+          <Mail className="w-4 h-4" />
+          Chi tiết đơn hàng đã được gửi đến email của bạn
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up">
+          <Link href="/dashboard/orders" className="btn-primary">
+            Theo dõi đơn hàng
+            <ArrowRight className="w-5 h-5" />
+          </Link>
+          <Link href="/products" className="btn-outline">
+            Tiếp tục mua sắm
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 }

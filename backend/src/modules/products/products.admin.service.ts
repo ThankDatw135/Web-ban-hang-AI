@@ -104,14 +104,16 @@ export class ProductsAdminService {
    * @returns Sản phẩm sau khi cập nhật
    * @throws NotFoundException nếu sản phẩm không tồn tại
    *
-   * // NOTE: Hiện tại chưa hỗ trợ update variants/images
-   * // TODO: Thêm logic update variants - cần thiết kế UI trước
+   * Hỗ trợ cập nhật variants theo chiến lược:
+   * - Variant có id: cập nhật variant đó
+   * - Variant không có id: tạo mới
+   * - Variant cũ không có trong danh sách: xóa đi
    */
   async update(id: string, dto: UpdateProductDto) {
     // Kiểm tra sản phẩm tồn tại
     const product = await this.findById(id);
 
-    // Tách variants và images ra (chưa xử lý)
+    // Tách variants và images ra để xử lý riêng
     const { variants, images, ...updateData } = dto;
 
     // Nếu đổi tên thì cập nhật slug
@@ -119,29 +121,128 @@ export class ProductsAdminService {
       (updateData as any).slug = this.utils.generateSlug(dto.name);
     }
 
-    return this.prisma.product.update({
-      where: { id },
-      data: updateData,
-      include: {
-        category: true,
-        images: true,
-        variants: true,
-      },
+    // Xử lý trong transaction để đảm bảo tính toàn vẹn
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Cập nhật thông tin cơ bản của sản phẩm
+      await tx.product.update({
+        where: { id },
+        data: updateData,
+      });
+
+      // 2. Xử lý variants nếu có
+      if (variants && variants.length > 0) {
+        // Lấy danh sách variant IDs hiện có
+        const existingVariantIds = product.variants.map(v => v.id);
+        
+        // Variant IDs từ request (chỉ những variant có id)
+        const incomingVariantIds = variants
+          .filter(v => (v as any).id)
+          .map(v => (v as any).id);
+
+        // Xóa variants không có trong request
+        const variantsToDelete = existingVariantIds.filter(
+          existingId => !incomingVariantIds.includes(existingId)
+        );
+        
+        if (variantsToDelete.length > 0) {
+          await tx.productVariant.deleteMany({
+            where: { id: { in: variantsToDelete } },
+          });
+        }
+
+        // Cập nhật hoặc tạo mới variants
+        for (let i = 0; i < variants.length; i++) {
+          const variant = variants[i] as any;
+          
+          if (variant.id) {
+            // Cập nhật variant hiện có
+            await tx.productVariant.update({
+              where: { id: variant.id },
+              data: {
+                size: variant.size as Size,
+                color: variant.color,
+                stock: variant.stock,
+              },
+            });
+          } else {
+            // Tạo variant mới
+            await tx.productVariant.create({
+              data: {
+                productId: id,
+                size: variant.size as Size,
+                color: variant.color || '',
+                stock: variant.stock || 0,
+                sku: `${product.sku}-${variant.size}-${Date.now()}`,
+              },
+            });
+          }
+        }
+      }
+
+      // 3. Xử lý images nếu có
+      if (images && images.length > 0) {
+        // Xóa tất cả images cũ và tạo lại
+        await tx.productImage.deleteMany({
+          where: { productId: id },
+        });
+
+        // Tạo images mới
+        await tx.productImage.createMany({
+          data: images.map((img, i) => ({
+            productId: id,
+            url: img.url,
+            alt: img.alt || product.name,
+            sortOrder: i,
+          })),
+        });
+      }
+
+      // Trả về sản phẩm đã cập nhật
+      return tx.product.findUnique({
+        where: { id },
+        include: {
+          category: true,
+          images: { orderBy: { sortOrder: 'asc' } },
+          variants: true,
+        },
+      });
     });
   }
 
+
   /**
-   * Xóa sản phẩm (hard delete)
+   * Xóa sản phẩm (soft delete)
    *
    * @param id - UUID của sản phẩm cần xóa
    * @returns Message xác nhận
    * @throws NotFoundException nếu sản phẩm không tồn tại
    *
-   * // CAUTION: Đây là hard delete, không recovery được
-   * // TODO: Cân nhắc chuyển sang soft delete (set isActive = false)
+   * Sử dụng soft delete (set isActive = false) để:
+   * - Giữ lại dữ liệu cho báo cáo, thống kê
+   * - Có thể khôi phục sản phẩm nếu cần
+   * - Không ảnh hưởng đến các đơn hàng cũ
    */
   async delete(id: string) {
     // Kiểm tra sản phẩm tồn tại
+    await this.findById(id);
+
+    // Soft delete: set isActive = false thay vì xóa thật
+    await this.prisma.product.update({
+      where: { id },
+      data: { isActive: false },
+    });
+
+    return { message: "Đã ẩn sản phẩm thành công" };
+  }
+
+  /**
+   * Xóa vĩnh viễn sản phẩm (hard delete)
+   * Chỉ sử dụng khi thật sự cần thiết
+   *
+   * @param id - UUID của sản phẩm cần xóa vĩnh viễn
+   * @returns Message xác nhận
+   */
+  async hardDelete(id: string) {
     await this.findById(id);
 
     // Xóa sản phẩm (cascade delete variants, images do Prisma config)
@@ -149,8 +250,35 @@ export class ProductsAdminService {
       where: { id },
     });
 
-    return { message: "Xóa sản phẩm thành công" };
+    return { message: "Xóa vĩnh viễn sản phẩm thành công" };
   }
+
+  /**
+   * Khôi phục sản phẩm đã ẩn
+   *
+   * @param id - UUID của sản phẩm cần khôi phục
+   * @returns Sản phẩm đã khôi phục
+   */
+  async restore(id: string) {
+    const product = await this.prisma.product.findUnique({
+      where: { id },
+    });
+
+    if (!product) {
+      throw new NotFoundException("Sản phẩm không tồn tại");
+    }
+
+    return this.prisma.product.update({
+      where: { id },
+      data: { isActive: true },
+      include: {
+        category: true,
+        images: { orderBy: { sortOrder: "asc" } },
+        variants: true,
+      },
+    });
+  }
+
 
   // ========================================
   // PRIVATE METHODS

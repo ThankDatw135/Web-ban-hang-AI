@@ -1,217 +1,208 @@
 /**
- * Fashion AI - Settings Page
+ * Fashion AI - Cài Đặt
  * 
- * Cài đặt tài khoản người dùng
+ * Trang cài đặt tài khoản user
  */
 
 'use client';
 
-import Link from 'next/link';
 import { useState } from 'react';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
-import { cn } from '@/lib/utils';
-
-// Sidebar items
-const sidebarItems = [
-  { href: '/dashboard', icon: 'dashboard', label: 'Tổng quan' },
-  { href: '/dashboard/orders', icon: 'receipt_long', label: 'Đơn hàng' },
-  { href: '/dashboard/wishlist', icon: 'favorite', label: 'Yêu thích' },
-  { href: '/dashboard/addresses', icon: 'location_on', label: 'Địa chỉ' },
-  { href: '/dashboard/settings', icon: 'settings', label: 'Cài đặt', active: true },
-];
+import { Lock, Bell, Moon, Globe, Shield, Save, Eye, EyeOff } from 'lucide-react';
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications'>('profile');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [notifications, setNotifications] = useState({
+    email: true,
+    push: true,
+    sms: false,
+  });
 
   return (
-    <>
-      <Header cartItemsCount={2} isLoggedIn={true} />
-      
-      <main className="flex-1 bg-cream">
-        <div className="container-app py-8">
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Sidebar */}
-            <aside className="w-full lg:w-64 shrink-0">
-              <nav className="bg-white rounded-2xl p-4 shadow-sm">
-                <div className="space-y-1">
-                  {sidebarItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={cn(
-                        'flex items-center gap-3 px-4 py-3 rounded-xl transition-colors',
-                        item.active 
-                          ? 'bg-primary/10 text-primary font-bold' 
-                          : 'hover:bg-gray-50'
-                      )}
-                    >
-                      <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              </nav>
-            </aside>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">Cài đặt</h1>
 
-            {/* Main content */}
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold mb-6">Cài đặt tài khoản</h1>
+      {/* Change Password */}
+      <div className="card p-6">
+        <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <Lock className="w-5 h-5 text-primary" />
+          Đổi mật khẩu
+        </h2>
 
-              {/* Tabs */}
-              <div className="flex gap-2 mb-6 border-b border-gray-200">
-                {[
-                  { id: 'profile', label: 'Hồ sơ', icon: 'person' },
-                  { id: 'security', label: 'Bảo mật', icon: 'lock' },
-                  { id: 'notifications', label: 'Thông báo', icon: 'notifications' },
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                    className={cn(
-                      'flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 -mb-[2px] transition-colors',
-                      activeTab === tab.id
-                        ? 'border-primary text-primary'
-                        : 'border-transparent text-gray-600 hover:text-gray-900'
-                    )}
-                  >
-                    <span className="material-symbols-outlined text-[18px]">{tab.icon}</span>
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Profile Tab */}
-              {activeTab === 'profile' && (
-                <div className="bg-white rounded-2xl p-6 shadow-sm">
-                  {/* Avatar */}
-                  <div className="flex items-center gap-6 mb-8 pb-6 border-b">
-                    <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="material-symbols-outlined text-4xl text-primary">person</span>
-                    </div>
-                    <div>
-                      <button className="px-4 h-9 rounded-full bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors mr-2">
-                        Đổi ảnh
-                      </button>
-                      <button className="px-4 h-9 rounded-full border border-gray-300 text-sm font-semibold hover:bg-gray-50 transition-colors">
-                        Xóa
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Form */}
-                  <form className="space-y-6">
-                    <div className="grid sm:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-semibold mb-2">Họ</label>
-                        <input 
-                          type="text" 
-                          defaultValue="Nguyễn"
-                          className="w-full h-12 px-4 rounded-xl border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold mb-2">Tên</label>
-                        <input 
-                          type="text" 
-                          defaultValue="Văn A"
-                          className="w-full h-12 px-4 rounded-xl border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold mb-2">Email</label>
-                      <input 
-                        type="email" 
-                        defaultValue="nguyenvana@email.com"
-                        className="w-full h-12 px-4 rounded-xl border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold mb-2">Số điện thoại</label>
-                      <input 
-                        type="tel" 
-                        defaultValue="0901234567"
-                        className="w-full h-12 px-4 rounded-xl border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                      />
-                    </div>
-                    <button 
-                      type="submit"
-                      className="px-6 h-12 rounded-full bg-primary text-white font-bold hover:bg-primary/90 transition-colors"
-                    >
-                      Lưu thay đổi
-                    </button>
-                  </form>
-                </div>
-              )}
-
-              {/* Security Tab */}
-              {activeTab === 'security' && (
-                <div className="bg-white rounded-2xl p-6 shadow-sm">
-                  <h2 className="font-bold mb-6">Đổi mật khẩu</h2>
-                  <form className="space-y-6 max-w-md">
-                    <div>
-                      <label className="block text-sm font-semibold mb-2">Mật khẩu hiện tại</label>
-                      <input 
-                        type="password" 
-                        className="w-full h-12 px-4 rounded-xl border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold mb-2">Mật khẩu mới</label>
-                      <input 
-                        type="password" 
-                        className="w-full h-12 px-4 rounded-xl border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold mb-2">Xác nhận mật khẩu mới</label>
-                      <input 
-                        type="password" 
-                        className="w-full h-12 px-4 rounded-xl border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                      />
-                    </div>
-                    <button 
-                      type="submit"
-                      className="px-6 h-12 rounded-full bg-primary text-white font-bold hover:bg-primary/90 transition-colors"
-                    >
-                      Đổi mật khẩu
-                    </button>
-                  </form>
-                </div>
-              )}
-
-              {/* Notifications Tab */}
-              {activeTab === 'notifications' && (
-                <div className="bg-white rounded-2xl p-6 shadow-sm">
-                  <h2 className="font-bold mb-6">Cài đặt thông báo</h2>
-                  <div className="space-y-4">
-                    {[
-                      { id: 'orders', label: 'Cập nhật đơn hàng', desc: 'Nhận thông báo khi đơn hàng được xử lý, giao hàng' },
-                      { id: 'promo', label: 'Khuyến mãi', desc: 'Nhận thông tin về chương trình giảm giá, ưu đãi' },
-                      { id: 'ai', label: 'AI Recommendations', desc: 'Nhận gợi ý phong cách từ AI Stylist' },
-                      { id: 'newsletter', label: 'Bản tin', desc: 'Nhận email về xu hướng thời trang mới nhất' },
-                    ].map((item) => (
-                      <div key={item.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                        <div>
-                          <p className="font-semibold">{item.label}</p>
-                          <p className="text-sm text-gray-500">{item.desc}</p>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input type="checkbox" defaultChecked className="sr-only peer" />
-                          <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+        <form className="space-y-4 max-w-md">
+          <div>
+            <label className="block text-sm font-medium mb-2">Mật khẩu hiện tại</label>
+            <div className="relative">
+              <input
+                type={showCurrentPassword ? 'text' : 'password'}
+                placeholder="Nhập mật khẩu hiện tại"
+                className="w-full h-12 px-4 pr-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2c2822] text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
             </div>
           </div>
-        </div>
-      </main>
 
-      <Footer />
-    </>
+          <div>
+            <label className="block text-sm font-medium mb-2">Mật khẩu mới</label>
+            <div className="relative">
+              <input
+                type={showNewPassword ? 'text' : 'password'}
+                placeholder="Nhập mật khẩu mới"
+                className="w-full h-12 px-4 pr-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2c2822] text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Xác nhận mật khẩu mới</label>
+            <input
+              type="password"
+              placeholder="Nhập lại mật khẩu mới"
+              className="w-full h-12 px-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2c2822] text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+            />
+          </div>
+
+          <button type="submit" className="btn-primary">
+            <Save className="w-5 h-5" />
+            Cập nhật mật khẩu
+          </button>
+        </form>
+      </div>
+
+      {/* Notifications */}
+      <div className="card p-6">
+        <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <Bell className="w-5 h-5 text-primary" />
+          Thông báo
+        </h2>
+
+        <div className="space-y-4 max-w-md">
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <p className="font-medium">Thông báo Email</p>
+              <p className="text-sm text-secondary">Nhận thông báo qua email</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={notifications.email}
+              onChange={(e) => setNotifications({ ...notifications, email: e.target.checked })}
+              className="w-5 h-5 rounded text-primary focus:ring-primary"
+            />
+          </label>
+
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <p className="font-medium">Thông báo đẩy</p>
+              <p className="text-sm text-secondary">Nhận thông báo trên trình duyệt</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={notifications.push}
+              onChange={(e) => setNotifications({ ...notifications, push: e.target.checked })}
+              className="w-5 h-5 rounded text-primary focus:ring-primary"
+            />
+          </label>
+
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <p className="font-medium">Thông báo SMS</p>
+              <p className="text-sm text-secondary">Nhận thông báo qua tin nhắn</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={notifications.sms}
+              onChange={(e) => setNotifications({ ...notifications, sms: e.target.checked })}
+              className="w-5 h-5 rounded text-primary focus:ring-primary"
+            />
+          </label>
+        </div>
+      </div>
+
+      {/* Appearance */}
+      <div className="card p-6">
+        <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <Moon className="w-5 h-5 text-primary" />
+          Giao diện
+        </h2>
+
+        <div className="flex items-center justify-between max-w-md">
+          <div>
+            <p className="font-medium">Chế độ tối</p>
+            <p className="text-sm text-secondary">Bật/tắt dark mode</p>
+          </div>
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className={`w-14 h-8 rounded-full transition-colors relative ${
+              darkMode ? 'bg-primary' : 'bg-gray-300'
+            }`}
+          >
+            <div
+              className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow transition-transform ${
+                darkMode ? 'left-7' : 'left-1'
+              }`}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Language */}
+      <div className="card p-6">
+        <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <Globe className="w-5 h-5 text-primary" />
+          Ngôn ngữ
+        </h2>
+
+        <div className="max-w-md">
+          <select className="w-full h-12 px-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2c2822] text-sm outline-none focus:border-primary appearance-none cursor-pointer">
+            <option value="vi">🇻🇳 Tiếng Việt</option>
+            <option value="en">🇺🇸 English</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Privacy */}
+      <div className="card p-6">
+        <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <Shield className="w-5 h-5 text-primary" />
+          Bảo mật
+        </h2>
+
+        <div className="space-y-4 max-w-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Xác thực 2 yếu tố</p>
+              <p className="text-sm text-secondary">Tăng cường bảo mật tài khoản</p>
+            </div>
+            <button className="btn-outline h-10 text-sm">Thiết lập</button>
+          </div>
+
+          <hr className="border-gray-200 dark:border-gray-700" />
+
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-red-500">Xóa tài khoản</p>
+              <p className="text-sm text-secondary">Xóa vĩnh viễn tài khoản của bạn</p>
+            </div>
+            <button className="h-10 px-4 rounded-full border border-red-500 text-red-500 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+              Xóa
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

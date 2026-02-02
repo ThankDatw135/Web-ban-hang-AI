@@ -1,101 +1,144 @@
 /**
- * Fashion AI - About Page
+ * Fashion AI - Trang Giới Thiệu
  * 
- * Giới thiệu về Fashion AI
+ * Giới thiệu về thương hiệu Fashion AI
  */
 
+import { Diamond, Sparkles, Users, ShieldCheck, Truck } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Giới thiệu',
+  description: 'Tìm hiểu về Fashion AI - Thương hiệu thời trang cao cấp kết hợp công nghệ AI tiên tiến.',
+};
+
+// Giá trị cốt lõi
+const values = [
+  {
+    icon: Diamond,
+    title: 'Chất lượng cao cấp',
+    description: 'Sản phẩm được chọn lọc kỹ lưỡng, đảm bảo chất liệu và thiết kế đẳng cấp.',
+  },
+  {
+    icon: Sparkles,
+    title: 'Công nghệ AI',
+    description: 'Ứng dụng AI tiên tiến giúp bạn thử đồ trực tuyến và nhận gợi ý phong cách.',
+  },
+  {
+    icon: Users,
+    title: 'Khách hàng là trọng tâm',
+    description: 'Luôn lắng nghe và đặt trải nghiệm khách hàng lên hàng đầu.',
+  },
+  {
+    icon: Truck,
+    title: 'Giao hàng nhanh chóng',
+    description: 'Giao hàng toàn quốc, đổi trả dễ dàng trong 30 ngày.',
+  },
+];
 
 export default function AboutPage() {
   return (
-    <>
-      <Header />
-      
-      <main className="flex-1 bg-cream">
-        {/* Hero */}
-        <section className="relative py-20 bg-gradient-to-b from-primary/10 to-cream">
-          <div className="container-app text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">Về Fashion AI</h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Chúng tôi kết hợp thời trang cao cấp với công nghệ AI tiên tiến để mang đến trải nghiệm mua sắm độc đáo.
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="relative py-20 bg-gradient-to-br from-primary/5 via-cream to-accent/5">
+        <div className="container-app text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-bold mb-6">
+            <Diamond className="w-4 h-4" />
+            Về chúng tôi
+          </div>
+          
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6">
+            <span className="gradient-text">Fashion AI</span>
+          </h1>
+          
+          <p className="text-lg md:text-xl text-secondary max-w-2xl mx-auto">
+            Thương hiệu thời trang cao cấp tiên phong ứng dụng công nghệ AI 
+            để mang đến trải nghiệm mua sắm hoàn hảo cho bạn.
+          </p>
+        </div>
+      </section>
+
+      {/* Story Section */}
+      <section className="py-20 bg-white dark:bg-[#25221d]">
+        <div className="container-app">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Image placeholder */}
+            <div className="aspect-square rounded-3xl bg-gray-100 dark:bg-[#2c2822] flex items-center justify-center">
+              <Diamond className="w-24 h-24 text-primary/20" />
+            </div>
+            
+            {/* Content */}
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">Câu chuyện của chúng tôi</h2>
+              <div className="space-y-4 text-secondary">
+                <p>
+                  Fashion AI được thành lập với sứ mệnh thay đổi cách mọi người mua sắm thời trang. 
+                  Chúng tôi tin rằng công nghệ có thể giúp mỗi người tìm được phong cách của riêng mình 
+                  một cách dễ dàng và thú vị hơn.
+                </p>
+                <p>
+                  Với tính năng thử đồ AI độc đáo, bạn có thể xem trước sản phẩm trên chính mình 
+                  mà không cần đến cửa hàng. Đội ngũ của chúng tôi không ngừng cải tiến công nghệ 
+                  để mang đến trải nghiệm chân thực nhất.
+                </p>
+                <p>
+                  Mỗi sản phẩm tại Fashion AI đều được chọn lọc kỹ lưỡng, đảm bảo chất lượng 
+                  và phong cách đẳng cấp. Chúng tôi cam kết đồng hành cùng bạn trên hành trình 
+                  khám phá và thể hiện cá tính riêng.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Values Section */}
+      <section className="py-20">
+        <div className="container-app">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Giá trị cốt lõi</h2>
+            <p className="text-secondary max-w-xl mx-auto">
+              Những nguyên tắc định hướng mọi hoạt động của chúng tôi
             </p>
           </div>
-        </section>
-
-        {/* Story */}
-        <section className="py-16">
-          <div className="container-app">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              <div>
-                <h2 className="text-3xl font-bold mb-6">Câu chuyện của chúng tôi</h2>
-                <div className="space-y-4 text-gray-600">
-                  <p>
-                    Fashion AI được thành lập với sứ mệnh thay đổi cách bạn trải nghiệm thời trang. 
-                    Chúng tôi tin rằng mọi người đều xứng đáng được mặc đẹp mà không cần phải lo lắng 
-                    về kích cỡ hay phong cách.
-                  </p>
-                  <p>
-                    Với công nghệ Virtual Try-on, bạn có thể thử bất kỳ trang phục nào ngay tại nhà. 
-                    AI Stylist của chúng tôi sẽ gợi ý những outfit hoàn hảo dựa trên phong cách và 
-                    sở thích của bạn.
-                  </p>
-                </div>
-              </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {values.map((value) => (
               <div 
-                className="aspect-square rounded-3xl bg-cover bg-center"
-                style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=800)' }}
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* Values */}
-        <section className="py-16 bg-white">
-          <div className="container-app">
-            <h2 className="text-3xl font-bold text-center mb-12">Giá trị cốt lõi</h2>
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                { icon: 'auto_awesome', title: 'Đổi mới', desc: 'Luôn tiên phong trong ứng dụng AI vào thời trang' },
-                { icon: 'verified', title: 'Chất lượng', desc: 'Chỉ cung cấp sản phẩm từ các thương hiệu uy tín' },
-                { icon: 'favorite', title: 'Tận tâm', desc: 'Đặt trải nghiệm khách hàng lên hàng đầu' },
-              ].map((value) => (
-                <div key={value.title} className="text-center p-8">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <span className="material-symbols-outlined text-3xl text-primary">{value.icon}</span>
-                  </div>
-                  <h3 className="text-xl font-bold mb-2">{value.title}</h3>
-                  <p className="text-gray-600">{value.desc}</p>
+                key={value.title}
+                className="card p-6 text-center hover:shadow-lg transition-shadow"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <value.icon className="w-7 h-7 text-primary" />
                 </div>
-              ))}
-            </div>
+                <h3 className="font-bold text-lg mb-2">{value.title}</h3>
+                <p className="text-secondary text-sm">{value.description}</p>
+              </div>
+            ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* CTA */}
-        <section className="py-16">
-          <div className="container-app text-center">
-            <h2 className="text-3xl font-bold mb-4">Sẵn sàng trải nghiệm?</h2>
-            <p className="text-gray-600 mb-8">Khám phá bộ sưu tập và thử đồ với AI ngay hôm nay</p>
-            <div className="flex justify-center gap-4">
-              <Link href="/products">
-                <button className="px-8 h-12 rounded-full bg-primary text-white font-bold hover:bg-primary/90">
-                  Xem sản phẩm
-                </button>
-              </Link>
-              <Link href="/ai-studio">
-                <button className="px-8 h-12 rounded-full bg-accent text-white font-bold hover:bg-accent/90 flex items-center gap-2">
-                  <span className="material-symbols-outlined">view_in_ar</span>
-                  Thử đồ AI
-                </button>
-              </Link>
-            </div>
+      {/* CTA Section */}
+      <section className="py-20 bg-primary/5">
+        <div className="container-app text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Sẵn sàng trải nghiệm?</h2>
+          <p className="text-secondary mb-8 max-w-xl mx-auto">
+            Khám phá bộ sưu tập mới nhất và thử đồ trực tuyến với công nghệ AI
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link href="/products" className="btn-primary">
+              Xem sản phẩm
+            </Link>
+            <Link href="/ai-studio" className="btn-accent">
+              <Sparkles className="w-5 h-5" />
+              Thử AI Studio
+            </Link>
           </div>
-        </section>
-      </main>
-
-      <Footer />
-    </>
+        </div>
+      </section>
+    </div>
   );
 }

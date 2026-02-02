@@ -38,14 +38,15 @@ model User {
     updatedAt DateTime @updatedAt @map("updated_at")
 
     // Relations
-    addresses     Address[]
-    cart          Cart?
-    orders        Order[]
-    refreshTokens RefreshToken[]
-    aiJobs        AIJob[]
-    reviews       Review[]
-    chatSessions  ChatSession[]
-    wishlist      Wishlist?
+    addresses      Address[]
+    cart           Cart?
+    orders         Order[]
+    refreshTokens  RefreshToken[]
+    aiJobs         AIJob[]
+    reviews        Review[]
+    chatSessions   ChatSession[]
+    wishlist       Wishlist?
+    supportTickets SupportTicket[]
 
     @@map("users")
 }
@@ -561,4 +562,117 @@ model Setting {
     updatedAt DateTime @updatedAt @map("updated_at")
 
     @@map("settings")
+}
+
+// =====================================================
+// HỖ TRỢ KHÁCH HÀNG
+// =====================================================
+
+model SupportTicket {
+    id           String         @id @default(cuid())
+    ticketNumber String         @unique @map("ticket_number")
+    userId       String         @map("user_id")
+    subject      String
+    description  String         @db.Text
+    category     TicketCategory
+    priority     TicketPriority @default(MEDIUM)
+    status       TicketStatus   @default(OPEN)
+    assignedTo   String?        @map("assigned_to")
+
+    createdAt  DateTime  @default(now()) @map("created_at")
+    updatedAt  DateTime  @updatedAt @map("updated_at")
+    resolvedAt DateTime? @map("resolved_at")
+
+    // Relations
+    user    User          @relation(fields: [userId], references: [id])
+    replies TicketReply[]
+
+    @@index([userId])
+    @@index([status])
+    @@index([priority])
+    @@map("support_tickets")
+}
+
+enum TicketCategory {
+    TECHNICAL_AI // Kỹ thuật AI
+    PAYMENT // Thanh toán
+    ORDER // Đơn hàng
+    PRODUCT // Sản phẩm
+    ACCOUNT // Tài khoản
+    OTHER // Khác
+}
+
+enum TicketPriority {
+    HIGH
+    MEDIUM
+    LOW
+}
+
+enum TicketStatus {
+    OPEN // Mới tạo
+    PROCESSING // Đang xử lý
+    RESOLVED // Đã giải quyết
+    CLOSED // Đóng
+}
+
+model TicketReply {
+    id       String  @id @default(cuid())
+    ticketId String  @map("ticket_id")
+    userId   String  @map("user_id")
+    content  String  @db.Text
+    isAdmin  Boolean @default(false) @map("is_admin")
+
+    createdAt DateTime @default(now()) @map("created_at")
+
+    ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+    @@index([ticketId])
+    @@map("ticket_replies")
+}
+
+// =====================================================
+// CHIẾN DỊCH MARKETING
+// =====================================================
+
+model Campaign {
+    id          String         @id @default(cuid())
+    name        String
+    description String?        @db.Text
+    type        CampaignType
+    status      CampaignStatus @default(DRAFT)
+
+    // Thời gian
+    startDate DateTime @map("start_date")
+    endDate   DateTime @map("end_date")
+
+    // Nội dung
+    bannerUrl String? @map("banner_url")
+    targetUrl String? @map("target_url")
+
+    // Thống kê
+    views  Int @default(0)
+    clicks Int @default(0)
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    @@index([status])
+    @@index([startDate, endDate])
+    @@map("campaigns")
+}
+
+enum CampaignType {
+    BANNER // Banner quảng cáo
+    FLASH_SALE // Flash sale
+    SEASONAL // Theo mùa
+    HOLIDAY // Ngày lễ
+    PROMOTION // Khuyến mãi
+}
+
+enum CampaignStatus {
+    DRAFT // Bản nháp
+    SCHEDULED // Đã lên lịch
+    ACTIVE // Đang chạy
+    PAUSED // Tạm dừng
+    ENDED // Đã kết thúc
 }

@@ -1,78 +1,74 @@
 /**
  * Fashion AI - Root Layout
  * 
- * Layout chính cho toàn bộ ứng dụng
- * Bao gồm: Fonts, Providers, Meta tags
+ * Layout chính của ứng dụng, bao gồm:
+ * - Import fonts (Manrope)
+ * - Providers (Theme, Auth, etc.)
+ * - Header & Footer components
  */
 
-import type { Metadata, Viewport } from 'next';
-import { QueryProvider } from '@/providers/query-provider';
+import type { Metadata } from 'next';
+import { Manrope } from 'next/font/google';
 import './globals.css';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 
-// SEO Metadata
+// Font configuration - Manrope cho toàn bộ app
+const manrope = Manrope({
+  subsets: ['latin', 'vietnamese'],
+  weight: ['200', '300', '400', '500', '600', '700', '800'],
+  variable: '--font-manrope',
+  display: 'swap',
+});
+
+// Metadata cho SEO
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
   title: {
-    default: 'Fashion AI - Thời trang tương lai',
+    default: 'Fashion AI - Thời trang cao cấp kết hợp AI',
     template: '%s | Fashion AI',
   },
-  description: 'Trải nghiệm mua sắm đẳng cấp với công nghệ AI. Thử đồ ảo, gợi ý phong cách cá nhân hóa.',
-  keywords: ['thời trang', 'AI', 'thử đồ ảo', 'virtual try-on', 'fashion', 'quần áo'],
+  description: 'Khám phá phong cách của riêng bạn với Fashion AI. Thử đồ trực tuyến với công nghệ AI tiên tiến.',
+  keywords: ['thời trang', 'fashion', 'AI', 'try-on', 'quần áo', 'mua sắm online'],
   authors: [{ name: 'Fashion AI Team' }],
-  creator: 'Fashion AI',
   openGraph: {
-    type: 'website',
-    locale: 'vi_VN',
+    title: 'Fashion AI - Thời trang cao cấp kết hợp AI',
+    description: 'Khám phá phong cách của riêng bạn với Fashion AI',
+    url: 'https://fashionai.vn',
     siteName: 'Fashion AI',
-    title: 'Fashion AI - Thời trang tương lai',
-    description: 'Trải nghiệm mua sắm đẳng cấp với công nghệ AI',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Fashion AI - Thời trang tương lai',
-    description: 'Trải nghiệm mua sắm đẳng cấp với công nghệ AI',
-  },
-  robots: {
-    index: true,
-    follow: true,
+    locale: 'vi_VN',
+    type: 'website',
   },
 };
 
-// Viewport configuration
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 5,
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#FAF7F2' },
-    { media: '(prefers-color-scheme: dark)', color: '#1e1a14' },
-  ],
-};
-
-interface RootLayoutProps {
+export default function RootLayout({
+  children,
+}: {
   children: React.ReactNode;
-}
-
-export default function RootLayout({ children }: RootLayoutProps) {
+}) {
   return (
-    <html lang="vi" className="light" suppressHydrationWarning>
+    <html lang="vi" className={manrope.variable} suppressHydrationWarning>
       <head>
-        {/* Preconnect to Google Fonts */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        
         {/* Favicon */}
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="icon" href="/logo.png" />
+        <link rel="apple-touch-icon" href="/logo.png" />
       </head>
-      <body className="font-sans bg-cream text-text-main antialiased">
-        <QueryProvider>
-          {/* Main content */}
-          <div className="relative flex min-h-screen flex-col">
-            {children}
-          </div>
-        </QueryProvider>
+      <body className="min-h-screen bg-cream dark:bg-[#1e1a14] text-text-main dark:text-white antialiased flex flex-col">
+        {/* TODO: Thêm Providers (ThemeProvider, AuthProvider) */}
+        
+        {/* Header */}
+        <Header />
+        
+        {/* Main content - có padding-top cho header */}
+        <main className="flex-1 pt-28">
+          {children}
+        </main>
+        
+        {/* Footer */}
+        <Footer />
+        
+        {/* TODO: Thêm Live Chat Widget */}
       </body>
     </html>
   );
 }
+

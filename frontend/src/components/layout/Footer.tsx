@@ -1,161 +1,166 @@
 /**
  * Fashion AI - Footer Component
  * 
- * Footer với logo, links, newsletter form, và social links
+ * Footer 4 columns với:
+ * - Logo & description
+ * - Quick links
+ * - Support links
+ * - Newsletter signup
  */
-
-'use client';
 
 import Link from 'next/link';
-import { Diamond, Instagram, Facebook, Twitter } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import Image from 'next/image';
+import { Facebook, Instagram, Youtube, Mail, Phone, MapPin } from 'lucide-react';
 
-// Footer navigation sections
-const footerSections = [
-  {
-    title: 'Khám phá',
-    links: [
-      { href: '/products?category=new', label: 'New Arrivals' },
-      { href: '/products?category=women', label: 'Women' },
-      { href: '/products?category=men', label: 'Men' },
-      { href: '/products?category=accessories', label: 'Accessories' },
-      { href: '/ai-studio', label: 'AI Studio' },
-    ],
-  },
-  {
-    title: 'Hỗ trợ',
-    links: [
-      { href: '/faq', label: 'FAQ' },
-      { href: '/shipping', label: 'Vận chuyển & Đổi trả' },
-      { href: '/size-guide', label: 'Hướng dẫn chọn size' },
-      { href: '/privacy', label: 'Chính sách bảo mật' },
-      { href: '/contact', label: 'Liên hệ' },
-    ],
-  },
+// Footer links data
+const quickLinks = [
+  { href: '/products', label: 'Sản phẩm' },
+  { href: '/about', label: 'Giới thiệu' },
+  { href: '/blog', label: 'Tin tức' },
+  { href: '/ai-studio', label: 'AI Studio' },
 ];
 
-// Social links
+const supportLinks = [
+  { href: '/contact', label: 'Liên hệ' },
+  { href: '/return-policy', label: 'Chính sách đổi trả' },
+  { href: '#', label: 'Hướng dẫn mua hàng' },
+  { href: '#', label: 'Câu hỏi thường gặp' },
+];
+
 const socialLinks = [
-  { href: 'https://instagram.com', label: 'Instagram', icon: Instagram, abbr: 'IG' },
-  { href: 'https://facebook.com', label: 'Facebook', icon: Facebook, abbr: 'FB' },
-  { href: 'https://tiktok.com', label: 'TikTok', icon: Twitter, abbr: 'TT' },
+  { href: '#', icon: Facebook, label: 'Facebook' },
+  { href: '#', icon: Instagram, label: 'Instagram' },
+  { href: '#', icon: Youtube, label: 'Youtube' },
 ];
 
-interface FooterProps {
-  className?: string;
-}
-
-/**
- * Footer component với navigation, newsletter, và social links
- */
-export function Footer({ className }: FooterProps) {
+export default function Footer() {
   return (
-    <footer
-      className={cn(
-        'w-full bg-white dark:bg-[#1a1814] pt-16 pb-8',
-        'border-t border-border dark:border-[#332f28]',
-        className
-      )}
-    >
-      <div className="container-app">
-        {/* Main footer content */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-          {/* Brand section */}
-          <div className="space-y-4">
-            <Link href="/" className="flex items-center gap-2 text-text-main dark:text-white">
-              <Diamond className="w-6 h-6 text-primary" />
-              <span className="text-lg font-extrabold tracking-tight">Fashion AI</span>
+    <footer className="bg-white dark:bg-[#25221d] border-t border-gray-200 dark:border-gray-700">
+      {/* Main footer content */}
+      <div className="container-app py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+          {/* Column 1 - Logo & Description */}
+          <div className="lg:col-span-1">
+            <Link href="/" className="flex items-center gap-3 mb-4">
+              <Image 
+                src="/logo.png" 
+                alt="Fashion AI Logo" 
+                width={64} 
+                height={64}
+              />
+              <span className="text-3xl font-bold text-text-main dark:text-white">
+                Fashion <span className="text-primary">AI</span>
+              </span>
             </Link>
-            <p className="text-sm text-secondary leading-relaxed">
-              Tiên phong trong cuộc cách mạng thời trang kỹ thuật số. 
-              Mang đến trải nghiệm mua sắm được cá nhân hóa hoàn hảo bởi trí tuệ nhân tạo.
+            <p className="text-secondary text-sm mb-6">
+              Khám phá phong cách của riêng bạn với Fashion AI. 
+              Thử đồ trực tuyến với công nghệ AI tiên tiến.
             </p>
             
             {/* Social links */}
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-3">
               {socialLinks.map((social) => (
                 <a
-                  key={social.href}
+                  key={social.label}
                   href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={cn(
-                    'w-9 h-9 rounded-full flex items-center justify-center',
-                    'bg-gray-100 dark:bg-gray-800 text-secondary',
-                    'hover:bg-primary hover:text-white transition-colors'
-                  )}
+                  className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-secondary hover:bg-primary hover:text-white transition-colors"
                   aria-label={social.label}
                 >
-                  <span className="text-xs font-bold">{social.abbr}</span>
+                  <social.icon className="w-5 h-5" />
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Navigation sections */}
-          {footerSections.map((section) => (
-            <div key={section.title}>
-              <h3 className="font-bold text-text-main dark:text-white mb-6">
-                {section.title}
-              </h3>
-              <ul className="space-y-3">
-                {section.links.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-secondary hover:text-primary transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-
-          {/* Newsletter section */}
+          {/* Column 2 - Quick Links */}
           <div>
-            <h3 className="font-bold text-text-main dark:text-white mb-6">
-              Đăng ký nhận tin
-            </h3>
-            <p className="text-sm text-secondary mb-4">
-              Nhận thông tin về bộ sưu tập mới và ưu đãi độc quyền.
-            </p>
-            <form className="flex flex-col gap-3" onSubmit={(e) => e.preventDefault()}>
-              <Input
+            <h4 className="text-sm font-bold text-text-main dark:text-white uppercase tracking-wider mb-4">
+              Khám phá
+            </h4>
+            <ul className="space-y-3">
+              {quickLinks.map((link) => (
+                <li key={link.href}>
+                  <Link 
+                    href={link.href}
+                    className="text-secondary hover:text-primary transition-colors text-sm"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Column 3 - Support */}
+          <div>
+            <h4 className="text-sm font-bold text-text-main dark:text-white uppercase tracking-wider mb-4">
+              Hỗ trợ
+            </h4>
+            <ul className="space-y-3">
+              {supportLinks.map((link) => (
+                <li key={link.label}>
+                  <Link 
+                    href={link.href}
+                    className="text-secondary hover:text-primary transition-colors text-sm"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Column 4 - Contact & Newsletter */}
+          <div>
+            <h4 className="text-sm font-bold text-text-main dark:text-white uppercase tracking-wider mb-4">
+              Liên hệ
+            </h4>
+            <ul className="space-y-3 mb-6">
+              <li className="flex items-start gap-3 text-secondary text-sm">
+                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <span>123 Đường ABC, Quận 1, TP. Hồ Chí Minh</span>
+              </li>
+              <li className="flex items-center gap-3 text-secondary text-sm">
+                <Phone className="w-4 h-4 flex-shrink-0" />
+                <span>1900 1234</span>
+              </li>
+              <li className="flex items-center gap-3 text-secondary text-sm">
+                <Mail className="w-4 h-4 flex-shrink-0" />
+                <span>support@fashionai.vn</span>
+              </li>
+            </ul>
+
+            {/* Newsletter mini */}
+            <div className="flex gap-2">
+              <input
                 type="email"
                 placeholder="Email của bạn"
-                size="md"
+                className="flex-1 h-10 px-4 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent text-sm outline-none focus:border-primary transition-colors"
               />
-              <Button variant="primary" fullWidth>
-                Đăng ký
-              </Button>
-            </form>
+              <button className="h-10 px-4 rounded-full bg-primary text-white text-sm font-bold hover:bg-primary-600 transition-colors">
+                Gửi
+              </button>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Bottom bar */}
-        <div className="pt-8 border-t border-gray-100 dark:border-[#332f28] flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-gray-400">
-            © 2024 Fashion AI. All rights reserved.
-          </p>
-          <div className="flex gap-6 text-xs text-gray-400">
-            <Link href="/terms" className="hover:text-primary transition-colors">
-              Terms
-            </Link>
-            <Link href="/privacy" className="hover:text-primary transition-colors">
-              Privacy
-            </Link>
-            <Link href="/cookies" className="hover:text-primary transition-colors">
-              Cookies
-            </Link>
+      {/* Bottom bar */}
+      <div className="border-t border-gray-200 dark:border-gray-700">
+        <div className="container-app py-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-secondary">
+            <p>© 2026 Fashion AI. Tất cả quyền được bảo lưu.</p>
+            <div className="flex gap-6">
+              <Link href="#" className="hover:text-primary transition-colors">
+                Điều khoản sử dụng
+              </Link>
+              <Link href="#" className="hover:text-primary transition-colors">
+                Chính sách bảo mật
+              </Link>
+            </div>
           </div>
         </div>
       </div>
     </footer>
   );
 }
-
-export default Footer;

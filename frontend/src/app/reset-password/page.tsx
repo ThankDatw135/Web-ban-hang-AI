@@ -1,262 +1,145 @@
 /**
- * Fashion AI - Reset Password Page
+ * Fashion AI - Đặt Lại Mật Khẩu
  * 
- * Trang đặt lại mật khẩu mới
+ * Form đặt mật khẩu mới
  */
 
 'use client';
 
-import { useState, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState } from 'react';
 import Link from 'next/link';
-import { Eye, EyeOff, ArrowLeft, Loader2, Check, CheckCircle } from 'lucide-react';
-import { useResetPassword } from '@/hooks/use-auth';
-
-const passwordRequirements = [
-  { id: 'length', label: 'Ít nhất 8 ký tự', test: (p: string) => p.length >= 8 },
-  { id: 'uppercase', label: 'Bao gồm chữ in hoa', test: (p: string) => /[A-Z]/.test(p) },
-  { id: 'number', label: 'Bao gồm số hoặc ký tự đặc biệt', test: (p: string) => /[0-9!@#$%^&*]/.test(p) },
-];
+import { Diamond, Lock, Eye, EyeOff, CheckCircle, Shield } from 'lucide-react';
 
 export default function ResetPasswordPage() {
-  const searchParams = useSearchParams();
-  const token = searchParams.get('token') || '';
-  
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [validationError, setValidationError] = useState('');
-  
-  const resetPasswordMutation = useResetPassword();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isReset, setIsReset] = useState(false);
 
-  const passwordStrength = useMemo(() => {
-    return passwordRequirements.filter(req => req.test(password)).length;
-  }, [password]);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setValidationError('');
-
-    // Validate
-    if (password !== confirmPassword) {
-      setValidationError('Mật khẩu xác nhận không khớp');
-      return;
-    }
-
-    if (passwordStrength < 3) {
-      setValidationError('Mật khẩu chưa đủ mạnh');
-      return;
-    }
-
-    resetPasswordMutation.mutate(
-      { token, newPassword: password },
-      {
-        onSuccess: () => {
-          setIsSuccess(true);
-        },
-      }
-    );
+    setIsLoading(true);
+    // TODO: Implement reset password logic
+    setTimeout(() => {
+      setIsLoading(false);
+      setIsReset(true);
+    }, 2000);
   };
 
-  const error = validationError || (resetPasswordMutation.error
-    ? (resetPasswordMutation.error as Error).message || 'Có lỗi xảy ra. Token có thể đã hết hạn.'
-    : '');
-
-  if (isSuccess) {
-    return (
-      <div className="bg-cream dark:bg-[#1e1a14] text-text-main dark:text-white font-sans min-h-screen flex flex-col antialiased">
-        {/* Header */}
-        <header className="flex items-center justify-between whitespace-nowrap px-6 py-4 lg:px-10 border-b border-transparent">
-          <Link href="/" className="flex items-center gap-3 cursor-pointer">
-            <div className="w-8 h-8 text-primary">
-              <svg fill="currentColor" viewBox="0 0 48 48">
-                <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" />
-              </svg>
-            </div>
-            <h2 className="text-lg font-bold leading-tight tracking-tight">Fashion AI</h2>
-          </Link>
-        </header>
-
-        {/* Success State */}
-        <main className="flex flex-1 flex-col items-center justify-center px-4 py-10">
-          <div className="flex flex-col w-full max-w-[480px]">
-            <div className="bg-white dark:bg-[#2c2824] p-6 sm:p-10 rounded-[2rem] shadow-sm ring-1 ring-black/5 dark:ring-white/10 text-center">
-              <div className="w-20 h-20 mx-auto bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-6 text-green-600 dark:text-green-400">
-                <CheckCircle className="w-10 h-10" />
-              </div>
-              <h1 className="text-3xl font-bold mb-3">Đổi mật khẩu thành công!</h1>
-              <p className="text-secondary mb-8">
-                Mật khẩu của bạn đã được cập nhật. Bạn có thể đăng nhập với mật khẩu mới.
-              </p>
-              <Link 
-                href="/login"
-                className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-12 px-6 bg-primary hover:bg-[#b08d5b] text-text-main text-base font-bold leading-normal tracking-wide transition-all duration-300 shadow-lg shadow-primary/20"
-              >
-                Đăng nhập ngay
-              </Link>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   return (
-    <div className="bg-cream dark:bg-[#1e1a14] text-text-main dark:text-white font-sans min-h-screen flex flex-col antialiased">
-      {/* Header */}
-      <header className="flex items-center justify-between whitespace-nowrap px-6 py-4 lg:px-10 border-b border-transparent">
-        <Link href="/" className="flex items-center gap-3 cursor-pointer">
-          <div className="w-8 h-8 text-primary">
-            <svg fill="currentColor" viewBox="0 0 48 48">
-              <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" />
-            </svg>
-          </div>
-          <h2 className="text-lg font-bold leading-tight tracking-tight">Fashion AI</h2>
-        </Link>
-        <div className="hidden sm:flex items-center gap-4">
-          <Link href="/help" className="text-sm font-bold hover:text-primary transition-colors">
-            Trợ giúp
+    <div className="min-h-screen flex items-center justify-center py-12 px-4">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-flex items-center gap-2">
+            <Diamond className="w-10 h-10 text-primary" />
+            <span className="text-2xl font-bold">
+              Fashion <span className="text-primary">AI</span>
+            </span>
           </Link>
+          <h1 className="text-2xl font-bold mt-6 mb-2">Đặt lại mật khẩu</h1>
+          <p className="text-secondary">
+            Tạo mật khẩu mới cho tài khoản của bạn
+          </p>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="flex flex-1 flex-col items-center justify-center px-4 py-10 sm:px-6">
-        <div className="flex flex-col w-full max-w-[480px]">
-          {/* Card */}
-          <div className="bg-white dark:bg-[#2c2824] p-6 sm:p-10 rounded-[2rem] shadow-sm ring-1 ring-black/5 dark:ring-white/10">
-            {/* Heading */}
-            <div className="flex flex-col gap-3 mb-8 text-center sm:text-left">
-              <h1 className="text-3xl sm:text-4xl font-black leading-tight tracking-tight">
-                Đặt lại mật khẩu
-              </h1>
-              <p className="text-secondary text-base font-normal leading-normal">
-                Vui lòng nhập mật khẩu mới cho tài khoản của bạn. Để bảo mật, hãy chọn mật khẩu mạnh.
-              </p>
-            </div>
-
-            {/* Error */}
-            {error && (
-              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-sm">
-                {error}
-              </div>
-            )}
-
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        {/* Form */}
+        <div className="card p-8">
+          {!isReset ? (
+            <form onSubmit={handleSubmit} className="space-y-5">
               {/* New Password */}
-              <div className="flex flex-col gap-2">
-                <label className="text-base font-medium leading-normal" htmlFor="new-password">
-                  Mật khẩu mới
-                </label>
-                <div className="group flex w-full items-center rounded-xl border border-border dark:border-[#444] bg-white dark:bg-[#1e1a14] focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all duration-200">
+              <div>
+                <label className="block text-sm font-medium mb-2">Mật khẩu mới</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
-                    id="new-password"
                     type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="flex w-full min-w-0 flex-1 bg-transparent px-4 py-3.5 text-base placeholder:text-secondary focus:outline-none border-none focus:ring-0 rounded-xl"
                     placeholder="Nhập mật khẩu mới"
+                    className="w-full h-12 pl-12 pr-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2c2822] text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                     required
+                    minLength={8}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="pr-4 text-secondary cursor-pointer hover:text-primary transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    {showPassword ? <Eye className="w-6 h-6" /> : <EyeOff className="w-6 h-6" />}
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
 
               {/* Confirm Password */}
-              <div className="flex flex-col gap-2">
-                <label className="text-base font-medium leading-normal" htmlFor="confirm-password">
-                  Xác nhận mật khẩu
-                </label>
-                <div className="group flex w-full items-center rounded-xl border border-border dark:border-[#444] bg-white dark:bg-[#1e1a14] focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all duration-200">
+              <div>
+                <label className="block text-sm font-medium mb-2">Xác nhận mật khẩu</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
-                    id="confirm-password"
                     type={showConfirmPassword ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="flex w-full min-w-0 flex-1 bg-transparent px-4 py-3.5 text-base placeholder:text-secondary focus:outline-none border-none focus:ring-0 rounded-xl"
                     placeholder="Nhập lại mật khẩu mới"
+                    className="w-full h-12 pl-12 pr-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2c2822] text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                     required
+                    minLength={8}
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="pr-4 text-secondary cursor-pointer hover:text-primary transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    {showConfirmPassword ? <Eye className="w-6 h-6" /> : <EyeOff className="w-6 h-6" />}
+                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
 
-              {/* Password Requirements Checklist */}
-              <div className="py-2">
-                <div className="flex flex-col gap-3">
-                  {passwordRequirements.map((req) => (
-                    <label key={req.id} className="flex items-center gap-3 cursor-pointer group">
-                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                        req.test(password) 
-                          ? 'bg-primary border-primary' 
-                          : 'border-border'
-                      }`}>
-                        {req.test(password) && <Check className="w-3 h-3 text-white" />}
-                      </div>
-                      <p className={`text-sm font-medium leading-normal transition-colors ${
-                        req.test(password)
-                          ? 'text-text-main dark:text-white'
-                          : 'text-secondary'
-                      }`}>
-                        {req.label}
-                      </p>
-                    </label>
-                  ))}
-                </div>
+              {/* Password requirements */}
+              <div className="p-4 rounded-xl bg-gray-50 dark:bg-[#2c2822] text-sm">
+                <p className="font-medium mb-2 flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-primary" />
+                  Yêu cầu mật khẩu:
+                </p>
+                <ul className="space-y-1 text-secondary text-xs">
+                  <li>• Ít nhất 8 ký tự</li>
+                  <li>• Ít nhất 1 chữ in hoa</li>
+                  <li>• Ít nhất 1 chữ số</li>
+                  <li>• Ít nhất 1 ký tự đặc biệt</li>
+                </ul>
               </div>
 
-              {/* Submit Button */}
+              {/* Submit */}
               <button
                 type="submit"
-                disabled={resetPasswordMutation.isPending}
-                className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-12 px-6 bg-primary hover:bg-[#b08d5b] text-text-main text-base font-bold leading-normal tracking-wide transition-all duration-300 mt-2 shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoading}
+                className="btn-primary w-full"
               >
-                {resetPasswordMutation.isPending ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                    Đang cập nhật...
-                  </>
+                {isLoading ? (
+                  <span className="animate-spin">⏳</span>
                 ) : (
-                  <span>Cập nhật mật khẩu</span>
+                  <>
+                    <CheckCircle className="w-5 h-5" />
+                    Đặt lại mật khẩu
+                  </>
                 )}
               </button>
             </form>
-
-            {/* Back Link */}
-            <div className="mt-8 text-center">
-              <Link 
-                href="/login"
-                className="inline-flex items-center gap-2 text-sm font-bold text-secondary hover:text-primary transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Quay lại Đăng nhập
+          ) : (
+            <div className="text-center py-4">
+              {/* Success icon */}
+              <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-success" />
+              </div>
+              
+              <h3 className="text-lg font-bold mb-2">Đặt lại mật khẩu thành công!</h3>
+              <p className="text-secondary text-sm mb-6">
+                Bạn có thể đăng nhập với mật khẩu mới.
+              </p>
+              
+              <Link href="/login" className="btn-primary w-full">
+                Đăng nhập ngay
               </Link>
             </div>
-          </div>
-
-          {/* Footer */}
-          <div className="mt-8 text-center">
-            <p className="text-xs text-secondary/60">
-              © 2024 Fashion AI. All rights reserved.
-            </p>
-          </div>
+          )}
         </div>
-      </main>
+      </div>
     </div>
   );
 }

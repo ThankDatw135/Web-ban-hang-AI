@@ -45,7 +45,14 @@ export class OrdersCreateService {
       include: {
         items: {
           include: {
-            product: true,
+            product: {
+              include: {
+                images: {
+                  orderBy: { sortOrder: "asc" },
+                  take: 1, // Chỉ lấy ảnh đầu tiên
+                },
+              },
+            },
             variant: true,
           },
         },
@@ -82,11 +89,14 @@ export class OrdersCreateService {
       const totalPrice = Number(price) * item.quantity;
       subtotal += totalPrice;
 
+      // Lấy URL ảnh đầu tiên của sản phẩm
+      const productImage = item.product.images?.[0]?.url || null;
+
       orderItems.push({
         productId: item.productId,
         variantId: item.variantId,
         productName: item.product.name,
-        productImage: null, // TODO: Lấy ảnh chính của sản phẩm
+        productImage, // Lưu ảnh sản phẩm vào order item
         size: item.variant.size,
         color: item.variant.color,
         quantity: item.quantity,
@@ -94,6 +104,7 @@ export class OrdersCreateService {
         totalPrice,
       });
     }
+
 
     // Bước 4: Tính phí ship (miễn phí nếu đơn >= 500k)
     const shippingFee = subtotal >= 500000 ? 0 : 30000;

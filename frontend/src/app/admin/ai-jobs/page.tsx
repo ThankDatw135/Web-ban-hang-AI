@@ -1,117 +1,128 @@
 /**
- * Fashion AI - Admin AI Jobs Monitoring
+ * Fashion AI - Admin AI Jobs
  * 
- * Theo dõi các AI jobs (virtual try-on, stylist)
+ * Quản lý các tác vụ AI (Virtual Try-On)
  */
 
 'use client';
 
-import { cn } from '@/lib/utils';
+import { Sparkles, Eye, RefreshCw, CheckCircle, Clock, XCircle, Loader2 } from 'lucide-react';
 
-// Mock AI jobs
-const mockJobs = [
-  { id: 'JOB-001', type: 'try_on', user: 'Nguyễn Văn A', status: 'completed', duration: '12s', created: '5 phút trước' },
-  { id: 'JOB-002', type: 'try_on', user: 'Trần Thị B', status: 'processing', duration: '-', created: '2 phút trước' },
-  { id: 'JOB-003', type: 'stylist', user: 'Lê Văn C', status: 'completed', duration: '3s', created: '10 phút trước' },
-  { id: 'JOB-004', type: 'try_on', user: 'Phạm Thị D', status: 'failed', duration: '-', created: '15 phút trước' },
-  { id: 'JOB-005', type: 'try_on', user: 'Hoàng Văn E', status: 'queued', duration: '-', created: '1 phút trước' },
+// Mock AI jobs data
+const aiJobs = [
+  { id: 'AI-001', user: 'Nguyễn Văn A', type: 'try-on', status: 'completed', createdAt: '12:30 02/02/2026', duration: '2.5s' },
+  { id: 'AI-002', user: 'Trần Thị B', type: 'try-on', status: 'processing', createdAt: '12:28 02/02/2026', duration: '-' },
+  { id: 'AI-003', user: 'Lê Văn C', type: 'try-on', status: 'completed', createdAt: '12:25 02/02/2026', duration: '3.1s' },
+  { id: 'AI-004', user: 'Phạm Thị D', type: 'try-on', status: 'failed', createdAt: '12:20 02/02/2026', duration: '-' },
+  { id: 'AI-005', user: 'Hoàng Văn E', type: 'try-on', status: 'queued', createdAt: '12:35 02/02/2026', duration: '-' },
 ];
 
-const statusConfig: Record<string, { label: string; class: string; icon: string }> = {
-  completed: { label: 'Hoàn thành', class: 'bg-green-100 text-green-700', icon: 'check_circle' },
-  processing: { label: 'Đang xử lý', class: 'bg-blue-100 text-blue-700', icon: 'sync' },
-  queued: { label: 'Đang chờ', class: 'bg-gray-100 text-gray-700', icon: 'schedule' },
-  failed: { label: 'Thất bại', class: 'bg-red-100 text-red-700', icon: 'error' },
+// Status config
+const statusConfig: Record<string, { label: string; color: string; icon: typeof Sparkles }> = {
+  completed: { label: 'Hoàn thành', color: 'bg-green-500/10 text-green-500', icon: CheckCircle },
+  processing: { label: 'Đang xử lý', color: 'bg-blue-500/10 text-blue-500', icon: Loader2 },
+  queued: { label: 'Chờ', color: 'bg-yellow-500/10 text-yellow-500', icon: Clock },
+  failed: { label: 'Lỗi', color: 'bg-red-500/10 text-red-500', icon: XCircle },
 };
-
-const typeConfig: Record<string, { label: string; icon: string }> = {
-  try_on: { label: 'Virtual Try-on', icon: 'view_in_ar' },
-  stylist: { label: 'AI Stylist', icon: 'smart_toy' },
-};
-
-// Stats
-const stats = [
-  { label: 'Đang xử lý', value: '3', color: 'text-blue-600' },
-  { label: 'Hoàn thành hôm nay', value: '156', color: 'text-green-600' },
-  { label: 'Thất bại', value: '2', color: 'text-red-600' },
-  { label: 'Thời gian TB', value: '8.5s', color: 'text-gray-600' },
-];
 
 export default function AdminAIJobsPage() {
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
+      <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">AI Jobs</h1>
-        <p className="text-gray-600">Theo dõi các tác vụ AI</p>
+        <button className="btn-outline">
+          <RefreshCw className="w-5 h-5" />
+          Làm mới
+        </button>
       </div>
 
       {/* Stats */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-xl p-5 shadow-sm">
-            <p className={cn('text-3xl font-bold', stat.color)}>{stat.value}</p>
-            <p className="text-sm text-gray-600">{stat.label}</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="card p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-purple-500" />
           </div>
-        ))}
+          <div>
+            <p className="text-xl font-bold">12,345</p>
+            <p className="text-xs text-secondary">Tổng requests</p>
+          </div>
+        </div>
+        <div className="card p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
+            <CheckCircle className="w-5 h-5 text-green-500" />
+          </div>
+          <div>
+            <p className="text-xl font-bold">98.5%</p>
+            <p className="text-xs text-secondary">Thành công</p>
+          </div>
+        </div>
+        <div className="card p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+            <Loader2 className="w-5 h-5 text-blue-500" />
+          </div>
+          <div>
+            <p className="text-xl font-bold">5</p>
+            <p className="text-xs text-secondary">Đang xử lý</p>
+          </div>
+        </div>
+        <div className="card p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Clock className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-xl font-bold">2.8s</p>
+            <p className="text-xs text-secondary">Thời gian TB</p>
+          </div>
+        </div>
       </div>
 
-      {/* Jobs table */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="p-4 border-b flex items-center justify-between">
-          <h2 className="font-bold">Jobs gần đây</h2>
-          <button className="text-sm text-primary font-semibold hover:underline flex items-center gap-1">
-            <span className="material-symbols-outlined text-[16px]">refresh</span>
-            Làm mới
-          </button>
-        </div>
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="text-left p-4 font-semibold text-sm">ID</th>
-              <th className="text-left p-4 font-semibold text-sm">Loại</th>
-              <th className="text-left p-4 font-semibold text-sm">User</th>
-              <th className="text-left p-4 font-semibold text-sm">Trạng thái</th>
-              <th className="text-left p-4 font-semibold text-sm">Thời gian</th>
-              <th className="text-left p-4 font-semibold text-sm">Tạo lúc</th>
-              <th className="text-center p-4 font-semibold text-sm">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {mockJobs.map((job) => (
-              <tr key={job.id} className="hover:bg-gray-50">
-                <td className="p-4 font-mono text-sm">{job.id}</td>
-                <td className="p-4">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-accent text-[18px]">{typeConfig[job.type].icon}</span>
-                    <span className="text-sm">{typeConfig[job.type].label}</span>
-                  </div>
-                </td>
-                <td className="p-4">{job.user}</td>
-                <td className="p-4">
-                  <span className={cn('inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold', statusConfig[job.status].class)}>
-                    <span className="material-symbols-outlined text-[14px]">{statusConfig[job.status].icon}</span>
-                    {statusConfig[job.status].label}
-                  </span>
-                </td>
-                <td className="p-4 text-gray-600">{job.duration}</td>
-                <td className="p-4 text-gray-600">{job.created}</td>
-                <td className="p-4">
-                  <div className="flex items-center justify-center gap-2">
-                    <button className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center">
-                      <span className="material-symbols-outlined text-[18px]">visibility</span>
-                    </button>
-                    {job.status === 'failed' && (
-                      <button className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-primary">
-                        <span className="material-symbols-outlined text-[18px]">replay</span>
-                      </button>
-                    )}
-                  </div>
-                </td>
+      {/* Jobs Table */}
+      <div className="card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="text-left text-sm text-secondary bg-gray-50 dark:bg-[#2c2822]">
+                <th className="p-4 font-medium">Job ID</th>
+                <th className="p-4 font-medium">Người dùng</th>
+                <th className="p-4 font-medium">Loại</th>
+                <th className="p-4 font-medium">Trạng thái</th>
+                <th className="p-4 font-medium">Thời gian</th>
+                <th className="p-4 font-medium">Duration</th>
+                <th className="p-4 font-medium">Thao tác</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {aiJobs.map((job) => {
+                const status = statusConfig[job.status];
+                const StatusIcon = status.icon;
+                return (
+                  <tr key={job.id} className="border-t border-gray-200 dark:border-gray-700">
+                    <td className="p-4 font-medium font-mono text-sm">{job.id}</td>
+                    <td className="p-4 text-sm">{job.user}</td>
+                    <td className="p-4">
+                      <span className="px-2 py-1 rounded-full bg-purple-500/10 text-purple-500 text-xs font-bold">
+                        Virtual Try-On
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${status.color}`}>
+                        <StatusIcon className={`w-3 h-3 ${job.status === 'processing' ? 'animate-spin' : ''}`} />
+                        {status.label}
+                      </span>
+                    </td>
+                    <td className="p-4 text-sm text-secondary">{job.createdAt}</td>
+                    <td className="p-4 text-sm font-mono">{job.duration}</td>
+                    <td className="p-4">
+                      <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 inline-flex">
+                        <Eye className="w-4 h-4 text-secondary" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

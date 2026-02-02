@@ -6,10 +6,7 @@
  */
 
 /* Google Fonts - Manrope */
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
-
-/* Material Symbols */
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -20,44 +17,44 @@
    ============================================ */
 :root {
   /* Background colors */
-  --color-cream: #FAF7F2;
-  --color-white: #FFFFFF;
-  
+  --color-cream: #faf7f2;
+  --color-white: #ffffff;
+
   /* Primary - Gold Champagne */
-  --color-primary: #C7A26A;
-  --color-primary-50: #FCF8F3;
-  --color-primary-100: #F5EBD9;
-  --color-primary-200: #E8D4B4;
-  --color-primary-300: #DBBF90;
-  --color-primary-400: #D1AC7A;
-  --color-primary-500: #C7A26A;
-  --color-primary-600: #B8915A;
-  --color-primary-700: #A07B4A;
-  
+  --color-primary: #c7a26a;
+  --color-primary-50: #fcf8f3;
+  --color-primary-100: #f5ebd9;
+  --color-primary-200: #e8d4b4;
+  --color-primary-300: #dbbf90;
+  --color-primary-400: #d1ac7a;
+  --color-primary-500: #c7a26a;
+  --color-primary-600: #b8915a;
+  --color-primary-700: #a07b4a;
+
   /* Accent - Purple for AI */
-  --color-accent: #A855F7;
-  --color-accent-50: #F5F3FF;
-  --color-accent-100: #EDE9FE;
-  --color-accent-500: #A855F7;
-  --color-accent-600: #9333EA;
-  
+  --color-accent: #a855f7;
+  --color-accent-50: #f5f3ff;
+  --color-accent-100: #ede9fe;
+  --color-accent-500: #a855f7;
+  --color-accent-600: #9333ea;
+
   /* Secondary - Warm Gray */
-  --color-secondary: #6B7280;
-  --color-secondary-800: #1F2937;
-  
+  --color-secondary: #6b7280;
+  --color-secondary-800: #1f2937;
+
   /* Text */
-  --color-text-main: #1F2937;
-  --color-text-muted: #6B7280;
-  
+  --color-text-main: #1f2937;
+  --color-text-muted: #6b7280;
+
   /* Border */
-  --color-border: #E5E7EB;
-  
+  --color-border: #e5e7eb;
+
   /* Semantic colors */
-  --color-success: #22C55E;
-  --color-warning: #F59E0B;
-  --color-error: #EF4444;
-  --color-info: #3B82F6;
-  
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+
   /* Shadows */
   --shadow-primary: 0 10px 40px rgba(199, 162, 106, 0.2);
   --shadow-accent: 0 10px 40px rgba(168, 85, 247, 0.2);
@@ -67,8 +64,8 @@
 .dark {
   --color-cream: #1e1a14;
   --color-white: #25221d;
-  --color-text-main: #FFFFFF;
-  --color-text-muted: #9CA3AF;
+  --color-text-main: #ffffff;
+  --color-text-muted: #9ca3af;
   --color-border: #332f28;
 }
 
@@ -81,39 +78,49 @@
   *::after {
     box-sizing: border-box;
   }
-  
+
   html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  
+
   body {
-    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family:
+      "Manrope",
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
     background-color: var(--color-cream);
     color: var(--color-text-main);
     overflow-x: hidden;
     line-height: 1.5;
   }
-  
+
   /* Headings */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-weight: 700;
     line-height: 1.2;
   }
-  
+
   /* Links */
   a {
     color: inherit;
     text-decoration: none;
   }
-  
+
   /* Images */
   img {
     max-width: 100%;
     height: auto;
   }
-  
+
   /* Focus states - Accessibility */
   :focus-visible {
     outline: 2px solid var(--color-primary);
@@ -129,24 +136,43 @@
   .container-app {
     @apply max-w-[1280px] mx-auto px-4 md:px-10 lg:px-40;
   }
-  
+
   /* Card base */
   .card {
     @apply bg-white dark:bg-[#2c2822] rounded-2xl shadow-sm;
   }
-  
+
   /* Gradient text */
   .gradient-text {
     @apply text-transparent bg-clip-text bg-gradient-to-r from-primary to-[#dcb77d];
   }
-  
+
   /* AI glow effect */
   .ai-glow {
     @apply relative;
   }
   .ai-glow::before {
-    content: '';
+    content: "";
     @apply absolute inset-0 bg-accent/20 blur-3xl -z-10;
+  }
+
+  /* Button variants */
+  .btn-primary {
+    @apply flex items-center justify-center gap-2 px-8 h-14 rounded-full bg-primary hover:bg-primary-600 text-white font-bold shadow-lg transition-all duration-300 hover:-translate-y-0.5;
+    box-shadow: var(--shadow-primary);
+  }
+
+  .btn-accent {
+    @apply flex items-center justify-center gap-2 px-8 h-14 rounded-full bg-accent hover:bg-accent-600 text-white font-bold shadow-lg transition-all duration-300 hover:-translate-y-0.5;
+    box-shadow: var(--shadow-accent);
+  }
+
+  .btn-outline {
+    @apply flex items-center justify-center gap-2 px-8 h-14 rounded-full border-2 border-gray-300 hover:border-primary text-text-main dark:text-white font-bold transition-all duration-300;
+  }
+
+  .btn-ghost {
+    @apply flex items-center justify-center px-4 h-10 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-200;
   }
 }
 
@@ -154,7 +180,7 @@
    Custom Utilities
    ============================================ */
 @layer utilities {
-  /* Hide scrollbar nhưng vẫn scroll được */
+  /* Hide scrollbar */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -162,17 +188,17 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
-  /* Text balance cho headings */
+
+  /* Text balance */
   .text-balance {
     text-wrap: balance;
   }
-  
+
   /* Aspect ratios */
   .aspect-product {
     aspect-ratio: 3/4;
   }
-  
+
   .aspect-hero {
     aspect-ratio: 4/5;
   }
@@ -182,45 +208,63 @@
    Animations
    ============================================ */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { 
-    transform: translateY(20px); 
-    opacity: 0; 
+  from {
+    transform: translateY(20px);
+    opacity: 0;
   }
-  to { 
-    transform: translateY(0); 
-    opacity: 1; 
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }
 
 @keyframes slideDown {
-  from { 
-    transform: translateY(-20px); 
-    opacity: 0; 
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
   }
-  to { 
-    transform: translateY(0); 
-    opacity: 1; 
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @keyframes pulse-slow {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
-@keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+@keyframes aiGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(168, 85, 247, 0.5);
+  }
 }
 
 /* Animation classes */
@@ -246,22 +290,6 @@
   animation: pulse-slow 3s infinite;
 }
 
-/* ============================================
-   Material Symbols Configuration
-   ============================================ */
-.material-symbols-outlined {
-  font-variation-settings:
-    'FILL' 0,
-    'wght' 400,
-    'GRAD' 0,
-    'opsz' 24;
-}
-
-/* Filled icons */
-.material-symbols-outlined.filled {
-  font-variation-settings:
-    'FILL' 1,
-    'wght' 400,
-    'GRAD' 0,
-    'opsz' 24;
+.animate-ai-glow {
+  animation: aiGlow 2s ease-in-out infinite;
 }
