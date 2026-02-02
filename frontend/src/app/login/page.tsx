@@ -8,17 +8,19 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Diamond, Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
+import { Diamond, Mail, Lock, Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
+import { useLogin } from '@/hooks/use-auth';
 
 export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  
+  const loginMutation = useLogin();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    // TODO: Implement login logic
-    setTimeout(() => setIsLoading(false), 2000);
+    loginMutation.mutate({ email, password });
   };
 
   return (
@@ -38,6 +40,15 @@ export default function LoginPage() {
 
         {/* Form */}
         <div className="card p-8">
+          {loginMutation.isError && (
+            <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3 text-sm">
+              <AlertCircle className="w-5 h-5 shrink-0" />
+              <span>
+                {(loginMutation.error as any)?.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.'}
+              </span>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
             <div>
@@ -46,6 +57,8 @@ export default function LoginPage() {
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="Nhập email của bạn"
                   className="w-full h-12 pl-12 pr-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2c2822] text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   required
@@ -60,6 +73,8 @@ export default function LoginPage() {
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Nhập mật khẩu"
                   className="w-full h-12 pl-12 pr-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2c2822] text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   required
@@ -88,10 +103,10 @@ export default function LoginPage() {
             {/* Submit */}
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={loginMutation.isPending}
               className="btn-primary w-full"
             >
-              {isLoading ? (
+              {loginMutation.isPending ? (
                 <span className="animate-spin">⏳</span>
               ) : (
                 <>
@@ -135,3 +150,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

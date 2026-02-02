@@ -2,6 +2,10 @@
 const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
+  // Fix module resolution for client-side packages in standalone build
+  experimental: {
+    serverComponentsExternalPackages: ['sonner'],
+  },
   images: {
     remotePatterns: [
       {

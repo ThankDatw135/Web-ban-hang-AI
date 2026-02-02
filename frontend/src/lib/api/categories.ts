@@ -1,24 +1,20 @@
 /**
- * Fashion AI - Categories API Service
- * 
- * Các functions gọi API danh mục
+ * Fashion AI - Categories API
  */
 
 import apiClient from '../api-client';
-import type { Category, ApiResponse } from '@/types/api';
+import { ApiResponse, Category } from '@/types/api';
 
 /**
- * Lấy danh sách danh mục
+ * Lấy danh sách tất cả category
  */
-export async function getCategories(tree = false): Promise<Category[]> {
-  const response = await apiClient.get<ApiResponse<Category[]>>(
-    `/categories${tree ? '?tree=true' : ''}`
-  );
+export async function getCategories(): Promise<Category[]> {
+  const response = await apiClient.get<ApiResponse<Category[]>>('/categories?isActive=true');
   return response.data.data;
 }
 
 /**
- * Lấy chi tiết danh mục theo slug
+ * Lấy category theo slug
  */
 export async function getCategoryBySlug(slug: string): Promise<Category> {
   const response = await apiClient.get<ApiResponse<Category>>(`/categories/${slug}`);

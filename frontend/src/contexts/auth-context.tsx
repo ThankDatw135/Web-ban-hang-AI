@@ -22,16 +22,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isReady, setIsReady] = useState(false);
+  const [hasToken, setHasToken] = useState(false);
   const queryClient = useQueryClient();
 
-  // Check if we have a token
+  // Check if we have a token - only on client side
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-    setIsReady(true);
-    
-    // If no token, don't try to fetch profile
-    if (!token) {
-      queryClient.setQueryData(['user'], null);
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('accessToken');
+      setHasToken(!!token);
+      setIsReady(true);
+      
+      // If no token, don't try to fetch profile
+      if (!token) {
+        queryClient.setQueryData(['auth', 'user'], null);
+      }
     }
   }, [queryClient]);
 
@@ -40,14 +44,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Handle auth error - clear tokens
   useEffect(() => {
-    if (error) {
+    if (error && typeof window !== 'undefined') {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
-      queryClient.setQueryData(['user'], null);
+      queryClient.setQueryData(['auth', 'user'], null);
+      setHasToken(false);
     }
   }, [error, queryClient]);
 
-  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('accessToken');
   const isLoading = !isReady || (hasToken && profileLoading);
   const isAuthenticated = !!user && !error;
   const isAdmin = user?.role === 'ADMIN';

@@ -1,14 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-
-interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  avatar?: string;
-  role: 'USER' | 'ADMIN';
-}
+import { User } from '@/types/api';
 
 interface AuthState {
   user: User | null;
@@ -31,6 +23,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
+      skipHydration: true, // Prevent SSR hydration mismatch
     }
   )
 );

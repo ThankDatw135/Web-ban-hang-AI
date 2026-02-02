@@ -8,6 +8,6 @@ export * from './auth';
 export * from './products';
 export * from './categories';
 export * from './cart';
-export * from './orders';
+export * from './order';
 export * from './users';
 export * from './ai';

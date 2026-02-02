@@ -8,23 +8,57 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Diamond, Lock, Eye, EyeOff, CheckCircle, Shield } from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Diamond, Lock, Eye, EyeOff, CheckCircle, Shield, AlertCircle } from 'lucide-react';
+import { useResetPassword } from '@/hooks/use-auth';
 
 export default function ResetPasswordPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get('token');
+
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isReset, setIsReset] = useState(false);
+  const [error, setError] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  const resetPasswordMutation = useResetPassword();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    // TODO: Implement reset password logic
-    setTimeout(() => {
-      setIsLoading(false);
-      setIsReset(true);
-    }, 2000);
+    if (!token) {
+      setError('Token không hợp lệ hoặc đã hết hạn.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Mật khẩu nhập lại không khớp.');
+      return;
+    }
+
+    resetPasswordMutation.mutate({ token, newPassword: password }, {
+      onSuccess: () => {
+        setIsSuccess(true);
+      },
+      onError: (err: any) => {
+        setError(err.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+      }
+    });
   };
+
+  if (!token) {
+    return (
+        <div className="min-h-screen flex items-center justify-center py-12 px-4">
+        <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Liên kết không hợp lệ</h1>
+            <p className="mb-4">Vui lòng kiểm tra lại liên kết trong email của bạn.</p>
+            <Link href="/login" className="text-primary hover:underline">Quay lại đăng nhập</Link>
+        </div>
+        </div>
+    )
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4">
@@ -45,7 +79,16 @@ export default function ResetPasswordPage() {
 
         {/* Form */}
         <div className="card p-8">
-          {!isReset ? (
+          {(error || resetPasswordMutation.isError) && (
+             <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3 text-sm">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                <span>
+                  {error || (resetPasswordMutation.error as any)?.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.'}
+                </span>
+             </div>
+          )}
+
+          {!isSuccess ? (
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* New Password */}
               <div>
@@ -54,6 +97,8 @@ export default function ResetPasswordPage() {
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     placeholder="Nhập mật khẩu mới"
                     className="w-full h-12 pl-12 pr-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2c2822] text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                     required
@@ -76,6 +121,8 @@ export default function ResetPasswordPage() {
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Nhập lại mật khẩu mới"
                     className="w-full h-12 pl-12 pr-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2c2822] text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                     required
@@ -108,10 +155,10 @@ export default function ResetPasswordPage() {
               {/* Submit */}
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={resetPasswordMutation.isPending}
                 className="btn-primary w-full"
               >
-                {isLoading ? (
+                {resetPasswordMutation.isPending ? (
                   <span className="animate-spin">⏳</span>
                 ) : (
                   <>

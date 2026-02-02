@@ -13,6 +13,7 @@
 import { Diamond, ShoppingBag, Sparkles, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import FeaturedProducts from '@/components/products/featured-products';
 
 export default function HomePage() {
   return (
@@ -61,7 +62,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Featured Categories */}
+      {/* Featured Parts */}
       <section className="py-20 bg-white dark:bg-[#25221d]">
         <div className="container-app">
           <div className="text-center mb-12">
@@ -99,6 +100,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Featured Products */}
+      <FeaturedProducts />
 
       {/* AI Try-On CTA Section */}
       <section className="py-20 relative overflow-hidden">

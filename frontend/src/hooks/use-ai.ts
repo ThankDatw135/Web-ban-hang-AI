@@ -1,83 +1,76 @@
 /**
  * Fashion AI - AI Hooks
- * 
- * React Query hooks cho AI features
  */
 
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as aiApi from '@/lib/api/ai';
-import type { VirtualTryOnRequest, AIChatRequest } from '@/types/api';
+import { toast } from 'sonner';
 
-/**
- * Hook yêu cầu thử đồ ảo
- */
+// Virtual Try-On
 export function useVirtualTryOn() {
-  const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: (data: VirtualTryOnRequest) => aiApi.requestVirtualTryOn(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['aiJobs'] });
+    mutationFn: aiApi.virtualTryOn,
+    onSuccess: (data) => {
+      toast.success('Đang xử lý thử đồ ảo...');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Lỗi thử đồ');
     },
   });
 }
 
-/**
- * Hook yêu cầu gợi ý size
- */
-export function useSizeRecommendation() {
-  return useMutation({
-    mutationFn: (productId: string) => aiApi.requestSizeRecommendation(productId),
-  });
-}
-
-/**
- * Hook gửi tin nhắn chat AI
- */
-export function useAIChat() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: AIChatRequest) => aiApi.sendChatMessage(data),
-    onSuccess: (_, variables) => {
-      if (variables.sessionId) {
-        queryClient.invalidateQueries({ queryKey: ['chatHistory', variables.sessionId] });
+export function useAIJob(id: string | null) {
+  return useQuery({
+    queryKey: ['ai-job', id],
+    queryFn: () => aiApi.getAIJobStatus(id!),
+    enabled: !!id,
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (data && (data.status === 'COMPLETED' || data.status === 'FAILED')) {
+        return false;
       }
+      return 2000; // Poll every 2s
     },
   });
 }
 
-/**
- * Hook lấy trạng thái job AI (polling)
- */
-export function useAIJobStatus(jobId: string | null, options?: { refetchInterval?: number }) {
-  return useQuery({
-    queryKey: ['aiJob', jobId],
-    queryFn: () => aiApi.getJobStatus(jobId!),
-    enabled: !!jobId,
-    refetchInterval: options?.refetchInterval ?? 2000, // Poll every 2s
+// Size Recommend
+export function useSizeRecommend() {
+  return useMutation({
+    mutationFn: aiApi.recommendSize,
+    onError: (error: any) => {
+      toast.error('Không thể lấy gợi ý size');
+    },
   });
 }
 
-/**
- * Hook lấy lịch sử chat
- */
-export function useChatHistory(sessionId: string) {
-  return useQuery({
-    queryKey: ['chatHistory', sessionId],
-    queryFn: () => aiApi.getChatHistory(sessionId),
-    enabled: !!sessionId,
+// Chat
+export function useChat() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: aiApi.sendChatMessage,
+    onSuccess: (data) => {
+      queryClient.setQueryData(['chat-history'], (old: any) => {
+        return old ? [...old, data] : [data];
+      });
+    },
   });
 }
 
-/**
- * Hook lấy danh sách phiên chat
- */
-export function useChatSessions() {
+// Admin Hook
+export function useAllAIJobs(limit = 20) {
   return useQuery({
-    queryKey: ['chatSessions'],
-    queryFn: aiApi.getChatSessions,
+    queryKey: ['admin-ai-jobs', limit],
+    queryFn: () => aiApi.getAIJobs(limit),
+  });
+}
+
+export function useChatHistory() {
+  return useQuery({
+    queryKey: ['chat-history'],
+    queryFn: aiApi.getChatHistory,
   });
 }

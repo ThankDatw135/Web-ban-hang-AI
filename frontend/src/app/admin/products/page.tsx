@@ -1,151 +1,159 @@
 /**
- * Fashion AI - Admin Quản Lý Sản Phẩm
- * 
- * Danh sách sản phẩm với CRUD operations
+ * Fashion AI - Admin Products
  */
 
 'use client';
 
+import { useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import { 
   Plus, 
   Search, 
   Filter, 
-  Edit2, 
-  Trash2, 
+  MoreHorizontal, 
+  Edit, 
+  Trash2,
   Eye,
-  MoreVertical
+  Loader2
 } from 'lucide-react';
-import Link from 'next/link';
-
-// Mock products data
-const products = [
-  { id: 1, name: 'Áo sơ mi trắng Premium', sku: 'FA-001', price: 850000, stock: 45, status: 'active' },
-  { id: 2, name: 'Đầm dự tiệc sang trọng', sku: 'FA-002', price: 1250000, stock: 12, status: 'active' },
-  { id: 3, name: 'Quần tây navy công sở', sku: 'FA-003', price: 750000, stock: 0, status: 'out_of_stock' },
-  { id: 4, name: 'Áo khoác denim phong cách', sku: 'FA-004', price: 950000, stock: 28, status: 'active' },
-  { id: 5, name: 'Váy midi họa tiết', sku: 'FA-005', price: 680000, stock: 5, status: 'low_stock' },
-];
-
-// Format giá tiền
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
-};
+import { useProducts } from '@/hooks/use-products';
+import { formatCurrency } from '@/lib/utils/format';
+import { toast } from 'sonner';
 
 export default function AdminProductsPage() {
+  const { data: productData, isLoading } = useProducts({ limit: 100 });
+  const [search, setSearch] = useState('');
+
+  const products = productData?.data || [];
+  const filteredProducts = products.filter(p => 
+      p.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleDelete = (id: string) => {
+      if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
+          // Call API delete
+          toast.success('Xóa sản phẩm thành công (Mock)');
+      }
+  };
+
+  if (isLoading) {
+      return (
+          <div className="flex items-center justify-center h-96">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+      );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">Quản lý sản phẩm</h1>
-        <Link href="/admin/products/new" className="btn-primary">
-          <Plus className="w-5 h-5" />
-          Thêm sản phẩm
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center">
+        <div>
+           <h1 className="text-2xl font-bold">Quản lý sản phẩm</h1>
+           <p className="text-secondary">Danh sách tất cả sản phẩm trong cửa hàng</p>
+        </div>
+        <Link href="/admin/products/create" className="btn-primary flex items-center gap-2">
+            <Plus className="w-5 h-5" />
+            Thêm sản phẩm
         </Link>
       </div>
 
       {/* Filters */}
-      <div className="card p-4 flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Tìm kiếm sản phẩm..."
-            className="w-full h-10 pl-10 pr-4 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2c2822] text-sm outline-none focus:border-primary transition-all"
-          />
-        </div>
-        <div className="flex gap-2">
-          <select className="h-10 px-4 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2c2822] text-sm outline-none focus:border-primary appearance-none cursor-pointer">
-            <option value="">Tất cả danh mục</option>
-            <option value="ao">Áo</option>
-            <option value="quan">Quần</option>
-            <option value="dam">Đầm</option>
-          </select>
-          <select className="h-10 px-4 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2c2822] text-sm outline-none focus:border-primary appearance-none cursor-pointer">
-            <option value="">Tất cả trạng thái</option>
-            <option value="active">Đang bán</option>
-            <option value="out_of_stock">Hết hàng</option>
-            <option value="low_stock">Sắp hết</option>
-          </select>
-        </div>
+      <div className="bg-white dark:bg-[#1e1a14] p-4 rounded-xl border border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary" />
+              <input 
+                 type="text" 
+                 placeholder="Tìm kiếm sản phẩm..." 
+                 className="input pl-10 w-full"
+                 value={search}
+                 onChange={(e) => setSearch(e.target.value)}
+              />
+          </div>
+          <div className="flex gap-2">
+              <button className="btn-outline flex items-center gap-2">
+                  <Filter className="w-4 h-4" />
+                  Lọc
+              </button>
+          </div>
       </div>
 
       {/* Table */}
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="text-left text-sm text-secondary bg-gray-50 dark:bg-[#2c2822]">
-                <th className="p-4 font-medium">
-                  <input type="checkbox" className="w-4 h-4 rounded" />
-                </th>
-                <th className="p-4 font-medium">Sản phẩm</th>
-                <th className="p-4 font-medium">SKU</th>
-                <th className="p-4 font-medium">Giá</th>
-                <th className="p-4 font-medium">Tồn kho</th>
-                <th className="p-4 font-medium">Trạng thái</th>
-                <th className="p-4 font-medium">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((product) => (
-                <tr key={product.id} className="border-t border-gray-200 dark:border-gray-700">
-                  <td className="p-4">
-                    <input type="checkbox" className="w-4 h-4 rounded" />
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-[#2c2822] flex items-center justify-center">
-                        <span className="text-xl">👕</span>
-                      </div>
-                      <span className="font-medium">{product.name}</span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-sm text-secondary">{product.sku}</td>
-                  <td className="p-4 font-medium text-primary">{formatPrice(product.price)}</td>
-                  <td className="p-4 text-sm">{product.stock}</td>
-                  <td className="p-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                      product.status === 'active' ? 'bg-green-500/10 text-green-500' :
-                      product.status === 'low_stock' ? 'bg-yellow-500/10 text-yellow-500' :
-                      'bg-red-500/10 text-red-500'
-                    }`}>
-                      {product.status === 'active' ? 'Đang bán' : 
-                       product.status === 'low_stock' ? 'Sắp hết' : 'Hết hàng'}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-1">
-                      <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-                        <Eye className="w-4 h-4 text-secondary" />
-                      </button>
-                      <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-                        <Edit2 className="w-4 h-4 text-secondary" />
-                      </button>
-                      <button className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
-                        <Trash2 className="w-4 h-4 text-red-500" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-          <p className="text-sm text-secondary">Hiển thị 1-5 của 456 sản phẩm</p>
-          <div className="flex gap-2">
-            <button className="px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-sm hover:bg-gray-100 dark:hover:bg-gray-800">
-              Trước
-            </button>
-            <button className="px-3 py-1 rounded-lg bg-primary text-white text-sm">1</button>
-            <button className="px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-sm hover:bg-gray-100 dark:hover:bg-gray-800">2</button>
-            <button className="px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-sm hover:bg-gray-100 dark:hover:bg-gray-800">3</button>
-            <button className="px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-sm hover:bg-gray-100 dark:hover:bg-gray-800">
-              Sau
-            </button>
+      <div className="bg-white dark:bg-[#1e1a14] rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+          <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                  <thead>
+                      <tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-800">
+                          <th className="p-4 font-medium text-secondary text-sm">Sản phẩm</th>
+                          <th className="p-4 font-medium text-secondary text-sm">Danh mục</th>
+                          <th className="p-4 font-medium text-secondary text-sm">Giá bán</th>
+                          <th className="p-4 font-medium text-secondary text-sm">Kho</th>
+                          <th className="p-4 font-medium text-secondary text-sm text-right">Thao tác</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      {filteredProducts.length > 0 ? filteredProducts.map((product) => (
+                          <tr key={product.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                              <td className="p-4">
+                                  <div className="flex items-center gap-3">
+                                      <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 relative overflow-hidden shrink-0">
+                                          <Image 
+                                              src={product.images.find(i => i.isMain)?.url || product.images[0]?.url || '/placeholder.jpg'} 
+                                              alt={product.name}
+                                              fill
+                                              className="object-cover"
+                                          />
+                                      </div>
+                                      <div>
+                                          <p className="font-medium line-clamp-1 max-w-[200px]">{product.name}</p>
+                                          <p className="text-xs text-secondary">ID: {product.id.slice(0, 8)}...</p>
+                                      </div>
+                                  </div>
+                              </td>
+                              <td className="p-4">
+                                  <span className="px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-medium">
+                                      {product.category?.name || 'Chưa phân loại'}
+                                  </span>
+                              </td>
+                              <td className="p-4 font-medium">
+                                  {formatCurrency(product.price)}
+                              </td>
+                              <td className="p-4">
+                                  {/* Calculate total stock */}
+                                  <span className="text-sm">
+                                      {product.variants.reduce((acc, v) => acc + v.stock, 0)}
+                                  </span>
+                              </td>
+                              <td className="p-4 text-right">
+                                  <div className="flex items-center justify-end gap-2">
+                                      <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-secondary hover:text-primary transition-colors" title="Xem">
+                                          <Eye className="w-4 h-4" />
+                                      </button>
+                                      <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-secondary hover:text-blue-500 transition-colors" title="Sửa">
+                                          <Edit className="w-4 h-4" />
+                                      </button>
+                                      <button 
+                                        onClick={() => handleDelete(product.id)}
+                                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-secondary hover:text-red-500 transition-colors" 
+                                        title="Xóa"
+                                      >
+                                          <Trash2 className="w-4 h-4" />
+                                      </button>
+                                  </div>
+                              </td>
+                          </tr>
+                      )) : (
+                          <tr>
+                              <td colSpan={5} className="p-8 text-center text-secondary">
+                                  Không tìm thấy sản phẩm nào.
+                              </td>
+                          </tr>
+                      )}
+                  </tbody>
+              </table>
           </div>
-        </div>
+          {/* Pagination could go here */}
       </div>
     </div>
   );

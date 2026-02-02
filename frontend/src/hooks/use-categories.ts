@@ -1,7 +1,5 @@
 /**
  * Fashion AI - Categories Hooks
- * 
- * React Query hooks cho danh mục
  */
 
 'use client';
@@ -10,21 +8,22 @@ import { useQuery } from '@tanstack/react-query';
 import * as categoriesApi from '@/lib/api/categories';
 
 /**
- * Hook lấy danh sách danh mục
+ * Hook lấy danh sách categories
  */
-export function useCategories(tree = false) {
+export function useCategories() {
   return useQuery({
-    queryKey: ['categories', tree],
-    queryFn: () => categoriesApi.getCategories(tree),
+    queryKey: ['categories'],
+    queryFn: categoriesApi.getCategories,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 
 /**
- * Hook lấy chi tiết danh mục
+ * Hook lấy category theo slug
  */
 export function useCategory(slug: string) {
   return useQuery({
-    queryKey: ['category', slug],
+    queryKey: ['categories', slug],
     queryFn: () => categoriesApi.getCategoryBySlug(slug),
     enabled: !!slug,
   });

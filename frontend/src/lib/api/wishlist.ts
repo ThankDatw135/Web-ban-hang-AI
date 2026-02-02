@@ -1,77 +1,30 @@
 /**
  * Fashion AI - Wishlist API
- * 
- * API functions cho danh sách yêu thích
  */
 
 import apiClient from '../api-client';
-import { ApiResponse } from '@/types/api';
+import { ApiResponse, Product } from '@/types/api';
 
-// Types
-export interface WishlistItem {
-  id: string;
-  productId: string;
-  createdAt: string;
-  product: {
-    id: string;
-    name: string;
-    slug: string;
-    price: number;
-    salePrice?: number;
-    images: { url: string }[];
-  };
-}
-
-export interface WishlistResponse {
-  items: WishlistItem[];
-  total: number;
-}
-
-/**
- * Get user's wishlist
- */
-export async function getWishlist(): Promise<WishlistResponse> {
-  const response = await apiClient.get<ApiResponse<WishlistResponse>>(
-    '/users/me/wishlist'
-  );
+export async function getWishlist(): Promise<Product[]> {
+  const response = await apiClient.get<ApiResponse<Product[]>>('/wishlist');
   return response.data.data;
 }
 
-/**
- * Add product to wishlist
- */
-export async function addToWishlist(productId: string): Promise<WishlistItem> {
-  const response = await apiClient.post<ApiResponse<WishlistItem>>(
-    '/users/me/wishlist',
-    { productId }
-  );
-  return response.data.data;
+export async function addToWishlist(productId: string): Promise<boolean> {
+  await apiClient.post(`/wishlist/${productId}`);
+  return true;
 }
 
-/**
- * Remove product from wishlist
- */
-export async function removeFromWishlist(productId: string): Promise<void> {
-  await apiClient.delete(`/users/me/wishlist/${productId}`);
+export async function removeFromWishlist(productId: string): Promise<boolean> {
+  await apiClient.delete(`/wishlist/${productId}`);
+  return true;
 }
 
-/**
- * Check if product is in wishlist
- */
-export async function isInWishlist(productId: string): Promise<boolean> {
-  const response = await apiClient.get<ApiResponse<{ isInWishlist: boolean }>>(
-    `/users/me/wishlist/check/${productId}`
-  );
-  return response.data.data.isInWishlist;
-}
-
-/**
- * Toggle wishlist (add if not exists, remove if exists)
- */
-export async function toggleWishlist(productId: string): Promise<{ added: boolean }> {
-  const response = await apiClient.post<ApiResponse<{ added: boolean }>>(
-    `/users/me/wishlist/toggle`,
-    { productId }
-  );
-  return response.data.data;
+export async function checkWishlist(productId: string): Promise<boolean> {
+    // Optional: Check if a specific product is wishlisted (often included in getProduct detail, but this is handy)
+    // If backend doesn't support, we can check client side from getWishlist list.
+    // Assuming backend endpoint /wishlist/check/:id exists or we filter getWishlist.
+    // For now, let's assume we fetch all and check.
+    const list = await getWishlist();
+    return list.some(p => p.id === productId);
 }

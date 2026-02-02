@@ -59,3 +59,30 @@ export async function searchProducts(query: string, limit = 20): Promise<Product
   );
   return response.data.data.data;
 }
+
+/**
+ * [ADMIN] Tạo sản phẩm mới
+ */
+export async function createProduct(data: FormData): Promise<Product> {
+  const response = await apiClient.post<ApiResponse<Product>>('/products', data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data.data;
+}
+
+/**
+ * [ADMIN] Cập nhật sản phẩm
+ */
+export async function updateProduct(id: string, data: FormData): Promise<Product> {
+  const response = await apiClient.patch<ApiResponse<Product>>(`/products/${id}`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data.data;
+}
+
+/**
+ * [ADMIN] Xóa sản phẩm
+ */
+export async function deleteProduct(id: string): Promise<void> {
+  await apiClient.delete(`/products/${id}`);
+}

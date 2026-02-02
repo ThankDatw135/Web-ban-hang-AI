@@ -8,22 +8,55 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Diamond, Mail, Lock, Eye, EyeOff, User, Phone, UserPlus } from 'lucide-react';
+import { Diamond, Mail, Lock, Eye, EyeOff, User, Phone, UserPlus, AlertCircle } from 'lucide-react';
+import { useRegister } from '@/hooks/use-auth';
 
 export default function RegisterPage() {
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: '',
+  });
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState('');
+
+  const registerMutation = useRegister();
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    // TODO: Implement register logic
-    setTimeout(() => setIsLoading(false), 2000);
+    setError('');
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Mật khẩu nhập lại không khớp');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Mật khẩu phải có ít nhất 6 ký tự');
+      return;
+    }
+
+    registerMutation.mutate({
+      email: formData.email,
+      password: formData.password,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      phone: formData.phone,
+    });
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-lg">
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2">
@@ -32,24 +65,53 @@ export default function RegisterPage() {
               Fashion <span className="text-primary">AI</span>
             </span>
           </Link>
-          <h1 className="text-2xl font-bold mt-6 mb-2">Tạo tài khoản</h1>
-          <p className="text-secondary">Đăng ký để trải nghiệm mua sắm tuyệt vời</p>
+          <h1 className="text-2xl font-bold mt-6 mb-2">Đăng ký tài khoản</h1>
+          <p className="text-secondary">Trải nghiệm mua sắm thông minh cùng AI</p>
         </div>
 
         {/* Form */}
         <div className="card p-8">
+          {(error || registerMutation.isError) && (
+            <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3 text-sm">
+              <AlertCircle className="w-5 h-5 shrink-0" />
+              <span>
+                {error || (registerMutation.error as any)?.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.'}
+              </span>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Full Name */}
-            <div>
-              <label className="block text-sm font-medium mb-2">Họ và tên</label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Nhập họ và tên"
-                  className="w-full h-12 pl-12 pr-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2c2822] text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                  required
-                />
+            {/* Name Fields */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Họ</label>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    placeholder="Họ"
+                    className="w-full h-12 pl-12 pr-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2c2822] text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Tên</label>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    placeholder="Tên"
+                    className="w-full h-12 pl-12 pr-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2c2822] text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    required
+                  />
+                </div>
               </div>
             </div>
 
@@ -60,6 +122,9 @@ export default function RegisterPage() {
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
                   placeholder="Nhập email của bạn"
                   className="w-full h-12 pl-12 pr-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2c2822] text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   required
@@ -74,9 +139,11 @@ export default function RegisterPage() {
                 <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
                   placeholder="Nhập số điện thoại"
                   className="w-full h-12 pl-12 pr-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2c2822] text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                  required
                 />
               </div>
             </div>
@@ -88,10 +155,12 @@ export default function RegisterPage() {
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Tạo mật khẩu (ít nhất 8 ký tự)"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Tạo mật khẩu"
                   className="w-full h-12 pl-12 pr-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2c2822] text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   required
-                  minLength={8}
                 />
                 <button
                   type="button"
@@ -99,6 +168,30 @@ export default function RegisterPage() {
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Nhập lại mật khẩu</label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="Nhập lại mật khẩu"
+                  className="w-full h-12 pl-12 pr-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2c2822] text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
@@ -117,15 +210,15 @@ export default function RegisterPage() {
             {/* Submit */}
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={registerMutation.isPending}
               className="btn-primary w-full"
             >
-              {isLoading ? (
+              {registerMutation.isPending ? (
                 <span className="animate-spin">⏳</span>
               ) : (
                 <>
                   <UserPlus className="w-5 h-5" />
-                  Đăng ký
+                  Đăng ký tài khoản
                 </>
               )}
             </button>
@@ -157,7 +250,7 @@ export default function RegisterPage() {
         <p className="text-center mt-6 text-sm text-secondary">
           Đã có tài khoản?{' '}
           <Link href="/login" className="text-primary font-medium hover:underline">
-            Đăng nhập
+            Đăng nhập ngay
           </Link>
         </p>
       </div>

@@ -1,35 +1,38 @@
 /**
  * Fashion AI - Cart Hooks
- * 
- * React Query hooks cho giỏ hàng
  */
 
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as cartApi from '@/lib/api/cart';
-import type { AddToCartRequest } from '@/types/api';
+import { toast } from 'sonner';
 
 /**
- * Hook lấy giỏ hàng
+ * Hook lấy thông tin giỏ hàng
  */
 export function useCart() {
   return useQuery({
     queryKey: ['cart'],
     queryFn: cartApi.getCart,
+    retry: false, // Don't retry if 401 (not logged in)
   });
 }
 
 /**
- * Hook thêm vào giỏ
+ * Hook thêm vào giỏ hàng
  */
 export function useAddToCart() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: AddToCartRequest) => cartApi.addToCart(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    mutationFn: cartApi.addToCart,
+    onSuccess: (data) => {
+      queryClient.setQueryData(['cart'], data);
+      toast.success('Đã thêm vào giỏ hàng');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
     },
   });
 }
@@ -43,36 +46,29 @@ export function useUpdateCartItem() {
   return useMutation({
     mutationFn: ({ itemId, quantity }: { itemId: string; quantity: number }) => 
       cartApi.updateCartItem(itemId, quantity),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    onSuccess: (data) => {
+      queryClient.setQueryData(['cart'], data);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Không thể cập nhật số lượng');
     },
   });
 }
 
 /**
- * Hook xóa item khỏi giỏ
+ * Hook xóa sản phẩm khỏi giỏ
  */
 export function useRemoveCartItem() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (itemId: string) => cartApi.removeCartItem(itemId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    mutationFn: cartApi.removeCartItem,
+    onSuccess: (data) => {
+      queryClient.setQueryData(['cart'], data);
+      toast.success('Đã xóa sản phẩm');
     },
-  });
-}
-
-/**
- * Hook xóa toàn bộ giỏ
- */
-export function useClearCart() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: cartApi.clearCart,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Không thể xóa sản phẩm');
     },
   });
 }

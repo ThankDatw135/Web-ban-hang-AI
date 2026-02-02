@@ -9,9 +9,17 @@
 
 import type { Metadata } from 'next';
 import { Manrope } from 'next/font/google';
+import dynamicImport from 'next/dynamic';
 import './globals.css';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import QueryProvider from '@/providers/query-provider';
+
+// Force dynamic rendering for all pages (required for auth, cart, etc.)
+export const dynamic = 'force-dynamic';
+
+const Toaster = dynamicImport(() => import('sonner').then(mod => mod.Toaster), { ssr: false });
+const AIChat = dynamicImport(() => import('@/components/ai/AIChat'), { ssr: false });
 
 // Font configuration - Manrope cho toàn bộ app
 const manrope = Manrope({
@@ -53,22 +61,25 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/logo.png" />
       </head>
       <body className="min-h-screen bg-cream dark:bg-[#1e1a14] text-text-main dark:text-white antialiased flex flex-col">
-        {/* TODO: Thêm Providers (ThemeProvider, AuthProvider) */}
-        
-        {/* Header */}
-        <Header />
-        
-        {/* Main content - có padding-top cho header */}
-        <main className="flex-1 pt-28">
-          {children}
-        </main>
-        
-        {/* Footer */}
-        <Footer />
-        
+        <QueryProvider>
+          {/* Header */}
+          <Header />
+
+          {/* Main content - có padding-top cho header */}
+          <main className="flex-1 pt-28">
+            {children}
+          </main>
+
+          {/* Footer */}
+          <Footer />
+
+          {/* Global UI */}
+          <Toaster />
+          <AIChat />
+        </QueryProvider>
+
         {/* TODO: Thêm Live Chat Widget */}
       </body>
     </html>
   );
 }
-

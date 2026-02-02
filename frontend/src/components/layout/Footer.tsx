@@ -23,7 +23,7 @@ const quickLinks = [
 const supportLinks = [
   { href: '/contact', label: 'Liên hệ' },
   { href: '/return-policy', label: 'Chính sách đổi trả' },
-  { href: '#', label: 'Hướng dẫn mua hàng' },
+  { href: '/size-guide', label: 'Hướng dẫn chọn size' },
   { href: '#', label: 'Câu hỏi thường gặp' },
 ];
 

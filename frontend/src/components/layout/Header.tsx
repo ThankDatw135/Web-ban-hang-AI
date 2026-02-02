@@ -20,6 +20,8 @@ import {
   Sparkles 
 } from 'lucide-react';
 
+import { useCart } from '@/hooks/use-cart';
+
 // Navigation links
 const navLinks = [
   { href: '/products', label: 'Sản phẩm' },
@@ -29,6 +31,9 @@ const navLinks = [
 ];
 
 export default function Header() {
+  const { data: cart } = useCart();
+  const cartCount = cart?.items?.reduce((acc, item) => acc + item.quantity, 0) || 0;
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -106,9 +111,11 @@ export default function Header() {
               <Link href="/cart" className="btn-ghost w-14 h-14 relative">
                 <ShoppingBag className="w-8 h-8" />
                 {/* Badge */}
-                <span className="absolute top-0 right-0 w-6 h-6 rounded-full bg-primary text-white text-sm flex items-center justify-center font-bold">
-                  0
-                </span>
+                {cartCount > 0 && (
+                  <span className="absolute top-0 right-0 w-6 h-6 rounded-full bg-primary text-white text-sm flex items-center justify-center font-bold">
+                    {cartCount > 99 ? '99+' : cartCount}
+                  </span>
+                )}
               </Link>
 
               {/* User */}

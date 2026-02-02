@@ -80,3 +80,34 @@ export async function setDefaultAddress(id: string): Promise<Address> {
   const response = await apiClient.patch<ApiResponse<Address>>(`/users/me/addresses/${id}/default`);
   return response.data.data;
 }
+
+// ===========================================
+// ADMIN APIs
+// ===========================================
+
+/**
+ * [ADMIN] Lấy danh sách users
+ */
+import { PaginatedResponse } from '@/types/api';
+
+export async function getUsers(params?: { 
+  page?: number; 
+  limit?: number; 
+  search?: string; 
+}): Promise<PaginatedResponse<User>> {
+  const searchParams = new URLSearchParams();
+  if (params?.page) searchParams.set('page', String(params.page));
+  if (params?.limit) searchParams.set('limit', String(params.limit));
+  if (params?.search) searchParams.set('search', params.search);
+
+  const response = await apiClient.get<ApiResponse<PaginatedResponse<User>>>(`/admin/users?${searchParams.toString()}`);
+  return response.data.data;
+}
+
+/**
+ * [ADMIN] Block/Unblock user
+ */
+export async function toggleBlockUser(id: string): Promise<User> {
+  const response = await apiClient.patch<ApiResponse<User>>(`/admin/users/${id}/toggle-block`);
+  return response.data.data;
+}
